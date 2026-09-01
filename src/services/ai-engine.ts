@@ -117,7 +117,7 @@ export async function tutorChat(
   userInput: string,
   history: ChatMessage[],
   apiKey?: string
-): Promise<{ replyText: string; correction?: GrammarCorrection }> {
+): Promise<{ replyText: string; correction?: GrammarCorrection | undefined }> {
   // Se houver chave Gemini configurada, usar IA avançada
   if (apiKey) {
     try {

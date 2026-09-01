@@ -11,7 +11,7 @@ export interface ChatMessage {
   id: string;
   sender: "user" | "tutor" | "system";
   text: string;
-  correction?: GrammarCorrection;
+  correction?: GrammarCorrection | undefined;
   timestamp: number;
 }
 
@@ -46,7 +46,7 @@ export interface Flashcard {
   translation: string;
   exampleSentence: string;
   exampleTranslation: string;
-  status?: "learning" | "mastered";
+  status?: "learning" | "mastered" | undefined;
 }
 
 export interface WordToken {
@@ -55,7 +55,7 @@ export interface WordToken {
   posBadge: string;
   posColor: string;
   literalTranslation: string;
-  note?: string;
+  note?: string | undefined;
 }
 
 export interface SentenceAnalysis {
@@ -73,6 +73,6 @@ export interface UserProgress {
   phrasesAnalyzedCount: number;
   messagesSentCount: number;
   dailySprintDone: boolean;
-  geminiApiKey?: string;
+  geminiApiKey?: string | undefined;
   audioSpeed: number; // 0.8, 1.0, 1.2
 }
