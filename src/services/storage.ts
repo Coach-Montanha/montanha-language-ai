@@ -1,0 +1,113 @@
+import { UserProgress, ChatMessage, Flashcard } from "@/types/language";
+
+const STORAGE_KEY_PROGRESS = "smart_language_progress_v1";
+const STORAGE_KEY_CHAT = "smart_language_chat_v1";
+const STORAGE_KEY_CUSTOM_CARDS = "smart_language_custom_cards_v1";
+
+const DEFAULT_PROGRESS: UserProgress = {
+  streakDays: 1,
+  lastActiveDate: new Date().toISOString().split("T")[0] || "",
+  xp: 50,
+  cardsMasteredCount: 0,
+  phrasesAnalyzedCount: 0,
+  messagesSentCount: 0,
+  dailySprintDone: false,
+  audioSpeed: 1.0,
+};
+
+export function loadUserProgress(): UserProgress {
+  if (typeof window === "undefined") return DEFAULT_PROGRESS;
+
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PROGRESS);
+    if (!raw) {
+      saveUserProgress(DEFAULT_PROGRESS);
+      return DEFAULT_PROGRESS;
+    }
+    const data = JSON.parse(raw) as UserProgress;
+
+    // Verificar streak de acordo com a data
+    const today = new Date().toISOString().split("T")[0] || "";
+    if (data.lastActiveDate !== today) {
+      const lastDate = new Date(data.lastActiveDate);
+      const currentDate = new Date(today);
+      const diffTime = Math.abs(currentDate.getTime() - lastDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        // Dia consecutivo!
+        data.streakDays += 1;
+      } else if (diffDays > 1) {
+        // Quebrou o streak
+        data.streakDays = 1;
+      }
+      data.lastActiveDate = today;
+      data.dailySprintDone = false; // reseta o sprint diário para o novo dia
+      saveUserProgress(data);
+    }
+
+    return { ...DEFAULT_PROGRESS, ...data };
+  } catch (error) {
+    console.error("Erro ao carregar progresso:", error);
+    return DEFAULT_PROGRESS;
+  }
+}
+
+export function saveUserProgress(progress: UserProgress): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(progress));
+  } catch (error) {
+    console.error("Erro ao salvar progresso:", error);
+  }
+}
+
+export function addXP(amount: number): UserProgress {
+  const current = loadUserProgress();
+  const updated = { ...current, xp: current.xp + amount };
+  saveUserProgress(updated);
+  return updated;
+}
+
+export function loadChatHistory(): ChatMessage[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_CHAT);
+    if (!raw) return [];
+    return JSON.parse(raw) as ChatMessage[];
+  } catch (e) {
+    console.error("Erro ao carregar chat:", e);
+    return [];
+  }
+}
+
+export function saveChatHistory(messages: ChatMessage[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    // Guarda até as últimas 50 mensagens para economia de espaço
+    const toSave = messages.slice(-50);
+    localStorage.setItem(STORAGE_KEY_CHAT, JSON.stringify(toSave));
+  } catch (e) {
+    console.error("Erro ao salvar chat:", e);
+  }
+}
+
+export function loadCustomFlashcards(): Flashcard[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_CUSTOM_CARDS);
+    return raw ? (JSON.parse(raw) as Flashcard[]) : [];
+  } catch (e) {
+    console.error("Erro ao carregar flashcards customizados:", e);
+    return [];
+  }
+}
+
+export function saveCustomFlashcard(card: Flashcard): Flashcard[] {
+  const existing = loadCustomFlashcards();
+  const updated = [card, ...existing.filter((c) => c.id !== card.id)];
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEY_CUSTOM_CARDS, JSON.stringify(updated));
+  }
+  return updated;
+}
