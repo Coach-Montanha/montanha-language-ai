@@ -76,15 +76,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      {
+        name: "viewport",
+        content:
+          "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
+      },
+      { title: "Smart Language - Tutor de Inglês com IA" },
+      {
+        name: "description",
+        content:
+          "Aprenda a falar, ouvir e ler inglês com o tutor Leo de Chicago, missões reais e treino de 5 minutos.",
+      },
+      { name: "theme-color", content: "#2563eb" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Smart Language" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "application-name", content: "Smart Language" },
+      { property: "og:title", content: "Smart Language - Tutor de Inglês com IA" },
+      {
+        property: "og:description",
+        content:
+          "Tutor nativo com personalidade, missões de sobrevivência e pronúncia fonética.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -92,6 +107,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "apple-touch-icon", sizes: "192x192", href: "/icons/icon-192.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -102,12 +120,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <head>
         <HeadContent />
       </head>
       <body>
         {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                    console.log('SW register failed:', err);
+                  });
+                });
+              }
+            `,
+          }}
+        />
         <Scripts />
       </body>
     </html>

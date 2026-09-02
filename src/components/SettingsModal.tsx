@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserProgress } from "@/types/language";
 import { speakText } from "@/services/speech";
-import { Volume2, Key, RotateCcw, CheckCircle2, Bot } from "lucide-react";
+import { Volume2, Key, RotateCcw, CheckCircle2, Bot, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 
 interface SettingsModalProps {
@@ -135,6 +135,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 onChange={(e) => setApiKey(e.target.value)}
                 className="pl-9 text-xs"
               />
+            </div>
+          </div>
+
+          {/* Instalação no Celular (PWA) */}
+          <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
+                <Smartphone className="h-4 w-4 text-primary" />
+                Instalar no Celular (PWA)
+              </Label>
+              <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                App Nativo
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Você pode instalar o <strong>Smart Language</strong> diretamente na tela inicial do seu celular (iPhone ou Android) para usar em tela cheia, sem barras do navegador e com acesso rápido aos treinos.
+            </p>
+            <div className="text-[11px] text-muted-foreground bg-background/80 rounded-lg p-2 border border-border/60 space-y-1">
+              <p>• <strong>Android / Chrome:</strong> Toque nos 3 pontinhos do navegador e escolha <em>&ldquo;Instalar Aplicativo&rdquo;</em>.</p>
+              <p>• <strong>iPhone / Safari:</strong> Toque no botão <em>Compartilhar</em> e escolha <em>&ldquo;Adicionar à Tela de Início&rdquo;</em>.</p>
             </div>
           </div>
 

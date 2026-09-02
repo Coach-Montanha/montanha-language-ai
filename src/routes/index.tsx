@@ -12,6 +12,7 @@ import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { LoginScreen } from "@/components/LoginScreen";
 import { DailyMissionBanner } from "@/components/DailyMissionBanner";
+import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { ConversationTab } from "@/components/tabs/ConversationTab";
 import { ScenarioTab } from "@/components/tabs/ScenarioTab";
 import { AlphabetTab } from "@/components/tabs/AlphabetTab";
@@ -180,6 +181,9 @@ function SmartLanguageApp() {
         progress={progress}
         onUpdateProgress={handleUpdateProgress}
       />
+
+      {/* Banner / Prompt de Instalação PWA para Celular */}
+      <PwaInstallPrompt />
     </div>
   );
 }
