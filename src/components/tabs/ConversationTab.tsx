@@ -1,7 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ChatMessage, UserProgress } from "@/types/language";
 import { tutorChat } from "@/services/ai-engine";
-import { speakText, createSpeechRecognizer, isSpeechRecognitionSupported } from "@/services/speech";
+import {
+  speakText,
+  stopSpeaking,
+  createSpeechRecognizer,
+  isSpeechRecognitionSupported,
+  isSpeechSynthesisSupported,
+} from "@/services/speech";
 import { saveChatHistory, loadChatHistory, addXP } from "@/services/storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +16,13 @@ import {
   Mic,
   MicOff,
   Volume2,
+  VolumeX,
   AlertCircle,
   Sparkles,
   Bot,
   User,
   Trash2,
+  Radio,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -43,6 +51,14 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [autoSpeak, setAutoSpeak] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const saved = localStorage.getItem("smart_language_autospeak");
+    return saved !== null ? saved === "true" : true;
+  });
+
+  const recognizerRef = useRef<ReturnType<typeof createSpeechRecognizer>>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -51,11 +67,49 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isRecording]);
+
+  // Salva preferência de auto-fala
+  const handleToggleAutoSpeak = () => {
+    const next = !autoSpeak;
+    setAutoSpeak(next);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("smart_language_autospeak", String(next));
+    }
+    if (!next) {
+      stopSpeaking();
+      setSpeakingMessageId(null);
+      toast.info("Leitura automática em voz alta desativada.");
+    } else {
+      toast.success("Leitura automática em voz alta ativada! O Alex falará as respostas.");
+    }
+  };
+
+  // Reproduz áudio de uma mensagem específica
+  const handleSpeakMessage = (msgId: string, text: string) => {
+    if (speakingMessageId === msgId) {
+      stopSpeaking();
+      setSpeakingMessageId(null);
+      return;
+    }
+
+    setSpeakingMessageId(msgId);
+    speakText(text, {
+      rate: progress.audioSpeed,
+      lang: "en-US",
+      onStart: () => setSpeakingMessageId(msgId),
+      onEnd: () => setSpeakingMessageId(null),
+      onError: () => setSpeakingMessageId(null),
+    });
+  };
 
   const handleSend = async (textToSend?: string) => {
     const query = (textToSend || input).trim();
     if (!query || isLoading) return;
+
+    // Para qualquer voz em reprodução quando o usuário enviar mensagem
+    stopSpeaking();
+    setSpeakingMessageId(null);
 
     setInput("");
     const userMsg: ChatMessage = {
@@ -73,8 +127,9 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     try {
       const response = await tutorChat(query, messages, progress.geminiApiKey);
 
+      const tutorMsgId = `tutor-${Date.now()}`;
       const tutorMsg: ChatMessage = {
-        id: `tutor-${Date.now()}`,
+        id: tutorMsgId,
         sender: "tutor",
         text: response.replyText,
         correction: response.correction,
@@ -85,8 +140,10 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
       setMessages(updatedHistory);
       saveChatHistory(updatedHistory);
 
-      // Toca áudio automaticamente da resposta do tutor
-      speakText(response.replyText, { rate: progress.audioSpeed });
+      // LEITURA AUTOMÁTICA EM VOZ ALTA (TTS) DA RESPOSTA DO TUTOR NO IDIOMA ALVO
+      if (autoSpeak && isSpeechSynthesisSupported()) {
+        handleSpeakMessage(tutorMsgId, response.replyText);
+      }
 
       // Atualiza XP e mensagens
       const updated = addXP(10);
@@ -102,43 +159,76 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     }
   };
 
-  const handleMicToggle = () => {
+  // ENTRADA POR VOZ (SPEECH-TO-TEXT) COM TRANSCRIÇÃO EM TEMPO REAL
+  const handleStartRecording = () => {
     if (!isSpeechRecognitionSupported()) {
-      toast.error("Reconhecimento de fala não suportado neste navegador.");
+      toast.error(
+        "Seu navegador não suporta a API de reconhecimento de voz. Tente usar o Google Chrome ou Edge."
+      );
       return;
     }
 
-    if (isRecording) {
+    // Interrompe qualquer áudio que estiver tocando
+    stopSpeaking();
+    setSpeakingMessageId(null);
+
+    try {
+      const recognizer = createSpeechRecognizer({
+        onStart: () => {
+          setIsRecording(true);
+        },
+        onInterim: (interimText) => {
+          // Transcrição em tempo real: exibe as palavras conforme o usuário fala
+          setInput(interimText);
+        },
+        onFinal: (finalText) => {
+          setInput(finalText);
+          setIsRecording(false);
+          toast.success("Voz capturada e transcrita!");
+        },
+        onError: (errMsg) => {
+          setIsRecording(false);
+          toast.error(errMsg);
+        },
+        onEnd: () => {
+          setIsRecording(false);
+        },
+      });
+
+      if (recognizer) {
+        recognizerRef.current = recognizer;
+        recognizer.start();
+      }
+    } catch (e) {
+      console.error(e);
       setIsRecording(false);
-      return;
+      toast.error("Erro ao inicializar o microfone.");
     }
+  };
 
-    setIsRecording(true);
-    const recognizer = createSpeechRecognizer(
-      (transcript) => {
-        setInput(transcript);
-        setIsRecording(false);
-        handleSend(transcript);
-      },
-      (err) => {
-        console.error(err);
-        setIsRecording(false);
-        toast.error("Não foi possível captar a voz. Tente falar mais perto do microfone.");
-      },
-      () => setIsRecording(false)
-    );
+  const handleStopRecording = () => {
+    if (recognizerRef.current) {
+      recognizerRef.current.stop();
+    }
+    setIsRecording(false);
+  };
 
-    if (recognizer) {
-      recognizer.start();
+  const handleMicToggle = () => {
+    if (isRecording) {
+      handleStopRecording();
+    } else {
+      handleStartRecording();
     }
   };
 
   const handleClearChat = () => {
     if (confirm("Deseja limpar as mensagens da conversa?")) {
-      const reset = [
+      stopSpeaking();
+      setSpeakingMessageId(null);
+      const reset: ChatMessage[] = [
         {
           id: "intro-reset",
-          sender: "tutor" as const,
+          sender: "tutor",
           text: "Let's start fresh! What would you like to chat about?",
           timestamp: Date.now(),
         },
@@ -175,26 +265,71 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
               </span>
             </div>
             <p className="text-[10px] text-muted-foreground">
-              Correção imediata com explicação em 1 linha
+              Voz e correção em 1 linha
             </p>
           </div>
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleClearChat}
-          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-          title="Limpar conversa"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          {/* Botão para Ligar / Desligar Leitura Automática em Voz Alta */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToggleAutoSpeak}
+            className={`h-7 px-2 text-[10px] gap-1 rounded-lg border transition-all ${
+              autoSpeak
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold"
+                : "text-muted-foreground bg-muted/40"
+            }`}
+            title={autoSpeak ? "Leitura automática ativada" : "Leitura automática pausada"}
+          >
+            {autoSpeak ? (
+              <>
+                <Volume2 className="h-3.5 w-3.5" />
+                <span>Voz Auto</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="h-3.5 w-3.5" />
+                <span>Mudo</span>
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleClearChat}
+            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+            title="Limpar conversa"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
+
+      {/* Indicador quando o microfone estiver gravando */}
+      {isRecording && (
+        <div className="flex items-center justify-between px-3 py-1.5 bg-red-500/15 border-b border-red-500/30 text-red-600 dark:text-red-400 text-xs animate-in fade-in">
+          <div className="flex items-center gap-1.5 font-medium">
+            <Radio className="h-3.5 w-3.5 animate-pulse" />
+            <span>Ouvindo sua voz... Fale em inglês</span>
+          </div>
+          <button
+            onClick={handleStopRecording}
+            className="text-[11px] font-bold underline hover:opacity-80"
+          >
+            Concluir Fala
+          </button>
+        </div>
+      )}
 
       {/* Lista de Mensagens */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3.5 text-xs">
         {messages.map((msg) => {
           const isUser = msg.sender === "user";
+          const isSpeakingThis = speakingMessageId === msg.id;
+
           return (
             <div
               key={msg.id}
@@ -207,9 +342,11 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                   </div>
                 )}
                 <div
-                  className={`rounded-2xl px-3.5 py-2.5 shadow-xs leading-relaxed ${
+                  className={`rounded-2xl px-3.5 py-2.5 shadow-xs leading-relaxed transition-all ${
                     isUser
                       ? "bg-primary text-primary-foreground rounded-tr-xs"
+                      : isSpeakingThis
+                      ? "bg-card border-2 border-emerald-500/70 shadow-md text-foreground rounded-tl-xs ring-2 ring-emerald-500/20"
                       : "bg-card border border-border text-foreground rounded-tl-xs"
                   }`}
                 >
@@ -217,10 +354,16 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
                   {!isUser && (
                     <button
-                      onClick={() => speakText(msg.text, { rate: progress.audioSpeed })}
-                      className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground font-medium pt-1"
+                      onClick={() => handleSpeakMessage(msg.id, msg.text)}
+                      className={`mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold transition-colors ${
+                        isSpeakingThis
+                          ? "text-emerald-600 dark:text-emerald-400 animate-pulse"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      title={isSpeakingThis ? "Pausar fala" : "Ouvir em voz alta"}
                     >
-                      <Volume2 className="h-3 w-3" /> Ouvir pronúncia
+                      <Volume2 className="h-3.5 w-3.5" />
+                      <span>{isSpeakingThis ? "Falando..." : "Ouvir pronúncia"}</span>
                     </button>
                   )}
                 </div>
@@ -231,7 +374,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                 )}
               </div>
 
-              {/* Balão de Correção em 1 Linha (se houver erro na fala anterior) */}
+              {/* Balão de Correção em 1 Linha */}
               {msg.correction && msg.correction.hasError && (
                 <div className="mt-1.5 max-w-[88%] rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-left text-[11px] space-y-1 animate-in fade-in">
                   <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold">
@@ -256,7 +399,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         {isLoading && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground pl-2">
             <Bot className="h-3.5 w-3.5 animate-spin text-primary" />
-            <span>Alex está pensando e digitando...</span>
+            <span>Alex está pensando e respondendo...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -278,7 +421,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         ))}
       </div>
 
-      {/* Barra de Entrada de Mensagem */}
+      {/* Barra de Entrada com Botão de Microfone & Envio */}
       <div className="p-2 border-t border-border bg-card/60">
         <form
           onSubmit={(e) => {
@@ -287,26 +430,37 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
           }}
           className="flex items-center gap-1.5"
         >
+          {/* BOTÃO DE MICROFONE NATIVO (STT) */}
           <Button
             type="button"
             size="icon"
             variant={isRecording ? "destructive" : "outline"}
             onClick={handleMicToggle}
-            className="h-9 w-9 shrink-0 rounded-xl"
-            title={isRecording ? "Parar gravação" : "Falar por voz em inglês"}
+            className={`h-9 w-9 shrink-0 rounded-xl transition-all ${
+              isRecording
+                ? "bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-md ring-2 ring-red-400/40"
+                : "hover:border-primary/60"
+            }`}
+            title={isRecording ? "Parar gravação de voz" : "Gravar e transcrever sua voz em inglês"}
           >
             {isRecording ? (
-              <MicOff className="h-4 w-4 animate-pulse" />
+              <MicOff className="h-4 w-4" />
             ) : (
-              <Mic className="h-4 w-4" />
+              <Mic className="h-4 w-4 text-primary" />
             )}
           </Button>
 
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Digite em inglês ou fale no mic..."
-            className="text-xs h-9 rounded-xl flex-1 bg-background"
+            placeholder={
+              isRecording
+                ? "Transcrevendo sua fala..."
+                : "Digite ou clique no mic para falar..."
+            }
+            className={`text-xs h-9 rounded-xl flex-1 bg-background transition-all ${
+              isRecording ? "border-red-400 ring-1 ring-red-400" : ""
+            }`}
             disabled={isLoading}
           />
 
@@ -315,6 +469,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
             size="icon"
             disabled={!input.trim() || isLoading}
             className="h-9 w-9 shrink-0 rounded-xl shadow-xs"
+            title="Enviar mensagem"
           >
             <Send className="h-4 w-4" />
           </Button>
