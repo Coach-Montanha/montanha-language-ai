@@ -61,6 +61,17 @@ function SmartLanguageApp() {
       setSession(s);
       if (s.progress) setProgress(s.progress);
     }
+
+    // Fecha a tela inicial de carregamento nativa com transição suave
+    const splash = document.getElementById("smart-app-splash");
+    if (splash) {
+      splash.classList.add("splash-dismissed");
+      setTimeout(() => {
+        if (splash.parentNode) {
+          splash.parentNode.removeChild(splash);
+        }
+      }, 350);
+    }
   }, []);
 
   // Aplica o tamanho global da fonte no elemento <html> para todo o projeto

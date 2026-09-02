@@ -106,10 +106,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "icon", type: "image/svg+xml", href: "/icons/icon.svg" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icons/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icons/icon-512.png" },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "shortcut icon", href: "/favicon.ico" },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
       { rel: "apple-touch-icon", sizes: "192x192", href: "/icons/icon-192.png" },
+      { rel: "apple-touch-icon", sizes: "512x512", href: "/icons/icon-512.png" },
+      { rel: "mask-icon", href: "/icons/icon.svg", color: "#09090b" },
     ],
   }),
   shellComponent: RootShell,
@@ -135,9 +142,132 @@ function RootShell({ children }: { children: ReactNode }) {
             `,
           }}
         />
+        {/* Estilos inline da tela inicial de carregamento com o símbolo oficial do app */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              #smart-app-splash {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 999999;
+                background-color: #09090b;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                transition: opacity 0.35s ease, visibility 0.35s ease;
+              }
+              #smart-app-splash.splash-dismissed {
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+              }
+              .splash-box {
+                width: 76px;
+                height: 76px;
+                border-radius: 22px;
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #090d16 100%);
+                border: 1.5px solid rgba(59, 130, 246, 0.4);
+                box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.7), 0 0 25px rgba(37, 99, 235, 0.35);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: splashPulse 2s ease-in-out infinite;
+              }
+              .splash-title {
+                margin-top: 18px;
+                font-size: 19px;
+                font-weight: 800;
+                letter-spacing: -0.02em;
+                color: #f8fafc;
+                text-align: center;
+              }
+              .splash-subtitle {
+                margin-top: 4px;
+                font-size: 12px;
+                color: #94a3b8;
+                text-align: center;
+              }
+              .splash-spinner {
+                margin-top: 24px;
+                width: 22px;
+                height: 22px;
+                border: 2.5px solid rgba(255, 255, 255, 0.1);
+                border-top-color: #3b82f6;
+                border-radius: 50%;
+                animation: splashSpin 0.75s linear infinite;
+              }
+              @keyframes splashPulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.04); }
+              }
+              @keyframes splashSpin {
+                to { transform: rotate(360deg); }
+              }
+            `,
+          }}
+        />
       </head>
       <body>
+        {/* Tela Inicial de Carregamento Instantânea com o Símbolo Oficial do Smart Language */}
+        <div id="smart-app-splash" aria-label="Carregando Smart Language...">
+          <div className="splash-box">
+            <svg
+              width="44"
+              height="44"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#fbbf24"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" fill="#fef08a" fillOpacity="0.25" />
+              <path d="M5 3v4" />
+              <path d="M7 5H3" />
+              <path d="M19 17v4" />
+              <path d="M21 19h-4" />
+            </svg>
+          </div>
+          <div className="splash-title">Smart Language</div>
+          <div className="splash-subtitle">Tutor de línguas com IA</div>
+          <div className="splash-spinner"></div>
+        </div>
+
         {children}
+
+        {/* Script para suavizar e fechar a splash assim que o app estiver pronto */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function dismiss() {
+                  var el = document.getElementById('smart-app-splash');
+                  if (el && !el.classList.contains('splash-dismissed')) {
+                    el.classList.add('splash-dismissed');
+                    setTimeout(function() {
+                      if (el && el.parentNode) {
+                        el.parentNode.removeChild(el);
+                      }
+                    }, 400);
+                  }
+                }
+                if (document.readyState === 'complete') {
+                  setTimeout(dismiss, 120);
+                } else {
+                  window.addEventListener('load', function() {
+                    setTimeout(dismiss, 120);
+                  });
+                }
+                setTimeout(dismiss, 1800);
+              })();
+            `,
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `

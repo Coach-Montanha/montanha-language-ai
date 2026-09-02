@@ -1,11 +1,15 @@
 // Smart Language - Progressive Web App Service Worker
-const CACHE_NAME = "smart-language-v1.0.0";
+const CACHE_NAME = "smart-language-v2.1.0";
 const PRECACHE_URLS = [
   "/",
   "/manifest.webmanifest",
   "/manifest.json",
   "/favicon.ico",
+  "/favicon.svg",
+  "/apple-touch-icon.png",
   "/icons/icon.svg",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
 ];
 
 // Instalação do Service Worker & Pre-caching
