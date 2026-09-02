@@ -1,7 +1,7 @@
 {
-  "name": "Smart Language - Tutor de Inglês com IA",
+  "name": "Smart Language - Tutor de Línguas com IA",
   "short_name": "Smart Language",
-  "description": "Aprenda a falar, ouvir e ler inglês com o tutor Leo de Chicago, situações reais de sobrevivência e treino de 5 minutos.",
+  "description": "Aprenda a falar, ouvir e ler idiomas com tutor com IA, situações reais de sobrevivência e treino de 5 minutos.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

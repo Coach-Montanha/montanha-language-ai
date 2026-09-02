@@ -9,7 +9,6 @@ import {
   KeyRound,
   Sparkles,
   ArrowRight,
-  ShieldCheck,
   RotateCcw,
   CheckCircle2,
   AlertCircle,
@@ -102,18 +101,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  const handleQuickDemo = async () => {
-    setUsername("aluno");
-    setPin("1234");
-    setIsLoading(true);
-    const res = await loginWithPin("aluno", "1234");
-    setIsLoading(false);
-    if (res.success && res.user) {
-      toast.success("Logado como Aluno de Demonstração!");
-      onLoginSuccess(res.user);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 flex flex-col justify-center items-center p-4">
       <div className="w-full max-w-sm space-y-5">
@@ -126,7 +113,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             Smart Language
           </h1>
           <p className="text-xs text-muted-foreground">
-            Tutor de inglês com IA &bull; Separado por usuário
+            Tutor de línguas com IA
           </p>
         </div>
 
@@ -311,34 +298,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               )}
             </Button>
           </form>
-
-          {/* Atalho Demo */}
-          {mode === "login" && (
-            <div className="pt-1 text-center">
-              <button
-                type="button"
-                onClick={handleQuickDemo}
-                className="text-[11px] text-muted-foreground hover:text-primary transition-colors font-medium underline"
-              >
-                ⚡ Entrar rápido como Aluno Demo (PIN: 1234)
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Card de Transparência de Dados do Servidor */}
-        <div className="rounded-xl bg-card/60 border border-border/80 p-3 text-[11px] text-muted-foreground space-y-1">
-          <div className="flex items-center gap-1.5 font-semibold text-foreground">
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
-            <span>Armazenamento no Servidor</span>
-          </div>
-          <p className="leading-relaxed">
-            Seus dados, histórico com o Leo, XP e senhas de 4 dígitos são guardados no servidor em{" "}
-            <code className="bg-muted px-1 py-0.5 rounded text-[10px] text-foreground font-mono">
-              data/users.json
-            </code>
-            , garantindo isolamento total entre cada aluno.
-          </p>
         </div>
       </div>
     </div>

@@ -81,11 +81,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
       },
-      { title: "Smart Language - Tutor de Inglês com IA" },
+      { title: "Smart Language - Tutor de Línguas com IA" },
       {
         name: "description",
         content:
-          "Aprenda a falar, ouvir e ler inglês com o tutor Leo de Chicago, missões reais e treino de 5 minutos.",
+          "Aprenda a falar, ouvir e ler idiomas com tutor com IA, missões reais e treino de 5 minutos.",
       },
       { name: "theme-color", content: "#2563eb" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
@@ -93,7 +93,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-title", content: "Smart Language" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "application-name", content: "Smart Language" },
-      { property: "og:title", content: "Smart Language - Tutor de Inglês com IA" },
+      { property: "og:title", content: "Smart Language - Tutor de Línguas com IA" },
       {
         property: "og:description",
         content:
