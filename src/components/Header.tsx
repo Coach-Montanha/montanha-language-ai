@@ -1,19 +1,23 @@
 import React from "react";
-import { Flame, Zap, Timer, Settings, Sparkles } from "lucide-react";
+import { Flame, Zap, Timer, Settings, Sparkles, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserProgress } from "@/types/language";
 
 interface HeaderProps {
   progress: UserProgress;
+  userName?: string;
   onOpenDailySprint: () => void;
   onOpenSettings: () => void;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   progress,
+  userName,
   onOpenDailySprint,
   onOpenSettings,
+  onLogout,
 }) => {
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border bg-background/95 backdrop-blur-md px-3 py-2.5 sm:px-4">
@@ -83,6 +87,19 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Settings className="h-4 w-4" />
           </Button>
+
+          {/* Usuário e Botão de Logout */}
+          {userName && onLogout && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
+              onClick={onLogout}
+              title={`Conectado como ${userName} (Clique para sair/trocar usuário)`}
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       </div>
     </header>

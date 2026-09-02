@@ -2,8 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { TabType, UserProgress, WeeklyMission } from "@/types/language";
 import { loadUserProgress, saveUserProgress, addXP } from "@/services/storage";
+import {
+  UserSession,
+  getCurrentSession,
+  setCurrentSession,
+  syncUserDataWithServer,
+} from "@/services/auth";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
+import { LoginScreen } from "@/components/LoginScreen";
 import { DailyMissionBanner } from "@/components/DailyMissionBanner";
 import { ConversationTab } from "@/components/tabs/ConversationTab";
 import { ScenarioTab } from "@/components/tabs/ScenarioTab";
@@ -13,28 +20,53 @@ import { BreakdownTab } from "@/components/tabs/BreakdownTab";
 import { DailySprintModal } from "@/components/DailySprintModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: SmartLanguageApp,
 });
 
 function SmartLanguageApp() {
+  const [session, setSession] = useState<UserSession | null>(() => getCurrentSession());
   const [activeTab, setActiveTab] = useState<TabType>("conversa");
-  const [progress, setProgress] = useState<UserProgress>(loadUserProgress());
+  const [progress, setProgress] = useState<UserProgress>(() => {
+    const s = getCurrentSession();
+    if (s && s.progress) return s.progress;
+    return loadUserProgress();
+  });
   const [selectedMission, setSelectedMission] = useState<WeeklyMission | null>(null);
   const [isDailySprintOpen, setIsDailySprintOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showSessionStarter, setShowSessionStarter] = useState(true);
 
   useEffect(() => {
-    // Carrega progresso persistido ao inicializar
-    const current = loadUserProgress();
-    setProgress(current);
+    const s = getCurrentSession();
+    if (s) {
+      setSession(s);
+      if (s.progress) setProgress(s.progress);
+    }
   }, []);
+
+  const handleLoginSuccess = (newSession: UserSession) => {
+    setSession(newSession);
+    setProgress(newSession.progress);
+    saveUserProgress(newSession.progress);
+  };
+
+  const handleLogout = () => {
+    if (confirm("Deseja sair da conta e trocar de usuário?")) {
+      setCurrentSession(null);
+      setSession(null);
+      toast.info("Você saiu da conta.");
+    }
+  };
 
   const handleUpdateProgress = (updated: UserProgress) => {
     setProgress(updated);
     saveUserProgress(updated);
+    if (session) {
+      syncUserDataWithServer(session.username, updated);
+    }
   };
 
   const handleDailySprintComplete = () => {
@@ -52,16 +84,28 @@ function SmartLanguageApp() {
     setShowSessionStarter(false);
   };
 
+  // Se não estiver logado, exibe a tela de login e cadastro com senha de 4 números
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-background text-foreground font-sans">
+        <Toaster position="top-center" richColors />
+        <LoginScreen onLoginSuccess={handleLoginSuccess} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans select-none antialiased">
       {/* Barra de Notificações Toast */}
       <Toaster position="top-center" richColors />
 
-      {/* Cabeçalho com Streak, XP e Desafio 5 min */}
+      {/* Cabeçalho com Nome do Usuário, Streak, XP, Desafio 5 min e Logout */}
       <Header
         progress={progress}
+        userName={session.displayName}
         onOpenDailySprint={() => setIsDailySprintOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* BANNER DA SESSÃO INICIAL: SITUAÇÃO REAL DO DIA (3 SEMANAS PROGRESSIVAS) */}
@@ -77,7 +121,7 @@ function SmartLanguageApp() {
               onClick={() => setShowSessionStarter(false)}
               className="text-[10px] text-muted-foreground hover:underline font-medium"
             >
-              Ocultar situação inicial e ir direto para o chat livre &darr;
+              Ocultar situação inicial e ir direto para o chat livre com Leo &darr;
             </button>
           </div>
         </div>

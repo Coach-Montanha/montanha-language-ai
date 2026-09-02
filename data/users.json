@@ -1,0 +1,25 @@
+{
+  "users": {
+    "aluno": {
+      "username": "aluno",
+      "displayName": "Aluno Demonstração",
+      "pin": "1234",
+      "createdAt": "2026-09-01T20:00:00.000Z",
+      "updatedAt": "2026-09-01T20:00:00.000Z",
+      "progress": {
+        "streakDays": 1,
+        "lastActiveDate": "2026-09-01",
+        "xp": 120,
+        "cardsMasteredCount": 3,
+        "phrasesAnalyzedCount": 2,
+        "messagesSentCount": 5,
+        "dailySprintDone": false,
+        "audioSpeed": 1.0,
+        "currentWeek": 1,
+        "completedMissionIds": ["w1-coffee"]
+      },
+      "chatHistory": [],
+      "customCards": []
+    }
+  }
+}
