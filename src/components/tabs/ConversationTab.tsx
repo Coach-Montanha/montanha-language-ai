@@ -546,6 +546,33 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
             portuguese: "Eu gostaria de um croissant e um café, por favor.",
           },
         ];
+      case "de":
+        return [
+          {
+            label: "Apresentar-se",
+            english: `Hallo ${activeTutor.name}, freut mich dich kennenzulernen!`,
+            phonetic: `Rá-lo ${activeTutor.name}, fróit mikh dikh kên-nen-tsu-lêr-nen!`,
+            portuguese: `Olá ${activeTutor.name}, prazer em te conhecer!`,
+          },
+          {
+            label: "Falar do dia",
+            english: "Mein Tag war gut, aber ziemlich beschäftigt.",
+            phonetic: "Máin Ták var gut, á-ber tsím-likh be-shêf-tikt.",
+            portuguese: "Meu dia foi bom, mas bastante corrido.",
+          },
+          {
+            label: "Aprender alemão",
+            english: "Ich möchte mein Deutsch jeden Tag verbessern.",
+            phonetic: "Ikh mêkh-te máin Dóitsh jê-den Ták fer-bé-sern.",
+            portuguese: "Quero melhorar meu alemão todos os dias.",
+          },
+          {
+            label: "Pedir café",
+            english: "Ich möchte bitte einen Kaffee mit Milch bestellen.",
+            phonetic: "Ikh mêkh-te bí-te ái-nen Ka-fê mit Mílkh be-chtê-len.",
+            portuguese: "Eu gostaria de pedir um café com leite, por favor.",
+          },
+        ];
       case "en":
       default:
         return [

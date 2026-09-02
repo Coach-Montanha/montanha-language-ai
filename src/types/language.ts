@@ -104,7 +104,7 @@ export interface WeeklyMission {
   script?: DialogueScriptLine[] | undefined;
 }
 
-export type SupportedLanguage = "en" | "es" | "ja" | "el-koine" | "it" | "fr";
+export type SupportedLanguage = "en" | "es" | "ja" | "el-koine" | "it" | "fr" | "de";
 
 export interface LanguageDefinition {
   id: SupportedLanguage;

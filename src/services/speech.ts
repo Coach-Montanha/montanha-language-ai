@@ -77,7 +77,7 @@ export function speakText(text: string, options: SpeakOptions = {}): void {
 
       if (langVoices.length > 0) {
         if (gender === "female") {
-          // Heurística de vozes femininas para inglês, espanhol, japonês, grego, italiano e francês
+          // Heurística de vozes femininas para inglês, espanhol, japonês, grego, italiano, francês e alemão
           matchedVoice = langVoices.find((v) => {
             const name = v.name.toLowerCase();
             return (
@@ -99,7 +99,13 @@ export function speakText(text: string, options: SpeakOptions = {}): void {
               name.includes("alice") ||
               name.includes("hortense") ||
               name.includes("julie") ||
-              name.includes("celine")
+              name.includes("celine") ||
+              name.includes("katja") ||
+              name.includes("hedda") ||
+              name.includes("marlene") ||
+              name.includes("vicki") ||
+              name.includes("gisela") ||
+              name.includes("anna")
             );
           });
         } else if (gender === "male") {
@@ -122,7 +128,13 @@ export function speakText(text: string, options: SpeakOptions = {}): void {
               name.includes("diego") ||
               name.includes("cosimo") ||
               name.includes("paul") ||
-              name.includes("henri")
+              name.includes("henri") ||
+              name.includes("stefan") ||
+              name.includes("hans") ||
+              name.includes("conrad") ||
+              name.includes("bernd") ||
+              name.includes("martin") ||
+              name.includes("florian")
             );
           });
         }

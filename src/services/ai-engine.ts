@@ -189,6 +189,7 @@ export async function tutorChat(
     "el-koine": "Biblical Koine Greek (Ancient Greek of the New Testament)",
     it: "Italian (Italiano)",
     fr: "French (Français)",
+    de: "German (Deutsch)",
   };
   const targetLangName = langNames[activeTutor.language] || "English";
 
@@ -306,6 +307,17 @@ Respond in strictly valid JSON format:
     } else {
       replyText = `C'est vraiment très intéressant ! Racontez-moi un peu plus.`;
       translationPt = `Isso é realmente muito interessante! Me conte um pouco mais.`;
+    }
+  } else if (activeTutor.language === "de") {
+    if (lower.includes("hallo") || lower.includes("guten") || lower.includes("tag") || lower.includes("morgen") || lower.includes("oi") || lower.includes("ola")) {
+      replyText = `Hallo! Herzlich willkommen. Schön, dich kennenzulernen! Wie geht es dir heute?`;
+      translationPt = `Olá! Boas-vindas. Muito bom te conhecer! Como vai você hoje?`;
+    } else if (lower.includes("wie geht") || lower.includes("alles gut")) {
+      replyText = `Mir geht es super, danke der Nachfrage! Ich freue mich sehr darauf, mit dir Deutsch zu üben.`;
+      translationPt = `Estou ótimo, obrigado por perguntar! Fico muito feliz em praticar alemão com você.`;
+    } else {
+      replyText = `Das ist wirklich sehr interessant! Erzähl mir gern noch ein bisschen mehr darüber.`;
+      translationPt = `Isso é realmente muito interessante! Fique à vontade para me contar um pouco mais sobre isso.`;
     }
   } else
 

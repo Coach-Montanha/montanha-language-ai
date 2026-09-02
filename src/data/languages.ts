@@ -61,6 +61,16 @@ export const SUPPORTED_LANGUAGES: LanguageDefinition[] = [
     welcomeMessage: "Bienvenue ! Pratiquons ensemble un français élégant et vivant.",
     defaultTutorId: "antoine",
   },
+  {
+    id: "de",
+    name: "Alemão",
+    nativeName: "Deutsch",
+    flag: "🇩🇪",
+    speechLangCode: "de-DE",
+    description: "Língua germânica de precisão, lógica gramatical rica, literatura e conversação autêntica.",
+    welcomeMessage: "Herzlich willkommen! Lass uns zusammen Deutsch üben. (Boas-vindas! Vamos praticar alemão juntos.)",
+    defaultTutorId: "max",
+  },
 ];
 
 export const DEFAULT_LANGUAGE = SUPPORTED_LANGUAGES[0]!;

@@ -675,9 +675,155 @@ export const SPANISH_ALPHABET_DATA: AlphabetItem[] = [
   },
 ];
 
+// ================= 🇩🇪 ALEMÃO (LETRAS, TREMAS & SONS ESPECIAIS) =================
+export const GERMAN_ALPHABET_DATA: AlphabetItem[] = [
+  {
+    id: "de-a-umlaut",
+    letter: "Ä ä (A-Umlaut)",
+    phoneticIpa: "/ɛː/",
+    phoneticPt: "é aberto longo",
+    exampleWord: "Äpfel",
+    exampleTranslation: "Maçãs",
+    category: "vowel",
+    description: "Vogal com trema. Soa como um 'é' aberto estendido.",
+  },
+  {
+    id: "de-o-umlaut",
+    letter: "Ö ö (O-Umlaut)",
+    phoneticIpa: "/øː/",
+    phoneticPt: "boca de 'o' falando 'e'",
+    exampleWord: "Österreich / Öffnen",
+    exampleTranslation: "Áustria / Abrir",
+    category: "vowel",
+    description: "Posicione os lábios em formato de 'o' e emita o som de 'e'.",
+  },
+  {
+    id: "de-u-umlaut",
+    letter: "Ü ü (U-Umlaut)",
+    phoneticIpa: "/yː/",
+    phoneticPt: "bico de 'u' falando 'i'",
+    exampleWord: "Über / Übung",
+    exampleTranslation: "Sobre / Exercício",
+    category: "vowel",
+    description: "Lábios em bico de 'u' enquanto fala 'i'. Idêntico ao 'u' francês.",
+  },
+  {
+    id: "de-eszett",
+    letter: "ß (Eszett / Scharfes S)",
+    phoneticIpa: "/s/",
+    phoneticPt: "ss forte",
+    exampleWord: "Straße / Gruß",
+    exampleTranslation: "Rua / Saudação",
+    category: "consonant",
+    description: "Letra única do alemão. Soa sempre como 'ss' surdo e forte, jamais como 'z'.",
+  },
+  {
+    id: "de-w",
+    letter: "W w",
+    phoneticIpa: "/v/",
+    phoneticPt: "v",
+    exampleWord: "Wasser / Welt",
+    exampleTranslation: "Água / Mundo",
+    category: "consonant",
+    description: "Em alemão, a letra 'W' soa exatamente como 'V' em português.",
+  },
+  {
+    id: "de-v",
+    letter: "V v (Vau)",
+    phoneticIpa: "/f/",
+    phoneticPt: "f",
+    exampleWord: "Vater / Vogel",
+    exampleTranslation: "Pai / Pássaro",
+    category: "consonant",
+    description: "Em palavras nativas alemãs, 'V' quase sempre soa como 'F'.",
+  },
+  {
+    id: "de-z",
+    letter: "Z z (Zett)",
+    phoneticIpa: "/ts/",
+    phoneticPt: "ts",
+    exampleWord: "Zeit / Zug",
+    exampleTranslation: "Tempo / Trem",
+    category: "consonant",
+    description: "Soa sempre como 'ts' explosivo, como em 'pizza'.",
+  },
+  {
+    id: "de-j",
+    letter: "J j (Jot)",
+    phoneticIpa: "/j/",
+    phoneticPt: "i semivogal",
+    exampleWord: "Ja / Jahr",
+    exampleTranslation: "Sim / Ano",
+    category: "consonant",
+    description: "O 'J' em alemão funciona como um 'i' consonantal ('ia', 'iár').",
+  },
+  {
+    id: "de-ch",
+    letter: "CH ch",
+    phoneticIpa: "/ç/ ou /x/",
+    phoneticPt: "ikh (suave) / ach (raspado)",
+    exampleWord: "Ich / Buch",
+    exampleTranslation: "Eu / Livro",
+    category: "sound",
+    description: "Com 'i, e' soa suave no céu da boca ('ich'). Com 'a, o, u' soa raspado na garganta ('ach').",
+  },
+  {
+    id: "de-sch",
+    letter: "SCH sch",
+    phoneticIpa: "/ʃ/",
+    phoneticPt: "ch forte",
+    exampleWord: "Schule / Schön",
+    exampleTranslation: "Escola / Bonito",
+    category: "sound",
+    description: "Som encorpado de 'ch' como em 'chuva'.",
+  },
+  {
+    id: "de-sp-st",
+    letter: "SP / ST no início",
+    phoneticIpa: "/ʃp/ /ʃt/",
+    phoneticPt: "chp / cht",
+    exampleWord: "Sprache / Stadt",
+    exampleTranslation: "Língua / Cidade",
+    category: "sound",
+    description: "No início das palavras, 'sp' e 'st' ganham som chiado ('chprache', 'chtadt').",
+  },
+  {
+    id: "de-ei",
+    letter: "EI (ditongo)",
+    phoneticIpa: "/aɪ/",
+    phoneticPt: "ái",
+    exampleWord: "Eins / Mein",
+    exampleTranslation: "Um / Meu",
+    category: "sound",
+    description: "O ditongo 'EI' em alemão soa invariavelmente como 'ái'.",
+  },
+  {
+    id: "de-ie",
+    letter: "IE (ditongo)",
+    phoneticIpa: "/iː/",
+    phoneticPt: "í longo",
+    exampleWord: "Sie / Wien",
+    exampleTranslation: "Você (formal) / Viena",
+    category: "sound",
+    description: "O ditongo 'IE' soa como um 'í' estendido e claro.",
+  },
+  {
+    id: "de-eu",
+    letter: "EU / ÄU (ditongo)",
+    phoneticIpa: "/ɔʏ/",
+    phoneticPt: "ói",
+    exampleWord: "Euro / Häuser",
+    exampleTranslation: "Euro / Casas",
+    category: "sound",
+    description: "Tanto 'EU' quanto 'ÄU' pronunciam-se como 'ói'.",
+  },
+];
+
 // Helper para obter o alfabeto dinâmico do idioma selecionado
 export function getAlphabetForLanguage(language: string = "en"): AlphabetItem[] {
   switch (language) {
+    case "de":
+      return GERMAN_ALPHABET_DATA;
     case "el-koine":
       return GREEK_ALPHABET_DATA;
     case "ja":
@@ -691,4 +837,5 @@ export function getAlphabetForLanguage(language: string = "en"): AlphabetItem[] 
       return [...ALPHABET_DATA, ...SPECIAL_SOUNDS];
   }
 }
+
 

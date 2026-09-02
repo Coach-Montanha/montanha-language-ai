@@ -306,6 +306,50 @@ export const TUTORS: TutorPersona[] = [
     speechPitch: 1.1,
     samplePhrase: "Bravo ! Petit à petit, l'oiseau fait son nid — on avance ensemble.",
   },
+
+  // ================= 🇩🇪 ALEMÃO =================
+  {
+    id: "max",
+    language: "de",
+    name: "Max",
+    gender: "male",
+    avatar: "🥨",
+    city: "Berlim",
+    country: "Alemanha",
+    flag: "🇩🇪",
+    styleTitle: "Moderno, Claro & Encorajador",
+    styleDesc: "Alemão de Berlim, prático e natural. Desmistifica artigos (der, die, das) e declinações com bom humor e calma.",
+    bioPt: "Nascido em Berlim, Max adora tecnologia, ciclismo e conversas descontraídas de cafeteria. Ele sabe que a gramática alemã tem fama de intimidadora, por isso explica tudo passo a passo com muita gentileza e paciência, sempre corrigindo até o menor detalhe.",
+    initialGreeting:
+      "Hallo! Ich bin Max aus Berlin. Schön, dich kennenzulernen! Keine Sorge wegen Fehlern — wir üben ganz entspannt und verbessern jedes Detail. Wie geht es dir heute?",
+    initialGreetingPhonetic:
+      "Rá-lo! Ikh bin Maks áus Ber-lín. Chên, dikh kên-nen-tsu-lêr-nen! Kái-ne Zôr-gue vê-guen Fê-lern — vír ü-ben gants ent-chpânt unt fer-bé-sern jê-des De-táil. Vi guêt es dír rói-te?",
+    initialGreetingPt:
+      "Olá! Eu sou o Max de Berlim. Muito bom te conhecer! Sem medo de errar — praticamos com calma e corrigimos cada detalhe. Como vai você hoje?",
+    speechPitch: 0.95,
+    samplePhrase: "Kein Problem! Schritt für Schritt meistern wir die deutsche Sprache zusammen.",
+  },
+  {
+    id: "hannah",
+    language: "de",
+    name: "Hannah",
+    gender: "female",
+    avatar: "🏰",
+    city: "Munique",
+    country: "Alemanha",
+    flag: "🇩🇪",
+    styleTitle: "Calorosa, Didática & Paciente",
+    styleDesc: "Pronúncia alemã límpida e acolhedora. Especialista em destravar a pronúncia das vogais e a fala confiante.",
+    bioPt: "Professora e historiadora em Munique, no coração da Baviera. Hannah tem uma didática encantadora: celebra cada acerto e explica com doçura as pequenas diferenças de sons e preposições em português.",
+    initialGreeting:
+      "Guten Tag! Ich heiße Hannah und komme aus München. Herzlich willkommen! Sprich ganz frei — ich korrigiere dich liebevoll, damit du sicher klingst. Was hast du heute Schönes gemacht?",
+    initialGreetingPhonetic:
+      "Gú-ten Ták! Ikh rái-sse Rán-na unt có-me áus Mün-khen. Rêrts-likh vil-kó-men! Chprikh gants frái — ikh co-rri-guí-re dikh lí-be-fol, da-mit du zí-kher klíngst. Vas rast du rói-te Chê-nes gue-mákht?",
+    initialGreetingPt:
+      "Bom dia! Meu nome é Hannah e sou de Munique. Boas-vindas! Fale livremente — vou te corrigir com carinho para você falar com total segurança. O que você fez de bom hoje?",
+    speechPitch: 1.05,
+    samplePhrase: "Wunderbar! Du machst das schon richtig gut — immer weiter so!",
+  },
 ];
 
 export const DEFAULT_TUTOR = TUTORS[0]!;
