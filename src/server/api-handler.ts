@@ -27,7 +27,7 @@ export async function handleApiRequest(request: Request): Promise<Response> {
     if (path === "/api/auth/register" && method === "POST") {
       const body = await request.json().catch(() => ({}));
       const { username, pin, displayName } = body;
-      const result = registerUser(username, pin, displayName);
+      const result = await registerUser(username, pin, displayName);
 
       if (!result.success) {
         return new Response(JSON.stringify({ success: false, error: result.error }), {
@@ -46,7 +46,7 @@ export async function handleApiRequest(request: Request): Promise<Response> {
     if (path === "/api/auth/login" && method === "POST") {
       const body = await request.json().catch(() => ({}));
       const { username, pin } = body;
-      const result = loginUser(username, pin);
+      const result = await loginUser(username, pin);
 
       if (!result.success) {
         return new Response(JSON.stringify({ success: false, error: result.error }), {
@@ -65,7 +65,7 @@ export async function handleApiRequest(request: Request): Promise<Response> {
     if (path === "/api/auth/reset-pin" && method === "POST") {
       const body = await request.json().catch(() => ({}));
       const { username, newPin } = body;
-      const result = resetUserPin(username, newPin);
+      const result = await resetUserPin(username, newPin);
 
       if (!result.success) {
         return new Response(JSON.stringify({ success: false, error: result.error }), {
@@ -88,7 +88,7 @@ export async function handleApiRequest(request: Request): Promise<Response> {
       const body = await request.json().catch(() => ({}));
       const { username, progress, chatHistory, customCards } = body;
 
-      const result = saveUserDataOnServer(username, { progress, chatHistory, customCards });
+      const result = await saveUserDataOnServer(username, { progress, chatHistory, customCards });
       if (!result.success) {
         return new Response(JSON.stringify({ success: false, error: result.error }), {
           status: 400,
@@ -105,7 +105,7 @@ export async function handleApiRequest(request: Request): Promise<Response> {
     // 5. CARREGAR DADOS DO USUÁRIO DO ARQUIVO DO SERVIDOR
     if (path === "/api/user/data" && method === "GET") {
       const username = url.searchParams.get("username") || "";
-      const result = getUserDataFromServer(username);
+      const result = await getUserDataFromServer(username);
 
       if (!result.success) {
         return new Response(JSON.stringify({ success: false, error: result.error }), {
