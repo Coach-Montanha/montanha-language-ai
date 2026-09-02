@@ -1,13 +1,14 @@
 // Serviço de Áudio (TTS) e Reconhecimento de Fala (STT) usando Web Speech API nativa
 
 export interface SpeakOptions {
-  rate?: number;
-  pitch?: number;
-  lang?: string;
-  voiceName?: string;
-  onStart?: () => void;
-  onEnd?: () => void;
-  onError?: (err: unknown) => void;
+  rate?: number | undefined;
+  pitch?: number | undefined;
+  lang?: string | undefined;
+  voiceName?: string | undefined;
+  gender?: ("male" | "female") | undefined;
+  onStart?: (() => void) | undefined;
+  onEnd?: (() => void) | undefined;
+  onError?: ((err: unknown) => void) | undefined;
 }
 
 // Cache de vozes carregadas pelo navegador
@@ -65,23 +66,68 @@ export function speakText(text: string, options: SpeakOptions = {}): void {
     setTimeout(() => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = options.lang || "en-US";
-      utterance.rate = options.rate ?? 1.0;
+      // Taxa de velocidade segura (padrão 0.85x para clareza ideal do aluno)
+      utterance.rate = Math.max(0.5, Math.min(1.5, options.rate ?? 0.85));
       utterance.pitch = options.pitch ?? 1.0;
 
-      // Buscar voz de alta qualidade em inglês
+      // Buscar voz de alta qualidade em inglês correspondente ao gênero do tutor
       const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
-      
-      const enVoice =
-        voices.find(
-          (v) =>
-            (v.lang.startsWith("en-US") || v.lang.startsWith("en-GB")) &&
-            (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Premium"))
-        ) ||
-        voices.find((v) => v.lang.startsWith("en-US")) ||
-        voices.find((v) => v.lang.startsWith("en"));
+      const englishVoices = voices.filter((v) => v.lang.startsWith("en-") || v.lang === "en");
 
-      if (enVoice) {
-        utterance.voice = enVoice;
+      const gender = options.gender;
+      let matchedVoice: SpeechSynthesisVoice | undefined;
+
+      if (gender === "female") {
+        // Vozes femininas conhecidas em Windows, Mac, iOS, Android e Chrome
+        matchedVoice = englishVoices.find((v) => {
+          const name = v.name.toLowerCase();
+          return (
+            name.includes("female") ||
+            name.includes("zira") ||
+            name.includes("samantha") ||
+            name.includes("victoria") ||
+            name.includes("karen") ||
+            name.includes("moira") ||
+            name.includes("tessa") ||
+            name.includes("fiona") ||
+            name.includes("hazel") ||
+            name.includes("susan") ||
+            (name.includes("google") && !name.includes("male") && name.includes("us english"))
+          );
+        });
+      } else if (gender === "male") {
+        // Vozes masculinas conhecidas em Windows, Mac, iOS, Android e Chrome
+        matchedVoice = englishVoices.find((v) => {
+          const name = v.name.toLowerCase();
+          return (
+            name.includes("male") ||
+            name.includes("david") ||
+            name.includes("alex") ||
+            name.includes("george") ||
+            name.includes("fred") ||
+            name.includes("daniel") ||
+            name.includes("oliver") ||
+            name.includes("mark") ||
+            name.includes("richard") ||
+            name.includes("guy")
+          );
+        });
+      }
+
+      // Se não encontrou por gênero específico, pega a melhor voz em inglês disponível
+      if (!matchedVoice) {
+        matchedVoice =
+          englishVoices.find(
+            (v) =>
+              (v.lang.startsWith("en-US") || v.lang.startsWith("en-GB")) &&
+              (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Premium"))
+          ) ||
+          englishVoices.find((v) => v.lang.startsWith("en-US")) ||
+          englishVoices[0];
+      }
+
+      if (matchedVoice) {
+        utterance.voice = matchedVoice;
       }
 
       if (options.onStart) utterance.onstart = options.onStart;

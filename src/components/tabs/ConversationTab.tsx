@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChatMessage, UserProgress } from "@/types/language";
+import { ChatMessage, UserProgress, TutorPersona } from "@/types/language";
 import { tutorChat } from "@/services/ai-engine";
 import {
   speakText,
@@ -9,6 +9,8 @@ import {
   isSpeechSynthesisSupported,
 } from "@/services/speech";
 import { saveChatHistory, loadChatHistory, addXP } from "@/services/storage";
+import { getTutorById } from "@/data/tutors";
+import { TutorSelectorModal } from "@/components/TutorSelectorModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,6 +25,9 @@ import {
   User,
   Trash2,
   Radio,
+  ChevronDown,
+  Gauge,
+  HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,14 +40,18 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   progress,
   onUpdateProgress,
 }) => {
+  const activeTutor = getTutorById(progress.selectedTutorId);
+  const [isTutorModalOpen, setIsTutorModalOpen] = useState(false);
+
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     const saved = loadChatHistory();
     if (saved.length > 0) return saved;
+    const initialTutor = getTutorById(progress.selectedTutorId);
     return [
       {
         id: "intro",
         sender: "tutor",
-        text: "Hey there! I'm Leo, born and raised right in Chicago, Illinois! 🏙️ Think of me as your American buddy: patient, direct, and playful, but with one golden rule — I'll catch and correct every single mistake, even tiny ones! How are you doing today?",
+        text: initialTutor.initialGreeting,
         timestamp: Date.now(),
       },
     ];
@@ -81,21 +90,88 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
       setSpeakingMessageId(null);
       toast.info("Leitura automática em voz alta desativada.");
     } else {
-      toast.success("Leitura automática em voz alta ativada! O Alex falará as respostas.");
+      toast.success(`Leitura automática em voz alta ativada! ${activeTutor.name} falará as respostas.`);
     }
   };
 
-  // Reproduz áudio de uma mensagem específica
-  const handleSpeakMessage = (msgId: string, text: string) => {
+  // Alterna velocidade de comunicação com 1 clique rápido (0.7x -> 0.85x -> 1.0x -> 1.2x)
+  const speeds = [0.7, 0.85, 1.0, 1.2];
+  const handleCycleSpeed = () => {
+    const currentSpeed = progress.audioSpeed || 0.85;
+    const currentIndex = speeds.findIndex((s) => Math.abs(s - currentSpeed) < 0.05);
+    const nextIndex = currentIndex === -1 || currentIndex === speeds.length - 1 ? 0 : currentIndex + 1;
+    const nextSpeed = speeds[nextIndex]!;
+
+    const updated: UserProgress = {
+      ...progress,
+      audioSpeed: nextSpeed,
+    };
+    onUpdateProgress(updated);
+
+    const labels: Record<number, string> = {
+      0.7: "🐢 0.7x (Lenta - fala bem calma e pausada)",
+      0.85: "🎧 0.85x (Confortável - ritmo ideal para alunos)",
+      1.0: "🗣️ 1.0x (Normal - velocidade nativa do dia a dia)",
+      1.2: "🚀 1.2x (Rápida - modo desafio)",
+    };
+
+    toast.success(`Velocidade de ${activeTutor.name}: ${labels[nextSpeed] || `${nextSpeed}x`}`);
+
+    // Se estiver falando agora, reinicia fala na nova velocidade
+    if (speakingMessageId) {
+      const msg = messages.find((m) => m.id === speakingMessageId);
+      if (msg) {
+        stopSpeaking();
+        handleSpeakMessage(msg.id, msg.text, nextSpeed);
+      }
+    }
+  };
+
+  // Seleção de novo tutor
+  const handleSelectTutor = (tutor: TutorPersona) => {
+    const updated: UserProgress = {
+      ...progress,
+      selectedTutorId: tutor.id,
+    };
+    onUpdateProgress(updated);
+
+    // Mensagem de apresentação do novo tutor no chat
+    const tutorMsg: ChatMessage = {
+      id: `tutor-switch-${Date.now()}`,
+      sender: "tutor",
+      text: tutor.initialGreeting,
+      timestamp: Date.now(),
+    };
+    const newHistory = [...messages, tutorMsg];
+    setMessages(newHistory);
+    saveChatHistory(newHistory);
+
+    if (autoSpeak && isSpeechSynthesisSupported()) {
+      handleSpeakMessage(tutorMsg.id, tutor.initialGreeting, progress.audioSpeed || 0.85, tutor);
+    }
+  };
+
+  // Reproduz áudio de uma mensagem específica respeitando o tutor e velocidade
+  const handleSpeakMessage = (
+    msgId: string,
+    text: string,
+    overrideSpeed?: number,
+    overrideTutor?: TutorPersona
+  ) => {
     if (speakingMessageId === msgId) {
       stopSpeaking();
       setSpeakingMessageId(null);
       return;
     }
 
+    const tutorToUse = overrideTutor || activeTutor;
+    const speedToUse = overrideSpeed ?? progress.audioSpeed ?? 0.85;
+
     setSpeakingMessageId(msgId);
     speakText(text, {
-      rate: progress.audioSpeed,
+      rate: speedToUse,
+      gender: tutorToUse.gender,
+      pitch: tutorToUse.speechPitch,
       lang: "en-US",
       onStart: () => setSpeakingMessageId(msgId),
       onEnd: () => setSpeakingMessageId(null),
@@ -125,7 +201,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await tutorChat(query, messages, progress.geminiApiKey);
+      const response = await tutorChat(query, messages, progress.geminiApiKey, activeTutor);
 
       const tutorMsgId = `tutor-${Date.now()}`;
       const tutorMsg: ChatMessage = {
@@ -163,32 +239,40 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   const handleStartRecording = () => {
     if (!isSpeechRecognitionSupported()) {
       toast.error(
-        "Seu navegador não suporta a API de reconhecimento de voz. Tente usar o Google Chrome ou Edge."
+        "Seu navegador não suporta reconhecimento de voz. Tente usar o Google Chrome ou Edge."
       );
       return;
     }
 
-    // Interrompe qualquer áudio que estiver tocando
     stopSpeaking();
     setSpeakingMessageId(null);
 
     try {
+      if (recognizerRef.current) {
+        try {
+          recognizerRef.current.abort();
+        } catch {
+          // ignora
+        }
+      }
+
       const recognizer = createSpeechRecognizer({
         onStart: () => {
           setIsRecording(true);
         },
         onInterim: (interimText) => {
-          // Transcrição em tempo real: exibe as palavras conforme o usuário fala
           setInput(interimText);
         },
         onFinal: (finalText) => {
           setInput(finalText);
           setIsRecording(false);
-          toast.success("Voz capturada e transcrita!");
+          if (finalText.trim()) {
+            handleSend(finalText.trim());
+          }
         },
-        onError: (errMsg) => {
+        onError: (err) => {
           setIsRecording(false);
-          toast.error(errMsg);
+          toast.error(err);
         },
         onEnd: () => {
           setIsRecording(false);
@@ -202,52 +286,49 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     } catch (e) {
       console.error(e);
       setIsRecording(false);
-      toast.error("Erro ao inicializar o microfone.");
+      toast.error("Não foi possível iniciar o microfone.");
     }
   };
 
   const handleStopRecording = () => {
     if (recognizerRef.current) {
-      recognizerRef.current.stop();
+      try {
+        recognizerRef.current.stop();
+      } catch {
+        // ignora
+      }
     }
     setIsRecording(false);
   };
 
-  const handleMicToggle = () => {
-    if (isRecording) {
-      handleStopRecording();
-    } else {
-      handleStartRecording();
-    }
-  };
-
   const handleClearChat = () => {
-    if (confirm("Deseja limpar as mensagens da conversa?")) {
+    if (confirm("Deseja reiniciar a conversa?")) {
       stopSpeaking();
       setSpeakingMessageId(null);
-      const reset: ChatMessage[] = [
+      const resetMessages: ChatMessage[] = [
         {
-          id: "intro-reset",
+          id: "intro",
           sender: "tutor",
-          text: "Alright, fresh start! What's on your mind today, my friend?",
+          text: activeTutor.initialGreeting,
           timestamp: Date.now(),
         },
       ];
-      setMessages(reset);
-      saveChatHistory(reset);
-      toast.info("Histórico limpo.");
+      setMessages(resetMessages);
+      saveChatHistory(resetMessages);
+      toast.info("Histórico de conversa reiniciado.");
     }
   };
 
-  const quickPrompts = [
+  // Sugestões práticas para o usuário praticar
+  const suggestions = [
     {
-      label: "Cumprimentar o Leo",
-      english: "Hey Leo! How is the weather in Chicago today?",
-      phonetic: "Rêi Lío! Ráo íz da ué-dér in Shi-cá-gou tu-dêi?",
-      portuguese: "Oi Leo! Como está o tempo em Chicago hoje?",
+      label: "Apresentar-se",
+      english: `Hello ${activeTutor.name}, nice to meet you!`,
+      phonetic: `Ré-lóu ${activeTutor.name}, náis tu mít iú!`,
+      portuguese: `Olá ${activeTutor.name}, prazer em conhecer você!`,
     },
     {
-      label: "Planos de inglês",
+      label: "Planos de línguas",
       english: "I want to improve my speaking and pronunciation skills.",
       phonetic: "Ái uónt tu im-prúv mái spí-kin énd pro-nân-si-êi-shên skíls.",
       portuguese: "Quero melhorar minha fala e habilidades de pronúncia.",
@@ -274,32 +355,68 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
   const [expandedSuggestionIndex, setExpandedSuggestionIndex] = useState<number | null>(null);
 
+  const speedDisplay = (progress.audioSpeed || 0.85) <= 0.75
+    ? "🐢 0.7x"
+    : (progress.audioSpeed || 0.85) === 0.85
+    ? "🎧 0.85x"
+    : (progress.audioSpeed || 0.85) === 1.0
+    ? "🗣️ 1.0x"
+    : "🚀 1.2x";
+
   return (
     <div className="flex flex-col h-[calc(100vh-8.5rem)] max-w-lg mx-auto w-full">
-      {/* Topo do Chat */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border/80 bg-card/40 rounded-t-xl">
-        <div className="flex items-center gap-2">
+      {/* Topo do Chat com Seletor de Tutor e Controle de Velocidade */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/80 bg-card/40 rounded-t-xl gap-1">
+        {/* Tutor Ativo (Clicável para abrir catálogo) */}
+        <button
+          type="button"
+          onClick={() => setIsTutorModalOpen(true)}
+          className="flex items-center gap-2 text-left hover:opacity-85 transition-opacity group cursor-pointer"
+          title="Clique para escolher outro tutor ou tutora"
+        >
           <div className="relative">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-              🏙️
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-base shadow-xs group-hover:scale-105 transition-transform">
+              {activeTutor.avatar}
             </div>
             <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-background" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-foreground">Leo</span>
+              <span className="text-xs font-bold text-foreground flex items-center gap-0.5">
+                {activeTutor.name}
+                <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors" />
+              </span>
               <span className="text-[10px] bg-primary/15 text-primary font-bold px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
-                Chicago, EUA 🇺🇸
+                {activeTutor.city} {activeTutor.flag}
               </span>
             </div>
-            <p className="text-[10px] text-muted-foreground font-medium">
-              Paciente, direto & brincalhão &bull; <span className="text-amber-600 dark:text-amber-400 font-semibold">Corrige até erro pequeno!</span>
+            <p className="text-[10px] text-muted-foreground font-medium truncate max-w-[130px] xs:max-w-[180px]">
+              {activeTutor.gender === "female" ? "Tutora" : "Tutor"} &bull; <span className="text-amber-600 dark:text-amber-400 font-semibold">Gentil e corrige tudo!</span>
             </p>
           </div>
-        </div>
+        </button>
 
-        <div className="flex items-center gap-1">
-          {/* Botão para Ligar / Desligar Leitura Automática em Voz Alta */}
+        {/* Controles de Áudio, Velocidade e Limpeza */}
+        <div className="flex items-center gap-1 shrink-0">
+          {/* CONTROLE DIRETO DE VELOCIDADE (0.7x, 0.85x, 1.0x, 1.2x) */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCycleSpeed}
+            className={`h-7 px-2 text-[10px] gap-1 rounded-lg border font-mono transition-all ${
+              (progress.audioSpeed || 0.85) <= 0.75
+                ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold"
+                : (progress.audioSpeed || 0.85) === 0.85
+                ? "border-primary/40 bg-primary/10 text-primary font-bold"
+                : "border-border text-foreground"
+            }`}
+            title="Clique para alternar a velocidade de fala (0.7x Lento, 0.85x Confortável, 1.0x Normal, 1.2x Rápido)"
+          >
+            <Gauge className="h-3 w-3 text-primary" />
+            <span>{speedDisplay}</span>
+          </Button>
+
+          {/* Botão de Auto-Voz */}
           <Button
             variant="outline"
             size="sm"
@@ -314,16 +431,17 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
             {autoSpeak ? (
               <>
                 <Volume2 className="h-3.5 w-3.5" />
-                <span>Voz Auto</span>
+                <span className="hidden xs:inline">Voz</span>
               </>
             ) : (
               <>
                 <VolumeX className="h-3.5 w-3.5" />
-                <span>Mudo</span>
+                <span className="hidden xs:inline">Mudo</span>
               </>
             )}
           </Button>
 
+          {/* Limpar conversa */}
           <Button
             variant="ghost"
             size="icon"
@@ -352,8 +470,8 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         </div>
       )}
 
-      {/* Lista de Mensagens */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3.5 text-xs">
+      {/* Área de Mensagens */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3.5">
         {messages.map((msg) => {
           const isUser = msg.sender === "user";
           const isSpeakingThis = speakingMessageId === msg.id;
@@ -365,8 +483,8 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
             >
               <div className="flex items-start gap-1.5 max-w-[88%]">
                 {!isUser && (
-                  <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-                    <Bot className="h-3 w-3" />
+                  <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 text-xs">
+                    {activeTutor.avatar}
                   </div>
                 )}
                 <div
@@ -388,10 +506,10 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                           ? "text-emerald-600 dark:text-emerald-400 animate-pulse"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
-                      title={isSpeakingThis ? "Pausar fala" : "Ouvir em voz alta"}
+                      title={isSpeakingThis ? "Pausar fala" : `Ouvir pronúncia (${speedDisplay})`}
                     >
                       <Volume2 className="h-3.5 w-3.5" />
-                      <span>{isSpeakingThis ? "Falando..." : "Ouvir pronúncia"}</span>
+                      <span>{isSpeakingThis ? "Falando..." : `Ouvir pronúncia (${speedDisplay})`}</span>
                     </button>
                   )}
                 </div>
@@ -402,12 +520,12 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                 )}
               </div>
 
-              {/* Balão de Correção em 1 Linha */}
+              {/* Balão de Correção em 1 Linha com Explicação em Português */}
               {msg.correction && msg.correction.hasError && (
                 <div className="mt-1.5 max-w-[88%] rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-left text-[11px] space-y-1 animate-in fade-in">
                   <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold">
                     <AlertCircle className="h-3 w-3 shrink-0" />
-                    <span>Dica do Leo (Chicago):</span>
+                    <span>Dica de {activeTutor.name} ({activeTutor.city}):</span>
                   </div>
                   <div className="text-muted-foreground">
                     Você disse: <span className="line-through text-destructive font-medium">{msg.correction.original}</span>
@@ -427,7 +545,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         {isLoading && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground pl-2">
             <Bot className="h-3.5 w-3.5 animate-spin text-primary" />
-            <span>Leo está respondendo com sotaque de Chicago...</span>
+            <span>{activeTutor.name} está respondendo com carinho...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -439,119 +557,101 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
           <span className="text-[10px] text-muted-foreground font-bold flex items-center gap-1">
             <Sparkles className="h-3 w-3 text-amber-500" /> Sugestões de Fala (com Fonética & Tradução):
           </span>
-          <button
-            type="button"
-            onClick={() => setExpandedSuggestionIndex(expandedSuggestionIndex !== null ? null : 0)}
-            className="text-[10px] text-primary hover:underline font-semibold"
-          >
-            {expandedSuggestionIndex !== null ? "Modo compacto" : "Ver guia com fonética"}
-          </button>
         </div>
 
-        {expandedSuggestionIndex !== null ? (
-          <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto pr-0.5">
-            {quickPrompts.map((p, idx) => (
-              <div
-                key={idx}
-                onClick={() => handleSend(p.english)}
-                className="group flex flex-col p-2 rounded-xl border border-border/70 bg-card hover:border-primary/60 hover:bg-primary/5 transition-all text-left cursor-pointer shadow-2xs"
-              >
-                <div className="flex items-start justify-between gap-1.5">
-                  <span className="text-xs font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
-                    &ldquo;{p.english}&rdquo;
-                  </span>
+        <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+          {suggestions.map((sug, idx) => {
+            const isExpanded = expandedSuggestionIndex === idx;
+
+            return (
+              <div key={idx} className="flex flex-col gap-1">
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      speakText(p.english, { rate: progress.audioSpeed });
-                    }}
-                    className="h-6 w-6 rounded-md hover:bg-muted text-muted-foreground hover:text-primary flex items-center justify-center shrink-0"
-                    title="Ouvir como falar"
+                    onClick={() => handleSend(sug.english)}
+                    className="text-[10px] bg-muted hover:bg-primary hover:text-primary-foreground text-foreground px-2 py-1 rounded-lg border border-border/60 transition-colors text-left"
+                    title={`Enviar frase: "${sug.english}"`}
                   >
-                    <Volume2 className="h-3.5 w-3.5" />
+                    💬 {sug.label}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSuggestionIndex(isExpanded ? null : idx)}
+                    className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors ${
+                      isExpanded
+                        ? "bg-primary/20 text-primary border-primary/40 font-bold"
+                        : "bg-muted/60 text-muted-foreground border-border/40 hover:text-foreground"
+                    }`}
+                    title="Ver pronúncia fonética escrita e tradução"
+                  >
+                    {isExpanded ? "Ocultar" : "Fonética"}
                   </button>
                 </div>
-                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono italic leading-tight mt-0.5">
-                  [ {p.phonetic} ]
-                </span>
-                <span className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
-                  {p.portuguese}
-                </span>
+
+                {isExpanded && (
+                  <div className="w-full text-left bg-card border border-primary/20 rounded-lg p-2 text-[10px] space-y-0.5 animate-in fade-in">
+                    <p className="font-semibold text-foreground">{sug.english}</p>
+                    <p className="text-primary font-mono text-[9px] bg-primary/5 px-1 py-0.2 rounded inline-block">
+                      🗣️ [{sug.phonetic}]
+                    </p>
+                    <p className="text-muted-foreground text-[9px]">🇧🇷 {sug.portuguese}</p>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-            {quickPrompts.map((p, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => handleSend(p.english)}
-                className="shrink-0 px-2.5 py-1 rounded-xl bg-muted/80 hover:bg-muted text-[10px] text-foreground font-medium border border-border/60 transition-colors flex items-center gap-1"
-                title={`[ ${p.phonetic} ] - ${p.portuguese}`}
-              >
-                <span>{p.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
 
-      {/* Barra de Entrada com Botão de Microfone & Envio */}
-      <div className="p-2 border-t border-border bg-card/60">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSend();
-          }}
-          className="flex items-center gap-1.5"
+      {/* Barra de Entrada (Texto + Microfone) */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSend();
+        }}
+        className="p-2 border-t border-border bg-card/60 flex items-center gap-1.5"
+      >
+        <Button
+          type="button"
+          size="icon"
+          variant={isRecording ? "destructive" : "outline"}
+          onClick={isRecording ? handleStopRecording : handleStartRecording}
+          className={`h-9 w-9 shrink-0 rounded-xl transition-all ${
+            isRecording ? "animate-pulse ring-2 ring-red-400" : ""
+          }`}
+          title={isRecording ? "Parar gravação" : "Falar no microfone (Reconhecimento de fala)"}
         >
-          {/* BOTÃO DE MICROFONE NATIVO (STT) */}
-          <Button
-            type="button"
-            size="icon"
-            variant={isRecording ? "destructive" : "outline"}
-            onClick={handleMicToggle}
-            className={`h-9 w-9 shrink-0 rounded-xl transition-all ${
-              isRecording
-                ? "bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-md ring-2 ring-red-400/40"
-                : "hover:border-primary/60"
-            }`}
-            title={isRecording ? "Parar gravação de voz" : "Gravar e transcrever sua voz em inglês"}
-          >
-            {isRecording ? (
-              <MicOff className="h-4 w-4" />
-            ) : (
-              <Mic className="h-4 w-4 text-primary" />
-            )}
-          </Button>
+          {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4 text-primary" />}
+        </Button>
 
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={
-              isRecording
-                ? "Transcrevendo sua fala..."
-                : "Digite ou clique no mic para falar..."
-            }
-            className={`text-xs h-9 rounded-xl flex-1 bg-background transition-all ${
-              isRecording ? "border-red-400 ring-1 ring-red-400" : ""
-            }`}
-            disabled={isLoading}
-          />
+        <Input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={isRecording ? "Ouvindo sua fala..." : `Converse em inglês com ${activeTutor.name}...`}
+          disabled={isLoading}
+          className="flex-1 h-9 text-xs rounded-xl bg-background"
+        />
 
-          <Button
-            type="submit"
-            size="icon"
-            disabled={!input.trim() || isLoading}
-            className="h-9 w-9 shrink-0 rounded-xl shadow-xs"
-            title="Enviar mensagem"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
-      </div>
+        <Button
+          type="submit"
+          size="icon"
+          disabled={!input.trim() || isLoading}
+          className="h-9 w-9 shrink-0 rounded-xl"
+          title="Enviar mensagem"
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </form>
+
+      {/* Modal de Escolha de Tutores (Homens e Mulheres) */}
+      <TutorSelectorModal
+        open={isTutorModalOpen}
+        onOpenChange={setIsTutorModalOpen}
+        selectedTutorId={activeTutor.id}
+        audioSpeed={progress.audioSpeed || 0.85}
+        onSelectTutor={handleSelectTutor}
+      />
     </div>
   );
 };

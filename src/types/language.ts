@@ -102,6 +102,22 @@ export interface WeeklyMission {
   script?: DialogueScriptLine[] | undefined;
 }
 
+export interface TutorPersona {
+  id: string;
+  name: string;
+  gender: "male" | "female";
+  avatar: string;
+  city: string;
+  country: string;
+  flag: string;
+  styleTitle: string;
+  styleDesc: string;
+  bioPt: string;
+  initialGreeting: string;
+  speechPitch?: number;
+  samplePhrase: string;
+}
+
 export interface UserProgress {
   streakDays: number;
   lastActiveDate: string;
@@ -111,8 +127,9 @@ export interface UserProgress {
   messagesSentCount: number;
   dailySprintDone: boolean;
   geminiApiKey?: string | undefined;
-  audioSpeed: number; // 0.8, 1.0, 1.2
+  audioSpeed: number; // 0.7, 0.85, 1.0, 1.2
   currentWeek?: (1 | 2 | 3) | undefined;
   completedMissionIds?: string[] | undefined;
   activeMissionId?: string | undefined;
+  selectedTutorId?: string | undefined;
 }

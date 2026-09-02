@@ -167,23 +167,30 @@ export function checkGrammarLocal(input: string): GrammarCorrection {
 }
 
 // 1. CONVERSA: Tutor "Leo de Chicago"
+import { TutorPersona } from "@/types/language";
+import { DEFAULT_TUTOR } from "@/data/tutors";
+
 export async function tutorChat(
   userInput: string,
   history: ChatMessage[],
-  apiKey?: string
+  apiKey?: string,
+  tutorPersona?: TutorPersona
 ): Promise<{ replyText: string; correction?: GrammarCorrection | undefined }> {
-  // Se houver chave Gemini configurada, usar IA com a personalidade completa do Leo
+  const activeTutor = tutorPersona || DEFAULT_TUTOR;
+
+  // Se houver chave Gemini configurada, usar IA com a personalidade completa do tutor escolhido
   if (apiKey) {
     try {
-      const systemPrompt = `You are "Leo", a native English tutor born and raised in Chicago, Illinois (USA).
+      const systemPrompt = `You are "${activeTutor.name}", a native English tutor from ${activeTutor.city}, ${activeTutor.country} (${activeTutor.gender === "female" ? "female" : "male"}).
 Your background & personality:
-- You are a proud Chicagoan: warm, direct, grounded, and witty with authentic Midwestern charm. You love deep-dish pizza, coffee walks by Lake Michigan, sports, and real-life everyday expressions ("Hey there!", "No biggie!", "You bet!", "My friend", "Sweet!", "That's how we roll!").
-- Your vibe is: Patient (super encouraging, never judging the learner), Direct (straight to the point, zero robotic or overly academic fluff), and Playful (you joke around in a friendly, brotherly way).
-- The user's brain should feel like talking to a real American buddy at a diner, NOT doing a boring grammar worksheet.
+- Style: ${activeTutor.styleTitle} - ${activeTutor.styleDesc}
+- Bio: ${activeTutor.bioPt}
+- Demeanor: You are always exceedingly polite, gentle, encouraging, and kind. You make the student feel completely safe, valued, and motivated.
+- The conversation should feel like talking to a real, warm native friend from ${activeTutor.city}.
 
 CRITICAL RULE (INVIOLABLE):
-- You ALWAYS catch and correct EVERY mistake, even tiny ones! (e.g. missing articles like "I have dog" -> "I have a dog", wrong prepositions like "in the bus" -> "on the bus", "listen music" -> "listen to music", wrong verb forms, typos).
-- Never let small mistakes slip! Point them out kindly and playfully.
+- You ALWAYS catch and correct EVERY mistake, even tiny ones! (e.g. missing articles like "I have dog" -> "I have a dog", wrong prepositions like "in the bus" -> "on the bus", "listen music" -> "listen to music", wrong verb forms, typos, plural slips).
+- Never let small mistakes slip! Point them out with great kindness, patience, and politeness.
 - Whenever there is any mistake, provide a crystal-clear explanation in Portuguese in EXACTLY ONE line.
 
 Respond in strictly valid JSON format:
@@ -191,15 +198,15 @@ Respond in strictly valid JSON format:
   "hasError": boolean,
   "corrected": "corrected sentence in English or empty string",
   "explanationPt": "Explicação amigável e direta em português em exatamente UMA linha (ou vazio se perfeito)",
-  "replyText": "Leo's conversational English response in character, keeping the chat flowing"
+  "replyText": "${activeTutor.name}'s conversational English response in character, keeping the chat flowing"
 }`;
 
       const historyFormatted = history
         .slice(-6)
-        .map((m) => `${m.sender === "user" ? "User" : "Leo"}: ${m.text}`)
+        .map((m) => `${m.sender === "user" ? "User" : activeTutor.name}: ${m.text}`)
         .join("\n");
 
-      const prompt = `Recent Conversation:\n${historyFormatted}\n\nUser said: "${userInput}"\n\nGenerate Leo's response:`;
+      const prompt = `Recent Conversation:\n${historyFormatted}\n\nUser said: "${userInput}"\n\nGenerate ${activeTutor.name}'s response:`;
       const responseRaw = await callGeminiRaw(apiKey, prompt, systemPrompt);
 
       const cleaned = responseRaw.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -215,7 +222,9 @@ Respond in strictly valid JSON format:
         : undefined;
 
       return {
-        replyText: parsed.replyText || "Hey, that's awesome! Tell me more about that, my friend.",
+        replyText:
+          parsed.replyText ||
+          `That's great! Tell me more about that, my friend.`,
         correction,
       };
     } catch (e) {
@@ -223,36 +232,60 @@ Respond in strictly valid JSON format:
     }
   }
 
-  // Motor Inteligente Local (Offline / Sem API Key) com a personalidade do Leo de Chicago
+  // Motor Inteligente Local (Offline / Sem API Key) com suporte à personalidade de cada tutor
   const localCorrection = checkGrammarLocal(userInput);
   const lower = userInput.toLowerCase();
 
   let replyText = "";
   if (lower.includes("hello") || lower.includes("hi ") || lower.startsWith("hi")) {
-    replyText = "Hey there! Leo here, straight out of Chicago! Great to talk to you. How's your day treating you so far?";
-  } else if (lower.includes("where are you from") || lower.includes("city") || lower.includes("chicago")) {
-    replyText = "Born and raised in Chicago, Illinois — the Windy City! Best deep-dish pizza in the world and freezing winters. Have you ever been to the US?";
+    if (activeTutor.id === "emma") {
+      replyText = `Hello darling! Emma here from London. It is a true delight to speak with you! How has your day been so far?`;
+    } else if (activeTutor.id === "sophia") {
+      replyText = `Hi there! Sophia here from New York! So excited to practice with you today. How is everything going?`;
+    } else if (activeTutor.id === "lucas") {
+      replyText = `Hey! Lucas here from Toronto. Really glad you're here. How has your day been treating you?`;
+    } else {
+      replyText = `Hey there! Leo here, straight out of Chicago! Great to talk to you. How's your day treating you so far?`;
+    }
+  } else if (lower.includes("where are you from") || lower.includes("city")) {
+    replyText = `I'm from ${activeTutor.city}, ${activeTutor.country}! ${activeTutor.bioPt.split(".")[0]}. Have you ever visited?`;
   } else if (lower.includes("my name is") || lower.includes("i am ") || lower.includes("i'm ")) {
-    replyText = "Nice to meet you, my friend! Love the energy. Don't worry about making mistakes with me — I'll catch every little slip so you sound like a pro in no time!";
+    if (activeTutor.id === "emma") {
+      replyText = `It is such a pleasure to meet you! Never worry about making mistakes with me — we'll gently polish every phrase together.`;
+    } else if (activeTutor.id === "sophia") {
+      replyText = `Awesome to meet you! I love your motivation. Speak freely — I'll catch every little detail and help you sound confident!`;
+    } else if (activeTutor.id === "lucas") {
+      replyText = `Great to meet you! There's absolutely zero rush here. We'll take our time and master this step by step.`;
+    } else {
+      replyText = `Nice to meet you, my friend! Love the energy. Don't worry about slips with me — I'll catch every little mistake so you speak like a local!`;
+    }
   } else if (lower.includes("how are you")) {
-    replyText = "I'm doing fantastic! Just grabbed a hot coffee, ready to practice some real-world English with you. What are you working on today?";
+    if (activeTutor.id === "emma") {
+      replyText = `I'm doing splendidly, thank you! Just enjoying a lovely cup of tea. What would you like to explore today?`;
+    } else if (activeTutor.id === "sophia") {
+      replyText = `I'm feeling great and energized! Ready to practice real-world communication with you. What are you up to today?`;
+    } else if (activeTutor.id === "lucas") {
+      replyText = `Doing really well, thanks for asking! Ready to practice whenever you are. What's on your mind?`;
+    } else {
+      replyText = `I'm doing fantastic! Just grabbed a hot coffee, ready to practice some real-world English with you. What are you working on today?`;
+    }
   } else if (lower.includes("good morning")) {
-    replyText = "Good morning! Hope you've got some coffee in hand. What's the main goal on your schedule today?";
+    replyText = `Good morning! Hope your morning is off to a peaceful start. What is on your agenda for today?`;
   } else if (lower.includes("good night")) {
-    replyText = "Good night, my friend! Get some good rest and we'll pick up where we left off tomorrow!";
+    replyText = `Good night! Rest well and sleep peacefully. We will continue our practice tomorrow!`;
   } else if (lower.includes("help") || lower.includes("dúvida") || lower.includes("portugues")) {
-    replyText = "I got your back! Shoot me any question you have, no matter how small. That's what I'm here for!";
+    replyText = `I am right here with you! Feel free to ask anything, no matter how small. I am happy to help!`;
   } else if (userInput.split(" ").length < 3) {
-    replyText = "Short and sweet! But hey, challenge yourself: try giving me a full sentence with a reason why! What do you think?";
+    replyText = `Short and sweet! Let's challenge yourself: try making a full sentence explaining why! What do you think?`;
   } else {
-    const leoReplies = [
-      "Now that is what I'm talking about! Tell me a bit more about how that usually goes down.",
-      "Haha, you bet! I love that. How would you explain that to someone who's never heard of it before?",
-      "That makes total sense, my friend! Have you always felt that way, or is it something new?",
-      "Sweet! You're getting clearer every single sentence. What happened next?",
-      "That sounds like a classic story! What's the most exciting part about it for you?",
+    const generalReplies = [
+      `That sounds very interesting! Could you tell me a little bit more about that?`,
+      `I completely understand what you mean. How does that usually work out for you?`,
+      `You expressed that very nicely! What was the most exciting part of it for you?`,
+      `Step by step you are sounding clearer and clearer. What happened next?`,
+      `I really appreciate you sharing that with me! How did that make you feel?`,
     ];
-    replyText = leoReplies[Math.floor(Math.random() * leoReplies.length)]!;
+    replyText = generalReplies[Math.floor(Math.random() * generalReplies.length)]!;
   }
 
   return {
