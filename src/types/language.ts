@@ -104,8 +104,22 @@ export interface WeeklyMission {
   script?: DialogueScriptLine[] | undefined;
 }
 
+export type SupportedLanguage = "en" | "es" | "ja" | "el-koine" | "it" | "fr";
+
+export interface LanguageDefinition {
+  id: SupportedLanguage;
+  name: string;
+  nativeName: string;
+  flag: string;
+  speechLangCode: string;
+  description: string;
+  welcomeMessage: string;
+  defaultTutorId: string;
+}
+
 export interface TutorPersona {
   id: string;
+  language: SupportedLanguage;
   name: string;
   gender: "male" | "female";
   avatar: string;
@@ -136,5 +150,6 @@ export interface UserProgress {
   completedMissionIds?: string[] | undefined;
   activeMissionId?: string | undefined;
   selectedTutorId?: string | undefined;
+  selectedLanguage?: SupportedLanguage | undefined;
   fontSize?: ("sm" | "md" | "lg" | "xl") | undefined;
 }

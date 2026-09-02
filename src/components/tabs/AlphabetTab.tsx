@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { ALPHABET_DATA, SPECIAL_SOUNDS } from "@/data/alphabet";
+import { getAlphabetForLanguage } from "@/data/alphabet";
+import { getLanguageById } from "@/data/languages";
 import { AlphabetItem, UserProgress } from "@/types/language";
 import { speakText } from "@/services/speech";
 import { addXP } from "@/services/storage";
@@ -22,10 +23,11 @@ export const AlphabetTab: React.FC<AlphabetTabProps> = ({
   progress,
   onUpdateProgress,
 }) => {
+  const activeLanguage = getLanguageById(progress.selectedLanguage || "en");
   const [filter, setFilter] = useState<"all" | "vowel" | "consonant" | "sound">("all");
   const [selectedItem, setSelectedItem] = useState<AlphabetItem | null>(null);
 
-  const allItems = [...ALPHABET_DATA, ...SPECIAL_SOUNDS];
+  const allItems = getAlphabetForLanguage(activeLanguage.id);
 
   const filteredItems = allItems.filter((item) => {
     if (filter === "all") return true;
@@ -33,7 +35,10 @@ export const AlphabetTab: React.FC<AlphabetTabProps> = ({
   });
 
   const handlePlayAudio = (text: string) => {
-    speakText(text, { rate: progress.audioSpeed });
+    speakText(text, {
+      rate: progress.audioSpeed,
+      lang: activeLanguage.speechLangCode,
+    });
   };
 
   const handleSelectItem = (item: AlphabetItem) => {
@@ -53,10 +58,10 @@ export const AlphabetTab: React.FC<AlphabetTabProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-amber-500" /> Alfabeto & Sons do Inglês
+            <Sparkles className="h-4 w-4 text-amber-500" /> Alfabeto & Sons &bull; {activeLanguage.name} {activeLanguage.flag}
           </h2>
           <p className="text-[11px] text-muted-foreground">
-            Toque em qualquer letra ou som para ouvir e ver a pronúncia escrita.
+            Toque em qualquer letra, caractere ou som para ouvir a pronúncia correta.
           </p>
         </div>
       </div>

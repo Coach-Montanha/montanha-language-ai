@@ -11,8 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { UserProgress } from "@/types/language";
-import { TUTORS, getTutorById } from "@/data/tutors";
+import { UserProgress, SupportedLanguage } from "@/types/language";
+import { TUTORS, getTutorById, getTutorsByLanguage, getDefaultTutorForLanguage } from "@/data/tutors";
+import { SUPPORTED_LANGUAGES, getLanguageById } from "@/data/languages";
 import { speakText, stopSpeaking } from "@/services/speech";
 import {
   Volume2,
@@ -25,6 +26,7 @@ import {
   Gauge,
   Check,
   Type,
+  Globe,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -43,16 +45,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [apiKey, setApiKey] = useState(progress.geminiApiKey || "");
   const [speed, setSpeed] = useState(progress.audioSpeed || 0.85);
-  const [selectedTutorId, setSelectedTutorId] = useState(progress.selectedTutorId || "leo");
+  const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>(
+    progress.selectedLanguage || "en"
+  );
+  const [selectedTutorId, setSelectedTutorId] = useState(
+    progress.selectedTutorId || getDefaultTutorForLanguage(progress.selectedLanguage || "en").id
+  );
   const [fontSize, setFontSize] = useState<"sm" | "md" | "lg" | "xl">(progress.fontSize || "md");
 
   const currentTutor = getTutorById(selectedTutorId);
+  const currentLang = getLanguageById(selectedLanguage);
+  const availableTutors = getTutorsByLanguage(selectedLanguage);
+
+  const handleLanguageChange = (langId: SupportedLanguage) => {
+    setSelectedLanguage(langId);
+    const defTutor = getDefaultTutorForLanguage(langId);
+    setSelectedTutorId(defTutor.id);
+  };
 
   const handleSave = () => {
     const updated: UserProgress = {
       ...progress,
       geminiApiKey: apiKey.trim() ? apiKey.trim() : undefined,
       audioSpeed: speed,
+      selectedLanguage,
       selectedTutorId,
       fontSize,
     };
@@ -67,6 +83,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       rate: speed,
       gender: currentTutor.gender,
       pitch: currentTutor.speechPitch,
+      lang: currentLang.speechLangCode,
     });
   };
 
@@ -81,7 +98,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         messagesSentCount: 0,
         dailySprintDone: false,
         audioSpeed: 0.85,
+        selectedLanguage: "en",
         selectedTutorId: "leo",
+        fontSize: "md",
       };
       onUpdateProgress(reset);
       toast.info("Progresso reiniciado com sucesso.");
@@ -97,17 +116,59 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             Configurações do Smart Language
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Escolha seu tutor(a), controle a velocidade de fala e ajuste a inteligência artificial.
+            Escolha o idioma de estudo, seu tutor(a), velocidade de fala e tamanho da fonte.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-2">
-          {/* Escolha do Tutor / Tutora */}
+          {/* 1. Escolha do Idioma de Estudo */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
+                <Globe className="h-4 w-4 text-primary" />
+                Idioma de Estudo
+              </Label>
+              <span className="text-[11px] text-muted-foreground font-semibold">
+                {currentLang.name} {currentLang.flag}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {SUPPORTED_LANGUAGES.map((lang) => {
+                const isSelected = lang.id === selectedLanguage;
+                return (
+                  <button
+                    key={lang.id}
+                    type="button"
+                    onClick={() => handleLanguageChange(lang.id)}
+                    className={`rounded-xl border p-2 text-left transition-all cursor-pointer flex items-center gap-2 ${
+                      isSelected
+                        ? "border-primary bg-primary/10 ring-2 ring-primary/20 shadow-xs"
+                        : "border-border bg-card/60 hover:bg-muted/40"
+                    }`}
+                  >
+                    <span className="text-xl">{lang.flag}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-foreground truncate">{lang.name}</p>
+                      <p className="text-[9px] text-muted-foreground truncate">{lang.nativeName}</p>
+                    </div>
+                    {isSelected && (
+                      <span className="h-3.5 w-3.5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[9px] shrink-0">
+                        <Check className="h-2 w-2" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. Escolha do Tutor / Tutora do Idioma */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
                 <Sparkles className="h-4 w-4 text-primary" />
-                Seu Tutor ou Tutora
+                Seu Tutor ou Tutora ({currentLang.name})
               </Label>
               <span className="text-[11px] text-muted-foreground">
                 {currentTutor.name} ({currentTutor.city} {currentTutor.flag})
@@ -115,7 +176,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              {TUTORS.map((tutor) => {
+              {availableTutors.map((tutor) => {
                 const isSelected = tutor.id === selectedTutorId;
                 return (
                   <button
@@ -156,7 +217,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Velocidade da Fala / Comunicação */}
+          {/* 3. Velocidade da Fala / Comunicação */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5">
@@ -173,9 +234,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <Volume2 className="h-3 w-3" /> Testar Voz
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Se você acha que eles falam rápido demais, escolha a velocidade <strong>0.7x (Lenta)</strong> ou <strong>0.85x (Confortável)</strong>:
-            </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
               {[
                 { val: 0.7, label: "🐢 0.7x Lenta", desc: "Bem pausada" },
@@ -206,26 +264,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Tamanho da Fonte para Leitura Facilitada */}
+          {/* 4. Tamanho da Fonte para Leitura Facilitada */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5">
                 <Type className="h-4 w-4 text-primary" />
-                Tamanho da Fonte (Leitura)
+                Tamanho da Fonte Global (Acessibilidade)
               </Label>
               <span className="text-[11px] text-muted-foreground font-mono">
                 {fontSize === "sm"
-                  ? "Pequena (13px)"
+                  ? "Pequena (14px)"
                   : fontSize === "md"
-                  ? "Padrão (15px)"
+                  ? "Padrão (16px)"
                   : fontSize === "lg"
-                  ? "Grande (17px)"
-                  : "Extra Grande (19px)"}
+                  ? "Grande (19px)"
+                  : "Extra Grande (22px)"}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Ajuste para facilitar a leitura das mensagens, fonética e tradução:
-            </p>
             <div className="grid grid-cols-4 gap-1.5">
               {[
                 { val: "sm", label: "P", desc: "Pequena" },
@@ -256,7 +311,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Modo de Inteligência Artificial */}
+          {/* 5. Modo de Inteligência Artificial */}
           <div className="space-y-2 rounded-xl border border-border bg-card/60 p-3.5">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5">
@@ -269,7 +324,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Todos os tutores contam com correção instantânea em português, conduzem cenários e corrigem até os menores erros tanto com o motor embutido quanto com o Google Gemini.
+              Todos os tutores dos 6 idiomas contam com correção instantânea e explicação em português, funcionando tanto com o motor embutido quanto com o Google Gemini.
             </p>
             <div className="relative mt-2">
               <Key className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -283,7 +338,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Instalação no Celular (PWA) */}
+          {/* 6. Instalação no Celular (PWA) */}
           <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3.5">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
@@ -295,7 +350,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Você pode instalar o <strong>Smart Language</strong> na tela inicial do seu celular (iPhone ou Android) para usar em tela cheia com treino de 5 minutos diário.
+              Instale o <strong>Smart Language</strong> na tela inicial do seu smartphone para praticar conversação diária em tela cheia com áudio nativo.
             </p>
           </div>
 

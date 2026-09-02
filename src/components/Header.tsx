@@ -1,8 +1,9 @@
 import React from "react";
-import { Flame, Zap, Timer, Settings, Sparkles, LogOut, User, Type } from "lucide-react";
+import { Flame, Zap, Timer, Settings, Sparkles, LogOut, User, Type, Globe, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserProgress } from "@/types/language";
+import { getLanguageById } from "@/data/languages";
 
 interface HeaderProps {
   progress: UserProgress;
@@ -11,6 +12,7 @@ interface HeaderProps {
   onOpenSettings: () => void;
   onLogout?: () => void;
   onCycleFontSize?: () => void;
+  onOpenLanguageSelector?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,19 +22,37 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
   onLogout,
   onCycleFontSize,
+  onOpenLanguageSelector,
 }) => {
+  const currentLang = getLanguageById(progress.selectedLanguage || "en");
+
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border bg-background/95 backdrop-blur-md px-3 py-2.5 sm:px-4">
       <div className="mx-auto flex max-w-lg items-center justify-between gap-2">
-        {/* Logo & Marca */}
+        {/* Logo, Marca & Seletor de Idioma */}
         <div className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <Sparkles className="h-5 w-5 text-amber-300" />
           </div>
           <div>
-            <h1 className="text-base font-bold leading-tight tracking-tight text-foreground flex items-center gap-1">
-              Smart Language
-            </h1>
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-base font-bold leading-tight tracking-tight text-foreground">
+                Smart Language
+              </h1>
+              {/* Pill Seletor de Idioma */}
+              {onOpenLanguageSelector && (
+                <button
+                  type="button"
+                  onClick={onOpenLanguageSelector}
+                  className="flex items-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 px-1.5 py-0.5 rounded-full text-[11px] font-bold transition-all cursor-pointer"
+                  title="Trocar idioma de estudo"
+                >
+                  <span>{currentLang.flag}</span>
+                  <span className="hidden xs:inline">{currentLang.name}</span>
+                  <ChevronDown className="h-2.5 w-2.5 opacity-70" />
+                </button>
+              )}
+            </div>
             <p className="text-[10px] text-muted-foreground leading-none font-medium">
               Tutor & Treino 5 min
             </p>

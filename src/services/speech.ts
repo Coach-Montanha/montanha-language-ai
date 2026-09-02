@@ -14,43 +14,39 @@ export interface SpeakOptions {
 // Cache de vozes carregadas pelo navegador
 let cachedVoices: SpeechSynthesisVoice[] = [];
 
-if (typeof window !== "undefined" && "speechSynthesis" in window) {
-  const loadVoices = () => {
-    cachedVoices = window.speechSynthesis.getVoices();
-  };
-
-  loadVoices();
-  if (window.speechSynthesis.onvoiceschanged !== undefined) {
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-  }
-}
-
 export function isSpeechSynthesisSupported(): boolean {
   return typeof window !== "undefined" && "speechSynthesis" in window;
 }
 
 export function isSpeechRecognitionSupported(): boolean {
-  if (typeof window === "undefined") return false;
-  return "webkitSpeechRecognition" in window || "SpeechRecognition" in window;
+  return (
+    typeof window !== "undefined" &&
+    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
+  );
 }
 
-export function stopSpeaking(): void {
-  if (isSpeechSynthesisSupported()) {
-    window.speechSynthesis.cancel();
+// Pré-carrega vozes do navegador
+export function initVoices(): void {
+  if (!isSpeechSynthesisSupported()) return;
+
+  const update = () => {
+    cachedVoices = window.speechSynthesis.getVoices();
+  };
+
+  update();
+  if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = update;
   }
 }
 
-export function isSpeaking(): boolean {
-  if (!isSpeechSynthesisSupported()) return false;
-  return window.speechSynthesis.speaking;
-}
-
-export function getAvailableEnglishVoices(): SpeechSynthesisVoice[] {
+export function getAvailableVoices(targetLang?: string): SpeechSynthesisVoice[] {
   if (!isSpeechSynthesisSupported()) return [];
   if (cachedVoices.length === 0) {
     cachedVoices = window.speechSynthesis.getVoices();
   }
-  return cachedVoices.filter((v) => v.lang.startsWith("en-") || v.lang === "en");
+  if (!targetLang) return cachedVoices;
+  const prefix = targetLang.split("-")[0] || targetLang;
+  return cachedVoices.filter((v) => v.lang.startsWith(prefix) || v.lang === targetLang);
 }
 
 export function speakText(text: string, options: SpeakOptions = {}): void {
@@ -62,70 +58,87 @@ export function speakText(text: string, options: SpeakOptions = {}): void {
   try {
     window.speechSynthesis.cancel(); // Para qualquer áudio anterior
 
-    // Pequeno delay para garantir que cancelamento anterior foi processado
     setTimeout(() => {
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = options.lang || "en-US";
+      const targetLang = options.lang || "en-US";
+      utterance.lang = targetLang;
       // Taxa de velocidade segura (padrão 0.85x para clareza ideal do aluno)
       utterance.rate = Math.max(0.5, Math.min(1.5, options.rate ?? 0.85));
       utterance.pitch = options.pitch ?? 1.0;
 
-      // Buscar voz de alta qualidade em inglês correspondente ao gênero do tutor
       const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
-      const englishVoices = voices.filter((v) => v.lang.startsWith("en-") || v.lang === "en");
+      const langPrefix = targetLang.split("-")[0]?.toLowerCase() || "en";
+      const langVoices = voices.filter(
+        (v) => v.lang.toLowerCase().startsWith(langPrefix) || v.lang.toLowerCase() === targetLang.toLowerCase()
+      );
 
       const gender = options.gender;
       let matchedVoice: SpeechSynthesisVoice | undefined;
 
-      if (gender === "female") {
-        // Vozes femininas conhecidas em Windows, Mac, iOS, Android e Chrome
-        matchedVoice = englishVoices.find((v) => {
-          const name = v.name.toLowerCase();
-          return (
-            name.includes("female") ||
-            name.includes("zira") ||
-            name.includes("samantha") ||
-            name.includes("victoria") ||
-            name.includes("karen") ||
-            name.includes("moira") ||
-            name.includes("tessa") ||
-            name.includes("fiona") ||
-            name.includes("hazel") ||
-            name.includes("susan") ||
-            (name.includes("google") && !name.includes("male") && name.includes("us english"))
-          );
-        });
-      } else if (gender === "male") {
-        // Vozes masculinas conhecidas em Windows, Mac, iOS, Android e Chrome
-        matchedVoice = englishVoices.find((v) => {
-          const name = v.name.toLowerCase();
-          return (
-            name.includes("male") ||
-            name.includes("david") ||
-            name.includes("alex") ||
-            name.includes("george") ||
-            name.includes("fred") ||
-            name.includes("daniel") ||
-            name.includes("oliver") ||
-            name.includes("mark") ||
-            name.includes("richard") ||
-            name.includes("guy")
-          );
-        });
+      if (langVoices.length > 0) {
+        if (gender === "female") {
+          // Heurística de vozes femininas para inglês, espanhol, japonês, grego, italiano e francês
+          matchedVoice = langVoices.find((v) => {
+            const name = v.name.toLowerCase();
+            return (
+              name.includes("female") ||
+              name.includes("zira") ||
+              name.includes("samantha") ||
+              name.includes("victoria") ||
+              name.includes("karen") ||
+              name.includes("helena") ||
+              name.includes("laura") ||
+              name.includes("monica") ||
+              name.includes("sabina") ||
+              name.includes("nanami") ||
+              name.includes("ayumi") ||
+              name.includes("haruka") ||
+              name.includes("kyoko") ||
+              name.includes("athina") ||
+              name.includes("elsa") ||
+              name.includes("alice") ||
+              name.includes("hortense") ||
+              name.includes("julie") ||
+              name.includes("celine")
+            );
+          });
+        } else if (gender === "male") {
+          // Heurística de vozes masculinas
+          matchedVoice = langVoices.find((v) => {
+            const name = v.name.toLowerCase();
+            return (
+              name.includes("male") ||
+              name.includes("david") ||
+              name.includes("alex") ||
+              name.includes("george") ||
+              name.includes("daniel") ||
+              name.includes("pablo") ||
+              name.includes("raul") ||
+              name.includes("jorge") ||
+              name.includes("keita") ||
+              name.includes("naoki") ||
+              name.includes("ichiro") ||
+              name.includes("stefanos") ||
+              name.includes("diego") ||
+              name.includes("cosimo") ||
+              name.includes("paul") ||
+              name.includes("henri")
+            );
+          });
+        }
+
+        if (!matchedVoice) {
+          matchedVoice =
+            langVoices.find(
+              (v) =>
+                v.name.includes("Natural") ||
+                v.name.includes("Google") ||
+                v.name.includes("Premium")
+            ) || langVoices[0];
+        }
       }
 
-      // Se não encontrou por gênero específico, pega a melhor voz em inglês disponível
-      if (!matchedVoice) {
-        matchedVoice =
-          englishVoices.find(
-            (v) =>
-              (v.lang.startsWith("en-US") || v.lang.startsWith("en-GB")) &&
-              (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Premium"))
-          ) ||
-          englishVoices.find((v) => v.lang.startsWith("en-US")) ||
-          englishVoices[0];
-      }
-
+      // Se não encontrou voz no idioma exato, usa a primeira voz do idioma ou padrão
       if (matchedVoice) {
         utterance.voice = matchedVoice;
       }
@@ -134,29 +147,36 @@ export function speakText(text: string, options: SpeakOptions = {}): void {
       if (options.onEnd) utterance.onend = options.onEnd;
       if (options.onError) utterance.onerror = options.onError;
 
-      // Evita travamento de fala em alguns navegadores Chrome no Windows
       window.speechSynthesis.resume();
       window.speechSynthesis.speak(utterance);
     }, 40);
-  } catch (error) {
-    console.error("Erro ao reproduzir voz:", error);
-    if (options.onError) options.onError(error);
+  } catch (e) {
+    console.error("Erro ao reproduzir fala com SpeechSynthesis:", e);
+  }
+}
+
+export function stopSpeaking(): void {
+  if (!isSpeechSynthesisSupported()) return;
+  try {
+    window.speechSynthesis.cancel();
+  } catch (e) {
+    console.error("Erro ao interromper áudio:", e);
   }
 }
 
 export interface SpeechRecognizerHandlers {
-  onInterim?: ((text: string) => void) | undefined;
-  onFinal: (text: string) => void;
-  onError?: ((errorMsg: string) => void) | undefined;
-  onStart?: (() => void) | undefined;
-  onEnd?: (() => void) | undefined;
+  onStart?: () => void;
+  onInterim?: (text: string) => void;
+  onFinal?: (text: string) => void;
+  onError?: (err: string) => void;
+  onEnd?: () => void;
 }
 
-// Reconhecimento de fala avançado com suporte a transcrição em tempo real
 export function createSpeechRecognizer(
   handlersOrOnFinal: SpeechRecognizerHandlers | ((text: string) => void),
   legacyOnError?: (err: string) => void,
-  legacyOnEnd?: () => void
+  legacyOnEnd?: () => void,
+  langCode: string = "en-US"
 ) {
   if (!isSpeechRecognitionSupported()) {
     return null;
@@ -175,7 +195,7 @@ export function createSpeechRecognizer(
   const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
   const recognizer = new SpeechRecognitionClass();
 
-  recognizer.lang = "en-US";
+  recognizer.lang = langCode;
   recognizer.continuous = false;
   recognizer.interimResults = true; // Transcrição em tempo real
   recognizer.maxAlternatives = 1;
@@ -209,7 +229,6 @@ export function createSpeechRecognizer(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   recognizer.onerror = (event: any) => {
-    // Erros benignos como no-speech não devem alarmar o usuário
     if (event.error === "no-speech") {
       if (handlers.onEnd) handlers.onEnd();
       return;

@@ -14,6 +14,7 @@ import {
 } from "@/services/speech";
 import { saveChatHistory, loadChatHistory, addXP } from "@/services/storage";
 import { getTutorById } from "@/data/tutors";
+import { getLanguageById } from "@/data/languages";
 import { TutorSelectorModal } from "@/components/TutorSelectorModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +87,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   onUpdateProgress,
 }) => {
   const activeTutor = getTutorById(progress.selectedTutorId);
+  const activeLanguage = getLanguageById(activeTutor.language);
   const currentFontSize: FontKey = (progress.fontSize as FontKey) || "md";
   const fontConfig = FONT_LEVELS[currentFontSize] || FONT_LEVELS.md;
 
@@ -200,6 +202,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     const updated: UserProgress = {
       ...progress,
       selectedTutorId: tutor.id,
+      selectedLanguage: tutor.language,
     };
     onUpdateProgress(updated);
 
@@ -234,6 +237,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     }
 
     const tutorToUse = overrideTutor || activeTutor;
+    const tutorLang = getLanguageById(tutorToUse.language);
     const speedToUse = overrideSpeed ?? progress.audioSpeed ?? 0.85;
 
     setSpeakingMessageId(msgId);
@@ -241,7 +245,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
       rate: speedToUse,
       gender: tutorToUse.gender,
       pitch: tutorToUse.speechPitch,
-      lang: "en-US",
+      lang: tutorLang.speechLangCode,
       onStart: () => setSpeakingMessageId(msgId),
       onEnd: () => setSpeakingMessageId(null),
       onError: () => setSpeakingMessageId(null),
@@ -325,28 +329,33 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         }
       }
 
-      const recognizer = createSpeechRecognizer({
-        onStart: () => {
-          setIsRecording(true);
+      const recognizer = createSpeechRecognizer(
+        {
+          onStart: () => {
+            setIsRecording(true);
+          },
+          onInterim: (interimText) => {
+            setInput(interimText);
+          },
+          onFinal: (finalText) => {
+            setInput(finalText);
+            setIsRecording(false);
+            if (finalText.trim()) {
+              handleSend(finalText.trim());
+            }
+          },
+          onError: (err) => {
+            setIsRecording(false);
+            toast.error(err);
+          },
+          onEnd: () => {
+            setIsRecording(false);
+          },
         },
-        onInterim: (interimText) => {
-          setInput(interimText);
-        },
-        onFinal: (finalText) => {
-          setInput(finalText);
-          setIsRecording(false);
-          if (finalText.trim()) {
-            handleSend(finalText.trim());
-          }
-        },
-        onError: (err) => {
-          setIsRecording(false);
-          toast.error(err);
-        },
-        onEnd: () => {
-          setIsRecording(false);
-        },
-      });
+        undefined,
+        undefined,
+        activeLanguage.speechLangCode
+      );
 
       if (recognizer) {
         recognizerRef.current = recognizer;
@@ -429,39 +438,144 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     }
   };
 
-  // Sugestões práticas de fala
-  const suggestions = [
-    {
-      label: "Apresentar-se",
-      english: `Hello ${activeTutor.name}, nice to meet you!`,
-      phonetic: `Ré-lóu ${activeTutor.name}, náis tu mít iú!`,
-      portuguese: `Olá ${activeTutor.name}, prazer em conhecer você!`,
-    },
-    {
-      label: "Planos de línguas",
-      english: "I want to improve my speaking and pronunciation skills.",
-      phonetic: "Ái uónt tu im-prúv mái spí-kin énd pro-nân-si-êi-shên skíls.",
-      portuguese: "Quero melhorar minha fala e habilidades de pronúncia.",
-    },
-    {
-      label: "Falar do dia",
-      english: "My day was pretty busy, but I'm ready to learn.",
-      phonetic: "Mái dêi uóz prí-ti bí-zi, bât áim ré-di tu lûrn.",
-      portuguese: "Meu dia foi bem corrido, mas estou pronto para aprender.",
-    },
-    {
-      label: "Testar erro: Faltou 'a'",
-      english: "I have dog and car.",
-      phonetic: "Ái rév dóg énd cár.",
-      portuguese: "Eu tenho cachorro e carro. (Faltou 'a')",
-    },
-    {
-      label: "Testar erro: In the bus",
-      english: "I am in the bus going home.",
-      phonetic: "Ái ém in da bâs góu-in róum.",
-      portuguese: "Estou no ônibus indo para casa. (O correto é 'on')",
-    },
-  ];
+  // Sugestões práticas de fala adaptadas ao idioma do tutor
+  const suggestions = (() => {
+    switch (activeTutor.language) {
+      case "es":
+        return [
+          {
+            label: "Apresentar-se",
+            english: `¡Hola ${activeTutor.name}, mucho gusto en conocerte!`,
+            phonetic: `Ó-la ${activeTutor.name}, mú-tcho gús-to en co-no-sér-te!`,
+            portuguese: `Olá ${activeTutor.name}, muito prazer em te conhecer!`,
+          },
+          {
+            label: "Falar do dia",
+            english: "Hoy tuve un día muy productivo y quiero practicar.",
+            phonetic: "Ói tú-ve un dí-a múi pro-duc-tí-vo i kié-ro prac-ti-cár.",
+            portuguese: "Hoje tive um dia muito produtivo e quero praticar.",
+          },
+          {
+            label: "Aprender mais",
+            english: "Quiero mejorar mi fluidez y pronunciación en español.",
+            phonetic: "Kié-ro me-ho-rár mi flui-déz i pro-nun-sia-sión en es-pa-nhól.",
+            portuguese: "Quero melhorar minha fluência e pronúncia em espanhol.",
+          },
+        ];
+      case "ja":
+        return [
+          {
+            label: "Apresentar-se",
+            english: `Konnichiwa ${activeTutor.name}-san, hajimemashite!`,
+            phonetic: `Kôn-ni-tchi-uá ${activeTutor.name}-san, ra-ji-me-má-shi-te!`,
+            portuguese: `Olá ${activeTutor.name}, muito prazer em conhecê-lo(a)!`,
+          },
+          {
+            label: "Falar do dia",
+            english: "Kyou wa totemo ii tenki deshita.",
+            phonetic: "Kiô uá to-te-mo íi tên-ki dé-shi-ta.",
+            portuguese: "Hoje fez um tempo muito bom.",
+          },
+          {
+            label: "Aprender",
+            english: "Nihongo o joudzu ni hanashitai desu.",
+            phonetic: "Ni-hôn-go o djô-dzu ni ra-na-shi-tái dés.",
+            portuguese: "Quero falar japonês com naturalidade.",
+          },
+        ];
+      case "el-koine":
+        return [
+          {
+            label: "Graça e paz",
+            english: `Cháirete ${activeTutor.name}! Cháris hymîn kaì eirênê.`,
+            phonetic: `Kái-re-te ${activeTutor.name}! Ká-ris ri-mîn ké êi-rê-nê.`,
+            portuguese: `Alegrai-vos ${activeTutor.name}! Graça e paz a vós.`,
+          },
+          {
+            label: "João 1:1",
+            english: "Ἐν ἀρχῇ ἦν ὁ λόγος (En archêi ên ho lógos).",
+            phonetic: "En ar-kêi ên ro ló-gos.",
+            portuguese: "No princípio era o Verbo (João 1:1).",
+          },
+          {
+            label: "Amor Ágape",
+            english: "Tí sêmaínei hê agápê tou Theou?",
+            phonetic: "Tí sê-mé-ni rê a-gá-pê tu Te-ú?",
+            portuguese: "O que significa o amor sacrificial de Deus?",
+          },
+        ];
+      case "it":
+        return [
+          {
+            label: "Apresentar-se",
+            english: `Ciao ${activeTutor.name}, piacere di conoscerti!`,
+            phonetic: `Tcháo ${activeTutor.name}, pia-tchê-re di co-nó-sher-ti!`,
+            portuguese: `Olá ${activeTutor.name}, prazer em te conhecer!`,
+          },
+          {
+            label: "Falar do dia",
+            english: "Oggi è stata una giornata tranquilla e produttiva.",
+            phonetic: "Ô-dji è sta-ta ú-na djor-na-ta tran-cuíl-la e pro-dut-tí-va.",
+            portuguese: "Hoje foi um dia tranquilo e produtivo.",
+          },
+          {
+            label: "Café italiano",
+            english: "Vorrei un caffè espresso per favore.",
+            phonetic: "Vor-rêi un caf-fè es-prés-so per fa-vó-re.",
+            portuguese: "Gostaria de um café expresso, por favor.",
+          },
+        ];
+      case "fr":
+        return [
+          {
+            label: "Apresentar-se",
+            english: `Bonjour ${activeTutor.name}, enchanté de faire votre connaissance !`,
+            phonetic: `Bôn-júr ${activeTutor.name}, ân-chan-tê de vú rân-côn-trê !`,
+            portuguese: `Bom dia ${activeTutor.name}, encantado em conhecê-lo(a)!`,
+          },
+          {
+            label: "Falar do dia",
+            english: "J'ai passé une excellente journée aujourd'hui.",
+            phonetic: "Jê pas-sê ün ek-se-lânt jur-nê o-júr-duí.",
+            portuguese: "Passei um dia excelente hoje.",
+          },
+          {
+            label: "Pedir croissant",
+            english: "Je voudrais un croissant et un café s'il vous plaît.",
+            phonetic: "Je vu-drê un crua-sân é un ca-fê sil vu plê.",
+            portuguese: "Eu gostaria de um croissant e um café, por favor.",
+          },
+        ];
+      case "en":
+      default:
+        return [
+          {
+            label: "Apresentar-se",
+            english: `Hello ${activeTutor.name}, nice to meet you!`,
+            phonetic: `Ré-lóu ${activeTutor.name}, náis tu mít iú!`,
+            portuguese: `Olá ${activeTutor.name}, prazer em conhecer você!`,
+          },
+          {
+            label: "Planos de línguas",
+            english: "I want to improve my speaking and pronunciation skills.",
+            phonetic: "Ái uónt tu im-prúv mái spí-kin énd pro-nân-si-êi-shên skíls.",
+            portuguese: "Quero melhorar minha fala e habilidades de pronúncia.",
+          },
+          {
+            label: "Falar do dia",
+            english: "My day was pretty busy, but I'm ready to learn.",
+            phonetic: "Mái dêi uóz prí-ti bí-zi, bât áim ré-di tu lûrn.",
+            portuguese: "Meu dia foi bem corrido, mas estou pronto para aprender.",
+          },
+          {
+            label: "Testar erro: Faltou 'a'",
+            english: "I have dog and car.",
+            phonetic: "Ái rév dóg énd cár.",
+            portuguese: "Eu tenho cachorro e carro. (Faltou 'a')",
+          },
+        ];
+    }
+  })();
 
   const [expandedSuggestionIndex, setExpandedSuggestionIndex] = useState<number | null>(null);
 
@@ -623,7 +737,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         <div className="flex items-center justify-between px-3 py-1.5 bg-red-500/15 border-b border-red-500/30 text-red-600 dark:text-red-400 text-xs animate-in fade-in">
           <div className="flex items-center gap-1.5 font-medium">
             <Radio className="h-3.5 w-3.5 animate-pulse" />
-            <span>Ouvindo sua voz... Fale em inglês</span>
+            <span>Ouvindo sua voz... Fale em {activeLanguage.name}</span>
           </div>
           <button
             onClick={handleStopRecording}
@@ -863,7 +977,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={isRecording ? "Ouvindo sua fala..." : `Converse em inglês com ${activeTutor.name}...`}
+          placeholder={isRecording ? "Ouvindo sua fala..." : `Converse em ${activeLanguage.name} com ${activeTutor.name}...`}
           disabled={isLoading}
           className="flex-1 h-9 text-xs rounded-xl bg-background"
         />
@@ -886,6 +1000,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         selectedTutorId={activeTutor.id}
         audioSpeed={progress.audioSpeed || 0.85}
         onSelectTutor={handleSelectTutor}
+        currentLanguage={activeLanguage.id}
       />
     </div>
   );

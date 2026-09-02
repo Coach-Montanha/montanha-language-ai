@@ -182,30 +182,41 @@ export async function tutorChat(
   correction?: GrammarCorrection | undefined;
 }> {
   const activeTutor = tutorPersona || DEFAULT_TUTOR;
+  const langNames: Record<string, string> = {
+    en: "English",
+    es: "Spanish (Español)",
+    ja: "Japanese (日本語 - with Romaji & Hiragana/Kanji)",
+    "el-koine": "Biblical Koine Greek (Ancient Greek of the New Testament)",
+    it: "Italian (Italiano)",
+    fr: "French (Français)",
+  };
+  const targetLangName = langNames[activeTutor.language] || "English";
 
   // Se houver chave Gemini configurada, usar IA com a personalidade completa do tutor escolhido
   if (apiKey) {
     try {
-      const systemPrompt = `You are "${activeTutor.name}", a native English tutor from ${activeTutor.city}, ${activeTutor.country} (${activeTutor.gender === "female" ? "female" : "male"}).
+      const systemPrompt = `You are "${activeTutor.name}", a native/expert tutor teaching ${targetLangName} from ${activeTutor.city}, ${activeTutor.country} (${activeTutor.gender === "female" ? "female" : "male"}).
+Target Language being taught and practiced: ${targetLangName}.
 Your background & personality:
 - Style: ${activeTutor.styleTitle} - ${activeTutor.styleDesc}
 - Bio: ${activeTutor.bioPt}
 - Demeanor: You are always exceedingly polite, gentle, encouraging, and kind. You make the student feel completely safe, valued, and motivated.
-- The conversation should feel like talking to a real, warm native friend from ${activeTutor.city}.
+- The conversation MUST be in ${targetLangName}. For Japanese, include Romaji alongside Japanese text. For Koine Greek, write in Greek script with transliteration.
 
-CRITICAL RULE (INVIOLABLE):
-- You ALWAYS catch and correct EVERY mistake, even tiny ones! (e.g. missing articles like "I have dog" -> "I have a dog", wrong prepositions like "in the bus" -> "on the bus", "listen music" -> "listen to music", wrong verb forms, typos, plural slips).
+CRITICAL RULES (INVIOLABLE):
+- You ALWAYS catch and correct EVERY mistake in ${targetLangName}, even tiny ones! (missing articles, gender agreement, conjugation, particles, spelling slips).
 - Never let small mistakes slip! Point them out with great kindness, patience, and politeness.
-- Whenever there is any mistake, provide a crystal-clear explanation in Portuguese in EXACTLY ONE line.
-- Always provide friendly phonetic pronunciation in Portuguese syllables (phonetic) and natural Brazilian Portuguese translation (translationPt).
+- Whenever there is any mistake, provide a crystal-clear explanation in Brazilian Portuguese in EXACTLY ONE line.
+- Always provide friendly phonetic pronunciation in Portuguese syllables (phonetic).
+- Always provide a natural Brazilian Portuguese translation of replyText (translationPt).
 
 Respond in strictly valid JSON format:
 {
   "hasError": boolean,
-  "corrected": "corrected sentence in English or empty string",
+  "corrected": "corrected sentence in ${targetLangName} or empty string",
   "explanationPt": "Explicação amigável e direta em português em exatamente UMA linha (ou vazio se perfeito)",
-  "replyText": "${activeTutor.name}'s conversational English response in character, keeping the chat flowing",
-  "phonetic": "Friendly phonetic pronunciation transcription in Portuguese syllables, for example: Réi! Áim Lú-cas frâm To-rôn-tou...",
+  "replyText": "${activeTutor.name}'s conversational response in ${targetLangName}, keeping the dialogue flowing",
+  "phonetic": "Friendly phonetic pronunciation transcription in Portuguese syllables, for example: [ Réi! Áim Lú-cas... ]",
   "translationPt": "Tradução natural da resposta para o português brasileiro"
 }`;
 
@@ -246,12 +257,57 @@ Respond in strictly valid JSON format:
     }
   }
 
-  // Motor Inteligente Local (Offline / Sem API Key) com suporte à personalidade de cada tutor
+  // Motor Inteligente Local (Offline / Sem API Key) com suporte a múltiplos idiomas e personalidade
   const localCorrection = checkGrammarLocal(userInput);
   const lower = userInput.toLowerCase();
 
   let replyText = "";
   let translationPt = "";
+
+  if (activeTutor.language === "es") {
+    if (lower.includes("hola") || lower.includes("buenos") || lower.includes("oi") || lower.includes("ola")) {
+      replyText = `¡Hola! Me alegra muchísimo hablar contigo hoy. ¿Cómo te encuentras?`;
+      translationPt = `Olá! Fico muito feliz em falar com você hoje. Como você está?`;
+    } else if (lower.includes("como estas") || lower.includes("cómo estás") || lower.includes("que tal")) {
+      replyText = `¡Estoy muy bien, gracias por preguntar! Con muchas ganas de practicar español contigo. ¿Qué planes tienes hoy?`;
+      translationPt = `Estou muito bem, obrigado por perguntar! Com muita vontade de praticar espanhol com você. Que planos você tem hoje?`;
+    } else {
+      replyText = `¡Eso suena muy interesante! Cuéntame un poco más sobre eso, amigo.`;
+      translationPt = `Isso parece muito interessante! Me conte um pouco mais sobre isso, amigo.`;
+    }
+  } else if (activeTutor.language === "ja") {
+    if (lower.includes("konnichiwa") || lower.includes("ohayou") || lower.includes("oi") || lower.includes("ola")) {
+      replyText = `Konnichiwa! Issho ni Nihongo o renshuu shimashou. Kyou wa donna hi deshita ka?`;
+      translationPt = `Olá! Vamos praticar japonês juntos. Como foi o seu dia hoje?`;
+    } else {
+      replyText = `Sore wa totemo omoshiroi desu ne! Motto oshiete kudasai.`;
+      translationPt = `Isso é muito interessante! Por favor, me conte mais sobre isso.`;
+    }
+  } else if (activeTutor.language === "el-koine") {
+    if (lower.includes("chaire") || lower.includes("paz") || lower.includes("oi") || lower.includes("ola")) {
+      replyText = `Cháirete! Cháris hymîn kaì eirênê apò Theou. Tí theleis matheîn sêmeron?`;
+      translationPt = `Alegrai-vos! Graça e paz a vós da parte de Deus. O que desejas aprender hoje?`;
+    } else {
+      replyText = `Kálon kaì thaumastón estin! Anaginóskomen tàs graphás met' eunoías.`;
+      translationPt = `Isso é belo e maravilhoso! Lemos os textos sagrados com dedicação.`;
+    }
+  } else if (activeTutor.language === "it") {
+    if (lower.includes("ciao") || lower.includes("buongiorno") || lower.includes("oi") || lower.includes("ola")) {
+      replyText = `Ciao! Che grandissimo piacere parlare con te. Come sta andando la tua giornata?`;
+      translationPt = `Olá! Que enorme prazer falar com você. Como está indo o seu dia?`;
+    } else {
+      replyText = `È davvero molto interessante! Raccontami qualcosa in più.`;
+      translationPt = `É realmente muito interessante! Me conte algo mais a respeito.`;
+    }
+  } else if (activeTutor.language === "fr") {
+    if (lower.includes("bonjour") || lower.includes("salut") || lower.includes("oi") || lower.includes("ola")) {
+      replyText = `Bonjour ! Quel grand plaisir d'échanger avec vous. Comment allez-vous aujourd'hui ?`;
+      translationPt = `Bom dia! Que grande prazer conversar com você. Como vai você hoje?`;
+    } else {
+      replyText = `C'est vraiment très intéressant ! Racontez-moi un peu plus.`;
+      translationPt = `Isso é realmente muito interessante! Me conte um pouco mais.`;
+    }
+  } else
 
   if (lower.includes("hello") || lower.includes("hi ") || lower.startsWith("hi")) {
     if (activeTutor.id === "emma") {

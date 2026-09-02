@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,10 +8,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TutorPersona, UserProgress } from "@/types/language";
+import { TutorPersona, SupportedLanguage } from "@/types/language";
 import { TUTORS, getTutorById } from "@/data/tutors";
+import { SUPPORTED_LANGUAGES, getLanguageById } from "@/data/languages";
 import { speakText, stopSpeaking } from "@/services/speech";
-import { Volume2, Check, Sparkles, HeartHandshake, ShieldCheck } from "lucide-react";
+import { Volume2, Check, Sparkles, HeartHandshake, Globe } from "lucide-react";
 import { toast } from "sonner";
 
 interface TutorSelectorModalProps {
@@ -20,6 +21,7 @@ interface TutorSelectorModalProps {
   selectedTutorId?: string | undefined;
   audioSpeed: number;
   onSelectTutor: (tutor: TutorPersona) => void;
+  currentLanguage?: SupportedLanguage;
 }
 
 export const TutorSelectorModal: React.FC<TutorSelectorModalProps> = ({
@@ -28,23 +30,32 @@ export const TutorSelectorModal: React.FC<TutorSelectorModalProps> = ({
   selectedTutorId,
   audioSpeed,
   onSelectTutor,
+  currentLanguage,
 }) => {
   const currentTutor = getTutorById(selectedTutorId);
+  const [filterLang, setFilterLang] = useState<string>(currentLanguage || "all");
+
+  const filteredTutors = TUTORS.filter((t) => {
+    if (filterLang === "all") return true;
+    return t.language === filterLang;
+  });
 
   const handleTestVoice = (e: React.MouseEvent, tutor: TutorPersona) => {
     e.stopPropagation();
     stopSpeaking();
+    const langDef = getLanguageById(tutor.language);
     speakText(tutor.samplePhrase, {
       rate: audioSpeed,
       gender: tutor.gender,
       pitch: tutor.speechPitch,
+      lang: langDef.speechLangCode,
     });
   };
 
   const handleChoose = (tutor: TutorPersona) => {
     stopSpeaking();
     onSelectTutor(tutor);
-    toast.success(`Tutor alterado para ${tutor.name} de ${tutor.city}!`);
+    toast.success(`Tutor alterado para ${tutor.name} (${tutor.city} ${tutor.flag})!`);
     onOpenChange(false);
   };
 
@@ -61,23 +72,53 @@ export const TutorSelectorModal: React.FC<TutorSelectorModalProps> = ({
                 Escolha seu Tutor ou Tutora
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Homens e mulheres com estilos próprios. Todos são gentis, pacientes e corrigem até pequenos erros.
+                Tutores homens e mulheres para cada língua. Todos são gentis, pacientes e corrigem pequenos desvios.
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
+        {/* Filtro por Idioma */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 no-scrollbar">
+          <button
+            type="button"
+            onClick={() => setFilterLang("all")}
+            className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+              filterLang === "all"
+                ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                : "bg-muted/70 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Todos ({TUTORS.length})
+          </button>
+          {SUPPORTED_LANGUAGES.map((lang) => (
+            <button
+              key={lang.id}
+              type="button"
+              onClick={() => setFilterLang(lang.id)}
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1 ${
+                filterLang === lang.id
+                  ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                  : "bg-muted/70 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span>{lang.flag}</span>
+              <span>{lang.name}</span>
+            </button>
+          ))}
+        </div>
+
         {/* Regra de Ouro Compartilhada */}
         <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2.5 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
           <HeartHandshake className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
           <p className="leading-snug">
-            <strong>Padrão de Qualidade:</strong> Não importa quem você escolher, seu tutor sempre será educado, acolhedor e apontará qualquer deslize com uma explicação clara em português.
+            <strong>Padrão de Qualidade:</strong> Todos os tutores corrigem até o menor dos erros na hora com explicação carinhosa em 1 linha em português.
           </p>
         </div>
 
         {/* Grade de Tutores */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          {TUTORS.map((tutor) => {
+          {filteredTutors.map((tutor) => {
             const isSelected = tutor.id === currentTutor.id;
 
             return (

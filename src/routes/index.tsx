@@ -20,6 +20,9 @@ import { FlashcardsTab } from "@/components/tabs/FlashcardsTab";
 import { BreakdownTab } from "@/components/tabs/BreakdownTab";
 import { DailySprintModal } from "@/components/DailySprintModal";
 import { SettingsModal } from "@/components/SettingsModal";
+import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
+import { getDefaultTutorForLanguage } from "@/data/tutors";
+import { LanguageDefinition } from "@/types/language";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
@@ -38,7 +41,19 @@ function SmartLanguageApp() {
   const [selectedMission, setSelectedMission] = useState<WeeklyMission | null>(null);
   const [isDailySprintOpen, setIsDailySprintOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [showSessionStarter, setShowSessionStarter] = useState(true);
+
+  const handleSelectLanguage = (lang: LanguageDefinition) => {
+    const defaultTutor = getDefaultTutorForLanguage(lang.id);
+    const updated: UserProgress = {
+      ...progress,
+      selectedLanguage: lang.id,
+      selectedTutorId: defaultTutor.id,
+    };
+    handleUpdateProgress(updated);
+    toast.success(`Idioma alterado para ${lang.name} (${lang.flag}) com ${defaultTutor.name}!`);
+  };
 
   useEffect(() => {
     const s = getCurrentSession();
@@ -141,6 +156,7 @@ function SmartLanguageApp() {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onLogout={handleLogout}
         onCycleFontSize={handleCycleGlobalFontSize}
+        onOpenLanguageSelector={() => setIsLanguageModalOpen(true)}
       />
 
       {/* BANNER DA SESSÃO INICIAL: SITUAÇÃO REAL DO DIA (3 SEMANAS PROGRESSIVAS) */}
@@ -214,6 +230,14 @@ function SmartLanguageApp() {
         onOpenChange={setIsSettingsOpen}
         progress={progress}
         onUpdateProgress={handleUpdateProgress}
+      />
+
+      {/* Modal: Escolha do Idioma de Estudo (Inglês, Espanhol, Japonês, Grego, Italiano, Francês) */}
+      <LanguageSelectorModal
+        open={isLanguageModalOpen}
+        onOpenChange={setIsLanguageModalOpen}
+        selectedLanguageId={progress.selectedLanguage || "en"}
+        onSelectLanguage={handleSelectLanguage}
       />
 
       {/* Banner / Prompt de Instalação PWA para Celular */}
