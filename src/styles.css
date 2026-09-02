@@ -137,6 +137,34 @@
     border-color: var(--color-border);
   }
 
+  /* Escala Tipográfica Global para Acessibilidade Visual (Todo o Projeto) */
+  html {
+    font-size: 16px;
+    transition: font-size 0.15s ease-out;
+  }
+
+  html[data-font-size="sm"] {
+    font-size: 14px;
+  }
+
+  html[data-font-size="md"],
+  html:not([data-font-size]) {
+    font-size: 16px;
+  }
+
+  html[data-font-size="lg"] {
+    font-size: 19px;
+  }
+
+  html[data-font-size="xl"] {
+    font-size: 22px;
+  }
+
+  html[data-font-size="lg"] body,
+  html[data-font-size="xl"] body {
+    letter-spacing: 0.012em;
+  }
+
   html,
   body {
     background-color: var(--color-background);

@@ -48,6 +48,39 @@ function SmartLanguageApp() {
     }
   }, []);
 
+  // Aplica o tamanho global da fonte no elemento <html> para todo o projeto
+  useEffect(() => {
+    const size =
+      progress.fontSize ||
+      (typeof window !== "undefined" ? localStorage.getItem("smart_language_fontsize") : null) ||
+      "md";
+    document.documentElement.setAttribute("data-font-size", size);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("smart_language_fontsize", size);
+    }
+  }, [progress.fontSize]);
+
+  const handleCycleGlobalFontSize = () => {
+    const order: ("sm" | "md" | "lg" | "xl")[] = ["sm", "md", "lg", "xl"];
+    const current = progress.fontSize || "md";
+    const nextIndex = (order.indexOf(current) + 1) % order.length;
+    const nextSize = order[nextIndex]!;
+
+    const updated: UserProgress = {
+      ...progress,
+      fontSize: nextSize,
+    };
+    handleUpdateProgress(updated);
+
+    const labels: Record<string, string> = {
+      sm: "Pequena (14px)",
+      md: "Padrão (16px)",
+      lg: "Grande (19px - Mais legível)",
+      xl: "Extra Grande (22px - Alta acessibilidade)",
+    };
+    toast.success(`Tamanho da fonte do app: ${labels[nextSize] || nextSize}`);
+  };
+
   const handleLoginSuccess = (newSession: UserSession) => {
     setSession(newSession);
     setProgress(newSession.progress);
@@ -100,13 +133,14 @@ function SmartLanguageApp() {
       {/* Barra de Notificações Toast */}
       <Toaster position="top-center" richColors />
 
-      {/* Cabeçalho com Nome do Usuário, Streak, XP, Desafio 5 min e Logout */}
+      {/* Cabeçalho com Nome do Usuário, Streak, XP, Desafio 5 min, Acessibilidade de Fonte e Logout */}
       <Header
         progress={progress}
         userName={session.displayName}
         onOpenDailySprint={() => setIsDailySprintOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onLogout={handleLogout}
+        onCycleFontSize={handleCycleGlobalFontSize}
       />
 
       {/* BANNER DA SESSÃO INICIAL: SITUAÇÃO REAL DO DIA (3 SEMANAS PROGRESSIVAS) */}

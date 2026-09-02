@@ -1,5 +1,5 @@
 import React from "react";
-import { Flame, Zap, Timer, Settings, Sparkles, LogOut, User } from "lucide-react";
+import { Flame, Zap, Timer, Settings, Sparkles, LogOut, User, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserProgress } from "@/types/language";
@@ -10,6 +10,7 @@ interface HeaderProps {
   onOpenDailySprint: () => void;
   onOpenSettings: () => void;
   onLogout?: () => void;
+  onCycleFontSize?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,6 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenDailySprint,
   onOpenSettings,
   onLogout,
+  onCycleFontSize,
 }) => {
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border bg-background/95 backdrop-blur-md px-3 py-2.5 sm:px-4">
@@ -76,6 +78,27 @@ export const Header: React.FC<HeaderProps> = ({
               {progress.dailySprintDone ? "Feito!" : "5 min"}
             </span>
           </Button>
+
+          {/* Botão de Tamanho da Fonte Global (Acessibilidade Visual) */}
+          {onCycleFontSize && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+              onClick={onCycleFontSize}
+              title={`Tamanho da fonte global: ${
+                progress.fontSize === "sm"
+                  ? "Pequena"
+                  : progress.fontSize === "lg"
+                  ? "Grande"
+                  : progress.fontSize === "xl"
+                  ? "Extra Grande"
+                  : "Padrão"
+              } (Clique para ajustar fonte de todo o app)`}
+            >
+              <Type className="h-4 w-4" />
+            </Button>
+          )}
 
           {/* Botão de Configurações */}
           <Button
