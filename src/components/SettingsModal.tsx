@@ -24,6 +24,7 @@ import {
   Sparkles,
   Gauge,
   Check,
+  Type,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -43,6 +44,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [apiKey, setApiKey] = useState(progress.geminiApiKey || "");
   const [speed, setSpeed] = useState(progress.audioSpeed || 0.85);
   const [selectedTutorId, setSelectedTutorId] = useState(progress.selectedTutorId || "leo");
+  const [fontSize, setFontSize] = useState<"sm" | "md" | "lg" | "xl">(progress.fontSize || "md");
 
   const currentTutor = getTutorById(selectedTutorId);
 
@@ -52,6 +54,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       geminiApiKey: apiKey.trim() ? apiKey.trim() : undefined,
       audioSpeed: speed,
       selectedTutorId,
+      fontSize,
     };
     onUpdateProgress(updated);
     toast.success("Configurações salvas com sucesso!");
@@ -194,6 +197,56 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <div
                     className={`text-[9px] mt-0.5 ${
                       speed === item.val ? "text-primary-foreground/80" : "text-muted-foreground"
+                    }`}
+                  >
+                    {item.desc}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tamanho da Fonte para Leitura Facilitada */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold flex items-center gap-1.5">
+                <Type className="h-4 w-4 text-primary" />
+                Tamanho da Fonte (Leitura)
+              </Label>
+              <span className="text-[11px] text-muted-foreground font-mono">
+                {fontSize === "sm"
+                  ? "Pequena (13px)"
+                  : fontSize === "md"
+                  ? "Padrão (15px)"
+                  : fontSize === "lg"
+                  ? "Grande (17px)"
+                  : "Extra Grande (19px)"}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Ajuste para facilitar a leitura das mensagens, fonética e tradução:
+            </p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[
+                { val: "sm", label: "P", desc: "Pequena" },
+                { val: "md", label: "M", desc: "Padrão" },
+                { val: "lg", label: "G", desc: "Grande" },
+                { val: "xl", label: "GG", desc: "Muito Grande" },
+              ].map((item) => (
+                <button
+                  key={item.val}
+                  type="button"
+                  onClick={() => setFontSize(item.val as "sm" | "md" | "lg" | "xl")}
+                  className={`py-2 px-1 rounded-xl text-center border text-xs font-semibold transition-all cursor-pointer ${
+                    fontSize === item.val
+                      ? "border-primary bg-primary text-primary-foreground shadow-xs font-bold"
+                      : "border-border bg-card/60 text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  <div className="text-sm font-bold">{item.label}</div>
+                  <div
+                    className={`text-[9px] mt-0.5 ${
+                      fontSize === item.val ? "text-primary-foreground/80" : "text-muted-foreground"
                     }`}
                   >
                     {item.desc}

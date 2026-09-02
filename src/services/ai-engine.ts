@@ -175,7 +175,12 @@ export async function tutorChat(
   history: ChatMessage[],
   apiKey?: string,
   tutorPersona?: TutorPersona
-): Promise<{ replyText: string; correction?: GrammarCorrection | undefined }> {
+): Promise<{
+  replyText: string;
+  phonetic?: string | undefined;
+  translationPt?: string | undefined;
+  correction?: GrammarCorrection | undefined;
+}> {
   const activeTutor = tutorPersona || DEFAULT_TUTOR;
 
   // Se houver chave Gemini configurada, usar IA com a personalidade completa do tutor escolhido
@@ -192,13 +197,16 @@ CRITICAL RULE (INVIOLABLE):
 - You ALWAYS catch and correct EVERY mistake, even tiny ones! (e.g. missing articles like "I have dog" -> "I have a dog", wrong prepositions like "in the bus" -> "on the bus", "listen music" -> "listen to music", wrong verb forms, typos, plural slips).
 - Never let small mistakes slip! Point them out with great kindness, patience, and politeness.
 - Whenever there is any mistake, provide a crystal-clear explanation in Portuguese in EXACTLY ONE line.
+- Always provide friendly phonetic pronunciation in Portuguese syllables (phonetic) and natural Brazilian Portuguese translation (translationPt).
 
 Respond in strictly valid JSON format:
 {
   "hasError": boolean,
   "corrected": "corrected sentence in English or empty string",
   "explanationPt": "Explicação amigável e direta em português em exatamente UMA linha (ou vazio se perfeito)",
-  "replyText": "${activeTutor.name}'s conversational English response in character, keeping the chat flowing"
+  "replyText": "${activeTutor.name}'s conversational English response in character, keeping the chat flowing",
+  "phonetic": "Friendly phonetic pronunciation transcription in Portuguese syllables, for example: Réi! Áim Lú-cas frâm To-rôn-tou...",
+  "translationPt": "Tradução natural da resposta para o português brasileiro"
 }`;
 
       const historyFormatted = history
@@ -221,10 +229,16 @@ Respond in strictly valid JSON format:
           }
         : undefined;
 
+      const replyText =
+        parsed.replyText ||
+        `That's great! Tell me more about that, my friend.`;
+      const phonetic = parsed.phonetic || generatePhoneticGuide(replyText);
+      const translationPt = parsed.translationPt || "Isso é ótimo! Me conte mais sobre isso, meu amigo.";
+
       return {
-        replyText:
-          parsed.replyText ||
-          `That's great! Tell me more about that, my friend.`,
+        replyText,
+        phonetic,
+        translationPt,
         correction,
       };
     } catch (e) {
@@ -237,59 +251,99 @@ Respond in strictly valid JSON format:
   const lower = userInput.toLowerCase();
 
   let replyText = "";
+  let translationPt = "";
+
   if (lower.includes("hello") || lower.includes("hi ") || lower.startsWith("hi")) {
     if (activeTutor.id === "emma") {
       replyText = `Hello darling! Emma here from London. It is a true delight to speak with you! How has your day been so far?`;
+      translationPt = `Olá querido(a)! Aqui é a Emma de Londres. É uma alegria falar com você! Como tem sido o seu dia até agora?`;
     } else if (activeTutor.id === "sophia") {
       replyText = `Hi there! Sophia here from New York! So excited to practice with you today. How is everything going?`;
+      translationPt = `Oi! Aqui é a Sophia de Nova York! Muito animada para praticar com você hoje. Como estão as coisas?`;
     } else if (activeTutor.id === "lucas") {
       replyText = `Hey! Lucas here from Toronto. Really glad you're here. How has your day been treating you?`;
+      translationPt = `Oi! Aqui é o Lucas de Toronto. Muito feliz de você estar aqui. Como o seu dia está te tratando?`;
     } else {
       replyText = `Hey there! Leo here, straight out of Chicago! Great to talk to you. How's your day treating you so far?`;
+      translationPt = `E aí! Aqui é o Leo, direto de Chicago! Muito bom falar com você. Como está sendo o seu dia até agora?`;
     }
   } else if (lower.includes("where are you from") || lower.includes("city")) {
     replyText = `I'm from ${activeTutor.city}, ${activeTutor.country}! ${activeTutor.bioPt.split(".")[0]}. Have you ever visited?`;
+    translationPt = `Eu sou de ${activeTutor.city}, ${activeTutor.country}! Você já visitou algum dia?`;
   } else if (lower.includes("my name is") || lower.includes("i am ") || lower.includes("i'm ")) {
     if (activeTutor.id === "emma") {
       replyText = `It is such a pleasure to meet you! Never worry about making mistakes with me — we'll gently polish every phrase together.`;
+      translationPt = `É um grande prazer te conhecer! Nunca se preocupe em errar comigo — vamos polir cada frase gentilmente juntos.`;
     } else if (activeTutor.id === "sophia") {
       replyText = `Awesome to meet you! I love your motivation. Speak freely — I'll catch every little detail and help you sound confident!`;
+      translationPt = `Incrível te conhecer! Adorei sua motivação. Fale à vontade — vou notar cada detalhe e te ajudar a falar com confiança!`;
     } else if (activeTutor.id === "lucas") {
       replyText = `Great to meet you! There's absolutely zero rush here. We'll take our time and master this step by step.`;
+      translationPt = `Muito bom te conhecer! Não há pressa alguma aqui. Vamos no seu tempo e dominar isso passo a passo.`;
     } else {
       replyText = `Nice to meet you, my friend! Love the energy. Don't worry about slips with me — I'll catch every little mistake so you speak like a local!`;
+      translationPt = `Prazer em te conhecer, meu amigo! Adorei a energia. Não se preocupe com deslizes — vou pegar cada errinho para você falar como um nativo!`;
     }
   } else if (lower.includes("how are you")) {
     if (activeTutor.id === "emma") {
       replyText = `I'm doing splendidly, thank you! Just enjoying a lovely cup of tea. What would you like to explore today?`;
+      translationPt = `Estou esplendidamente bem, obrigada! Apenas aproveitando uma deliciosa xícara de chá. O que gostaria de explorar hoje?`;
     } else if (activeTutor.id === "sophia") {
       replyText = `I'm feeling great and energized! Ready to practice real-world communication with you. What are you up to today?`;
+      translationPt = `Estou me sentindo ótima e cheia de energia! Pronta para praticar conversas da vida real com você. O que vai fazer hoje?`;
     } else if (activeTutor.id === "lucas") {
       replyText = `Doing really well, thanks for asking! Ready to practice whenever you are. What's on your mind?`;
+      translationPt = `Indo muito bem, obrigado por perguntar! Pronto para praticar quando você quiser. No que você está pensando?`;
     } else {
       replyText = `I'm doing fantastic! Just grabbed a hot coffee, ready to practice some real-world English with you. What are you working on today?`;
+      translationPt = `Estou fantástico! Acabei de pegar um café quente, pronto para praticar inglês da vida real com você. Em que você está trabalhando hoje?`;
     }
   } else if (lower.includes("good morning")) {
     replyText = `Good morning! Hope your morning is off to a peaceful start. What is on your agenda for today?`;
+    translationPt = `Bom dia! Espero que sua manhã tenha começado com tranquilidade. O que está na sua agenda hoje?`;
   } else if (lower.includes("good night")) {
     replyText = `Good night! Rest well and sleep peacefully. We will continue our practice tomorrow!`;
+    translationPt = `Boa noite! Descanse bem e durma em paz. Continuaremos nosso treino amanhã!`;
   } else if (lower.includes("help") || lower.includes("dúvida") || lower.includes("portugues")) {
     replyText = `I am right here with you! Feel free to ask anything, no matter how small. I am happy to help!`;
+    translationPt = `Estou bem aqui ao seu lado! Sinta-se à vontade para perguntar qualquer coisa, por menor que seja. Fico feliz em ajudar!`;
   } else if (userInput.split(" ").length < 3) {
     replyText = `Short and sweet! Let's challenge yourself: try making a full sentence explaining why! What do you think?`;
+    translationPt = `Curto e direto! Vamos se desafiar: tente montar uma frase completa explicando o porquê! O que você acha?`;
   } else {
     const generalReplies = [
-      `That sounds very interesting! Could you tell me a little bit more about that?`,
-      `I completely understand what you mean. How does that usually work out for you?`,
-      `You expressed that very nicely! What was the most exciting part of it for you?`,
-      `Step by step you are sounding clearer and clearer. What happened next?`,
-      `I really appreciate you sharing that with me! How did that make you feel?`,
+      {
+        en: `That sounds very interesting! Could you tell me a little bit more about that?`,
+        pt: `Isso parece muito interessante! Você poderia me contar um pouco mais sobre isso?`,
+      },
+      {
+        en: `I completely understand what you mean. How does that usually work out for you?`,
+        pt: `Eu entendo perfeitamente o que você quer dizer. Como isso geralmente funciona para você?`,
+      },
+      {
+        en: `You expressed that very nicely! What was the most exciting part of it for you?`,
+        pt: `Você expressou isso muito bem! Qual foi a parte mais emocionante disso para você?`,
+      },
+      {
+        en: `Step by step you are sounding clearer and clearer. What happened next?`,
+        pt: `Passo a passo você está soando cada vez mais claro. O que aconteceu depois?`,
+      },
+      {
+        en: `I really appreciate you sharing that with me! How did that make you feel?`,
+        pt: `Agradeço muito por você compartilhar isso comigo! Como isso fez você se sentir?`,
+      },
     ];
-    replyText = generalReplies[Math.floor(Math.random() * generalReplies.length)]!;
+    const picked = generalReplies[Math.floor(Math.random() * generalReplies.length)]!;
+    replyText = picked.en;
+    translationPt = picked.pt;
   }
+
+  const phonetic = generatePhoneticGuide(replyText);
 
   return {
     replyText,
+    phonetic,
+    translationPt,
     correction: localCorrection.hasError ? localCorrection : undefined,
   };
 }
@@ -409,6 +463,64 @@ export function generatePhoneticGuide(english: string): string {
         .replace(/r\b/g, "r");
     })
     .join(" ");
+}
+
+export function getPortugueseTranslation(english: string): string {
+  const lower = english.toLowerCase().trim();
+
+  // Saudações iniciais dos tutores
+  if (lower.includes("straight out of chicago") || (lower.includes("leo") && lower.includes("chicago"))) {
+    return "Olá! Eu sou o Leo de Chicago. Super animado para conversar com você! Não se preocupe em errar — vou corrigir com carinho cada deslize para você soar natural. Como tem sido o seu dia?";
+  }
+  if (lower.includes("emma from london") || (lower.includes("emma") && lower.includes("london"))) {
+    return "Olá querido(a)! Eu sou a Emma de Londres. É um prazer absoluto te conhecer. Vá no seu ritmo, não há pressa alguma, e vamos polir o seu inglês juntos. Sobre o que você gostaria de conversar hoje?";
+  }
+  if (lower.includes("sophia here from new york") || (lower.includes("sophia") && lower.includes("new york"))) {
+    return "Oi! Aqui é a Sophia de Nova York! Você tem um potencial incrível e estou aqui para te apoiar 100%. Fale à vontade — vou notar qualquer errinho e te orientar. O que você está fazendo hoje?";
+  }
+  if (lower.includes("lucas from toronto") || (lower.includes("lucas") && lower.includes("toronto"))) {
+    return "Olá! Eu sou o Lucas de Toronto. É muito bom ter você aqui. Não há pressão alguma na nossa conversa — cada pequeno erro é apenas um passo adiante. Como estão as coisas com você hoje?";
+  }
+
+  // Respostas comuns de diálogo
+  if (lower.includes("day been treating you") || lower.includes("day treating you")) {
+    return "Como o seu dia está te tratando até agora?";
+  }
+  if (lower.includes("pleasure to meet you") || lower.includes("nice to meet you")) {
+    return "É um enorme prazer te conhecer! Não se preocupe com erros, vamos praticar juntos com calma.";
+  }
+  if (lower.includes("splendidly, thank you") || lower.includes("doing splendidly")) {
+    return "Estou esplendidamente bem, muito obrigada! O que gostaria de explorar hoje?";
+  }
+  if (lower.includes("doing fantastic")) {
+    return "Estou me sentindo fantástico! Pronto para praticar inglês da vida real com você. O que você está fazendo hoje?";
+  }
+  if (lower.includes("doing really well")) {
+    return "Estou muito bem, obrigado por perguntar! Pronto para praticar quando você quiser. No que você está pensando?";
+  }
+  if (lower.includes("good morning")) {
+    return "Bom dia! Espero que seu dia tenha começado com tranquilidade e boas energias. O que você tem planejado para hoje?";
+  }
+  if (lower.includes("good night")) {
+    return "Boa noite! Descanse bem e durma em paz. Amanhã continuamos nosso aprendizado!";
+  }
+  if (lower.includes("right here with you") || lower.includes("happy to help")) {
+    return "Estou bem aqui ao seu lado! Fique à vontade para perguntar qualquer coisa, por menor que seja.";
+  }
+  if (lower.includes("sounds very interesting")) {
+    return "Isso parece muito interessante! Você poderia me contar um pouco mais sobre isso?";
+  }
+  if (lower.includes("completely understand what you mean")) {
+    return "Eu entendo perfeitamente o que você quer dizer. Como isso costuma funcionar para você?";
+  }
+  if (lower.includes("expressed that very nicely")) {
+    return "Você expressou isso muito bem! Qual foi a parte mais emocionante disso para você?";
+  }
+  if (lower.includes("sounding clearer and clearer")) {
+    return "Passo a passo você está soando cada vez mais claro. O que aconteceu depois?";
+  }
+
+  return "Resposta do tutor acompanhando nossa conversa em inglês.";
 }
 
 // 2. CENÁRIO: Roleplay em situações reais

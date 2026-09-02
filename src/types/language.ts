@@ -11,6 +11,8 @@ export interface ChatMessage {
   id: string;
   sender: "user" | "tutor" | "system";
   text: string;
+  phonetic?: string | undefined;
+  translationPt?: string | undefined;
   correction?: GrammarCorrection | undefined;
   timestamp: number;
 }
@@ -114,7 +116,9 @@ export interface TutorPersona {
   styleDesc: string;
   bioPt: string;
   initialGreeting: string;
-  speechPitch?: number;
+  initialGreetingPhonetic?: string | undefined;
+  initialGreetingPt?: string | undefined;
+  speechPitch?: number | undefined;
   samplePhrase: string;
 }
 
@@ -132,4 +136,5 @@ export interface UserProgress {
   completedMissionIds?: string[] | undefined;
   activeMissionId?: string | undefined;
   selectedTutorId?: string | undefined;
+  fontSize?: ("sm" | "md" | "lg" | "xl") | undefined;
 }
