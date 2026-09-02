@@ -42,7 +42,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
       {
         id: "intro",
         sender: "tutor",
-        text: "Hi there! I'm Alex, your English tutor. What would you like to talk about today? Tell me about your day or ask any question!",
+        text: "Hey there! I'm Leo, born and raised right in Chicago, Illinois! 🏙️ Think of me as your American buddy: patient, direct, and playful, but with one golden rule — I'll catch and correct every single mistake, even tiny ones! How are you doing today?",
         timestamp: Date.now(),
       },
     ];
@@ -229,7 +229,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         {
           id: "intro-reset",
           sender: "tutor",
-          text: "Let's start fresh! What would you like to chat about?",
+          text: "Alright, fresh start! What's on your mind today, my friend?",
           timestamp: Date.now(),
         },
       ];
@@ -240,10 +240,11 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   };
 
   const quickPrompts = [
-    { label: "Cumprimentar", text: "Hello Alex! How are you doing today?" },
-    { label: "Testar erro: Idade", text: "I have 25 years old." },
-    { label: "Testar erro: 3ª pessoa", text: "She have a blue car." },
-    { label: "Falar de hobbies", text: "I really enjoy watching movies and reading books." },
+    { label: "Cumprimentar o Leo", text: "Hey Leo! How is the weather in Chicago today?" },
+    { label: "Erro sutil: Faltou 'a'", text: "I have dog and car." },
+    { label: "Erro sutil: In the bus", text: "I am in the bus going home." },
+    { label: "Erro sutil: Listen music", text: "I like to listen music when I relax." },
+    { label: "Erro sutil: Good in", text: "I want to be good in English." },
   ];
 
   return (
@@ -252,20 +253,20 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/80 bg-card/40 rounded-t-xl">
         <div className="flex items-center gap-2">
           <div className="relative">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-              <Bot className="h-4 w-4" />
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+              🏙️
             </div>
             <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-background" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-foreground">Alex</span>
-              <span className="text-[10px] bg-primary/10 text-primary font-medium px-1.5 py-0.2 rounded-full">
-                Tutor Nativo
+              <span className="text-xs font-bold text-foreground">Leo</span>
+              <span className="text-[10px] bg-primary/15 text-primary font-bold px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
+                Chicago, EUA 🇺🇸
               </span>
             </div>
-            <p className="text-[10px] text-muted-foreground">
-              Voz e correção em 1 linha
+            <p className="text-[10px] text-muted-foreground font-medium">
+              Paciente, direto & brincalhão &bull; <span className="text-amber-600 dark:text-amber-400 font-semibold">Corrige até erro pequeno!</span>
             </p>
           </div>
         </div>
@@ -379,7 +380,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                 <div className="mt-1.5 max-w-[88%] rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-left text-[11px] space-y-1 animate-in fade-in">
                   <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold">
                     <AlertCircle className="h-3 w-3 shrink-0" />
-                    <span>Dica do Alex:</span>
+                    <span>Dica do Leo (Chicago):</span>
                   </div>
                   <div className="text-muted-foreground">
                     Você disse: <span className="line-through text-destructive font-medium">{msg.correction.original}</span>
@@ -399,7 +400,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         {isLoading && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground pl-2">
             <Bot className="h-3.5 w-3.5 animate-spin text-primary" />
-            <span>Alex está pensando e respondendo...</span>
+            <span>Leo está respondendo com sotaque de Chicago...</span>
           </div>
         )}
         <div ref={messagesEndRef} />

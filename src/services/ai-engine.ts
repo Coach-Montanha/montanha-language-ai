@@ -87,6 +87,60 @@ const GRAMMAR_RULES: CorrectionRule[] = [
     fix: () => "everybody is",
     explanation: "'Everybody' e 'everyone' são tratados gramaticalmente como singular ('is').",
   },
+  // Regras para erros sutis e pequenos
+  {
+    pattern: /\blisten\s+music\b/i,
+    fix: () => "listen to music",
+    explanation: "Depois do verbo 'listen', é obrigatório usar a preposição 'to' ('listen to music').",
+  },
+  {
+    pattern: /\bin\s+the\s+(bus|train|plane|subway|flight)\b/i,
+    fix: (m) => m.replace(/in\s+the/i, "on the"),
+    explanation: "Para transportes públicos grandes onde você fica em pé, usamos 'on', não 'in'.",
+  },
+  {
+    pattern: /\bgood\s+in\s+(english|math|sports|cooking|playing|coding)\b/i,
+    fix: (m) => m.replace(/good\s+in/i, "good at"),
+    explanation: "Para expressar habilidade em algo, a preposição correta é 'good at', não 'good in'.",
+  },
+  {
+    pattern: /\blook\s+to\s+(me|you|him|her|it|them|us|the\s+mirror|the\s+sky)\b/i,
+    fix: (m) => m.replace(/look\s+to/i, "look at"),
+    explanation: "Para olhar para algo ou alguém, usamos o phrasal verb 'look at', não 'look to'.",
+  },
+  {
+    pattern: /\binformations\b/i,
+    fix: () => "information",
+    explanation: "'Information' é substantivo incontável em inglês e nunca vai para o plural com 's'.",
+  },
+  {
+    pattern: /\bi\s+have\s+a\s+doubt\b/i,
+    fix: () => "I have a question",
+    explanation: "Para tirar uma dúvida em inglês, dizemos 'I have a question' ('doubt' soa como desconfiança).",
+  },
+  {
+    pattern: /\bpay\s+attention\s+in\b/i,
+    fix: () => "pay attention to",
+    explanation: "A regência de prestar atenção em inglês usa a preposição 'to' ('pay attention to').",
+  },
+  {
+    pattern: /\bwait\s+(me|you|him|her|them|us)\b/i,
+    fix: (m) => m.replace(/wait\s+/i, "wait for "),
+    explanation: "O verbo 'wait' exige a preposição 'for' antes da pessoa que você está esperando.",
+  },
+  {
+    pattern: /\b(he|she|it)\s+(like|want|need|work|live|say|play|know|think)\b/i,
+    fix: (m) => {
+      const parts = m.split(/\s+/);
+      return `${parts[0]} ${parts[1]}s`;
+    },
+    explanation: "Na 3ª pessoa do singular (he/she/it) no presente, o verbo recebe 's' no final.",
+  },
+  {
+    pattern: /\bi\s+have\s+(car|dog|cat|computer|phone|house|job|problem)\b/i,
+    fix: (m) => m.replace(/have\s+/i, "have a "),
+    explanation: "Faltou o artigo indefinido 'a' antes do substantivo contável singular ('have a...').",
+  },
 ];
 
 // Analisa e detecta erros comuns
@@ -112,34 +166,40 @@ export function checkGrammarLocal(input: string): GrammarCorrection {
   };
 }
 
-// 1. CONVERSA: Tutor "Alex"
+// 1. CONVERSA: Tutor "Leo de Chicago"
 export async function tutorChat(
   userInput: string,
   history: ChatMessage[],
   apiKey?: string
 ): Promise<{ replyText: string; correction?: GrammarCorrection | undefined }> {
-  // Se houver chave Gemini configurada, usar IA avançada
+  // Se houver chave Gemini configurada, usar IA com a personalidade completa do Leo
   if (apiKey) {
     try {
-      const systemPrompt = `You are "Alex", an enthusiastic, patient, and friendly native English tutor in an app called Smart Language.
-Your tasks:
-1. Always converse primarily in natural English suited for learners.
-2. Check the user's input for grammatical mistakes, spelling, or unnatural phrasing.
-3. If there is a mistake, explain the correction in Portuguese in EXACTLY ONE short line.
-4. Respond in strictly valid JSON format with this structure:
+      const systemPrompt = `You are "Leo", a native English tutor born and raised in Chicago, Illinois (USA).
+Your background & personality:
+- You are a proud Chicagoan: warm, direct, grounded, and witty with authentic Midwestern charm. You love deep-dish pizza, coffee walks by Lake Michigan, sports, and real-life everyday expressions ("Hey there!", "No biggie!", "You bet!", "My friend", "Sweet!", "That's how we roll!").
+- Your vibe is: Patient (super encouraging, never judging the learner), Direct (straight to the point, zero robotic or overly academic fluff), and Playful (you joke around in a friendly, brotherly way).
+- The user's brain should feel like talking to a real American buddy at a diner, NOT doing a boring grammar worksheet.
+
+CRITICAL RULE (INVIOLABLE):
+- You ALWAYS catch and correct EVERY mistake, even tiny ones! (e.g. missing articles like "I have dog" -> "I have a dog", wrong prepositions like "in the bus" -> "on the bus", "listen music" -> "listen to music", wrong verb forms, typos).
+- Never let small mistakes slip! Point them out kindly and playfully.
+- Whenever there is any mistake, provide a crystal-clear explanation in Portuguese in EXACTLY ONE line.
+
+Respond in strictly valid JSON format:
 {
   "hasError": boolean,
   "corrected": "corrected sentence in English or empty string",
-  "explanationPt": "Explicação em português em exatamente UMA linha (ou vazio)",
-  "replyText": "Your friendly English response to keep the conversation going"
+  "explanationPt": "Explicação amigável e direta em português em exatamente UMA linha (ou vazio se perfeito)",
+  "replyText": "Leo's conversational English response in character, keeping the chat flowing"
 }`;
 
       const historyFormatted = history
         .slice(-6)
-        .map((m) => `${m.sender === "user" ? "User" : "Alex"}: ${m.text}`)
+        .map((m) => `${m.sender === "user" ? "User" : "Leo"}: ${m.text}`)
         .join("\n");
 
-      const prompt = `Recent Conversation:\n${historyFormatted}\n\nUser just said: "${userInput}"\n\nGenerate the JSON output:`;
+      const prompt = `Recent Conversation:\n${historyFormatted}\n\nUser said: "${userInput}"\n\nGenerate Leo's response:`;
       const responseRaw = await callGeminiRaw(apiKey, prompt, systemPrompt);
 
       const cleaned = responseRaw.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -155,7 +215,7 @@ Your tasks:
         : undefined;
 
       return {
-        replyText: parsed.replyText || "Great job! Tell me more about that.",
+        replyText: parsed.replyText || "Hey, that's awesome! Tell me more about that, my friend.",
         correction,
       };
     } catch (e) {
@@ -163,34 +223,36 @@ Your tasks:
     }
   }
 
-  // Motor Inteligente Local (Offline / Sem API Key)
+  // Motor Inteligente Local (Offline / Sem API Key) com a personalidade do Leo de Chicago
   const localCorrection = checkGrammarLocal(userInput);
   const lower = userInput.toLowerCase();
 
   let replyText = "";
   if (lower.includes("hello") || lower.includes("hi ") || lower.startsWith("hi")) {
-    replyText = "Hello! It's fantastic to talk with you today. How was your day so far?";
+    replyText = "Hey there! Leo here, straight out of Chicago! Great to talk to you. How's your day treating you so far?";
+  } else if (lower.includes("where are you from") || lower.includes("city") || lower.includes("chicago")) {
+    replyText = "Born and raised in Chicago, Illinois — the Windy City! Best deep-dish pizza in the world and freezing winters. Have you ever been to the US?";
   } else if (lower.includes("my name is") || lower.includes("i am ") || lower.includes("i'm ")) {
-    replyText = "Nice to meet you! Learning a new language takes courage, and you're doing great. What would you like to practice today?";
+    replyText = "Nice to meet you, my friend! Love the energy. Don't worry about making mistakes with me — I'll catch every little slip so you sound like a pro in no time!";
   } else if (lower.includes("how are you")) {
-    replyText = "I'm doing wonderful, thank you! Ready to practice some English with you. What are you up to today?";
+    replyText = "I'm doing fantastic! Just grabbed a hot coffee, ready to practice some real-world English with you. What are you working on today?";
   } else if (lower.includes("good morning")) {
-    replyText = "Good morning! Wishing you an energized and productive day. What are your plans for today?";
+    replyText = "Good morning! Hope you've got some coffee in hand. What's the main goal on your schedule today?";
   } else if (lower.includes("good night")) {
-    replyText = "Good night! Sleep well and recharge for another day of learning tomorrow!";
+    replyText = "Good night, my friend! Get some good rest and we'll pick up where we left off tomorrow!";
   } else if (lower.includes("help") || lower.includes("dúvida") || lower.includes("portugues")) {
-    replyText = "I'm right here to help you! Feel free to ask me anything about grammar, vocabulary, or pronunciation.";
+    replyText = "I got your back! Shoot me any question you have, no matter how small. That's what I'm here for!";
   } else if (userInput.split(" ").length < 3) {
-    replyText = "I understand! Could you try to expand that into a full sentence? For example, add why or when it happens!";
+    replyText = "Short and sweet! But hey, challenge yourself: try giving me a full sentence with a reason why! What do you think?";
   } else {
-    const conversationalReplies = [
-      "That is very interesting! How do you usually handle that in your daily routine?",
-      "I see what you mean. Could you tell me more details about it in English?",
-      "That makes total sense! Have you always felt that way, or is it something recent?",
-      "Awesome! You are expressing yourself clearly. What else happened after that?",
-      "I love that topic! What is the most exciting part about it for you?",
+    const leoReplies = [
+      "Now that is what I'm talking about! Tell me a bit more about how that usually goes down.",
+      "Haha, you bet! I love that. How would you explain that to someone who's never heard of it before?",
+      "That makes total sense, my friend! Have you always felt that way, or is it something new?",
+      "Sweet! You're getting clearer every single sentence. What happened next?",
+      "That sounds like a classic story! What's the most exciting part about it for you?",
     ];
-    replyText = conversationalReplies[Math.floor(Math.random() * conversationalReplies.length)]!;
+    replyText = leoReplies[Math.floor(Math.random() * leoReplies.length)]!;
   }
 
   return {
