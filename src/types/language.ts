@@ -15,6 +15,21 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+export interface ScriptSuggestion {
+  english: string;
+  phonetic: string;
+  portuguese: string;
+}
+
+export interface DialogueScriptLine {
+  id: string;
+  speaker: string;
+  roleType: "ai" | "user";
+  english: string;
+  phonetic: string;
+  portuguese: string;
+}
+
 export interface Scenario {
   id: string;
   title: string;
@@ -25,6 +40,8 @@ export interface Scenario {
   context: string;
   initialAiMessage: string;
   sampleReplies: string[];
+  structuredSuggestions?: ScriptSuggestion[] | undefined;
+  script?: DialogueScriptLine[] | undefined;
 }
 
 export interface AlphabetItem {
@@ -76,9 +93,13 @@ export interface WeeklyMission {
   aiRole: string;
   userRole: string;
   openingAiDialogue: string;
+  openingAiPhonetic?: string | undefined;
+  openingAiPortuguese?: string | undefined;
   survivalObjective: string;
   survivalTipsPt: string;
   sampleResponses: string[];
+  structuredSuggestions?: ScriptSuggestion[] | undefined;
+  script?: DialogueScriptLine[] | undefined;
 }
 
 export interface UserProgress {

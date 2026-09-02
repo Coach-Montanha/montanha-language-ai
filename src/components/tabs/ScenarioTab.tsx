@@ -1,7 +1,18 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Scenario, ChatMessage, UserProgress, WeeklyMission } from "@/types/language";
-import { WEEKLY_MISSIONS, getMissionsByWeek, missionToScenario } from "@/data/missions";
-import { scenarioChat } from "@/services/ai-engine";
+import {
+  Scenario,
+  ChatMessage,
+  UserProgress,
+  WeeklyMission,
+  ScriptSuggestion,
+  DialogueScriptLine,
+} from "@/types/language";
+import {
+  WEEKLY_MISSIONS,
+  getMissionsByWeek,
+  missionToScenario,
+} from "@/data/missions";
+import { scenarioChat, generatePhoneticGuide } from "@/services/ai-engine";
 import {
   speakText,
   stopSpeaking,
@@ -27,12 +38,14 @@ import {
   Mic,
   MicOff,
   Volume2,
-  RotateCcw,
   Sparkles,
   PlusCircle,
   CheckCircle2,
   Lightbulb,
   Target,
+  BookOpen,
+  X,
+  Play,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -79,12 +92,15 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
       timestamp: Date.now(),
     },
   ]);
-  const [suggestedReplies, setSuggestedReplies] = useState<string[]>(
-    initialMission.sampleResponses
+
+  const [structuredSuggestions, setStructuredSuggestions] = useState<ScriptSuggestion[]>(
+    initialMission.structuredSuggestions || []
   );
+
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [showScriptModal, setShowScriptModal] = useState(false);
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customTitle, setCustomTitle] = useState("");
   const [customRole, setCustomRole] = useState("");
@@ -95,7 +111,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Se uma missão foi passada como prop
+  // Se uma missão foi selecionada vinda do banner inicial
   useEffect(() => {
     if (selectedMission) {
       setActiveWeek(selectedMission.week);
@@ -110,7 +126,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
           timestamp: Date.now(),
         },
       ]);
-      setSuggestedReplies(selectedMission.sampleResponses);
+      setStructuredSuggestions(selectedMission.structuredSuggestions || []);
       speakText(selectedMission.openingAiDialogue, { rate: progress.audioSpeed });
     }
   }, [selectedMission]);
@@ -133,7 +149,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
         timestamp: Date.now(),
       },
     ]);
-    setSuggestedReplies(mission.sampleResponses);
+    setStructuredSuggestions(mission.structuredSuggestions || []);
     speakText(mission.openingAiDialogue, { rate: progress.audioSpeed });
   };
 
@@ -169,7 +185,18 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
       };
 
       setMessages([...newHistory, aiMsg]);
-      setSuggestedReplies(res.suggestedReplies);
+      if (res.structuredSuggestions && res.structuredSuggestions.length > 0) {
+        setStructuredSuggestions(res.structuredSuggestions);
+      } else {
+        setStructuredSuggestions(
+          res.suggestedReplies.map((r) => ({
+            english: r,
+            phonetic: generatePhoneticGuide(r),
+            portuguese: "Toque para responder",
+          }))
+        );
+      }
+
       speakText(res.replyText, { rate: progress.audioSpeed });
 
       const updated = addXP(10);
@@ -227,6 +254,11 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
     }
   };
 
+  const handlePlaySound = (e: React.MouseEvent, text: string) => {
+    e.stopPropagation();
+    speakText(text, { rate: progress.audioSpeed });
+  };
+
   const handleCreateCustomScenario = (e: React.FormEvent) => {
     e.preventDefault();
     if (!customTitle.trim()) return;
@@ -245,6 +277,18 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
         "Could you help me resolve this issue?",
         "Thank you for your help!",
       ],
+      structuredSuggestions: [
+        {
+          english: "Hello! I would like more information about this, please.",
+          phonetic: "ré-lou! ái uûd láik mór in-fór-mêi-shân a-báut dís, plíz.",
+          portuguese: "Olá! Gostaria de mais informações sobre isso, por favor.",
+        },
+        {
+          english: "Could you help me resolve this issue?",
+          phonetic: "cûd iú rélp mi ri-zólv dís í-shu?",
+          portuguese: "Você poderia me ajudar a resolver esse problema?",
+        },
+      ],
     };
 
     setShowCustomModal(false);
@@ -259,7 +303,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
         timestamp: Date.now(),
       },
     ]);
-    setSuggestedReplies(custom.sampleReplies);
+    setStructuredSuggestions(custom.structuredSuggestions || []);
     toast.success("Situação personalizada iniciada com o Leo!");
   };
 
@@ -276,12 +320,23 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
             Trilha de Sobrevivência Real
           </span>
-          <button
-            onClick={() => setShowCustomModal(true)}
-            className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1"
-          >
-            <PlusCircle className="h-3.5 w-3.5" /> Outra situação
-          </button>
+          <div className="flex items-center gap-2">
+            {activeMission.script && (
+              <button
+                type="button"
+                onClick={() => setShowScriptModal(true)}
+                className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded-md"
+              >
+                <BookOpen className="h-3.5 w-3.5" /> Roteiro Completo
+              </button>
+            )}
+            <button
+              onClick={() => setShowCustomModal(true)}
+              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+            >
+              <PlusCircle className="h-3.5 w-3.5" /> Outro
+            </button>
+          </div>
         </div>
 
         {/* Abas das 3 Semanas */}
@@ -306,7 +361,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
           ))}
         </div>
 
-        {/* Carrossel de Situações da Semana Escolhida */}
+        {/* Carrossel de Situações da Semana */}
         <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar pt-0.5">
           {missionsInCurrentWeek.map((m) => {
             const Icon = ICON_MAP[m.icon] || Coffee;
@@ -338,7 +393,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
       <div className="px-3 py-2 bg-muted/40 border-b border-border text-[11px] space-y-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <Badge variant="outline" className="text-[9px] bg-background">
+            <Badge variant="outline" className="text-[9px] bg-background font-semibold">
               Papel IA: <strong className="ml-1 text-primary">{activeScenario.roleAi}</strong>
             </Badge>
             <Badge variant="outline" className="text-[9px] bg-background">
@@ -353,7 +408,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
             className={`h-6 text-[10px] px-2 gap-1 rounded-md ${
               isMissionCompleted
                 ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
-                : "border-primary/40 text-primary hover:bg-primary/10"
+                : "border-primary/40 text-primary hover:bg-primary/10 font-bold"
             }`}
           >
             <CheckCircle2 className="h-3 w-3" />
@@ -373,8 +428,10 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
 
       {/* 3. HISTÓRICO DO DIÁLOGO DE SOBREVIVÊNCIA */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3 text-xs">
-        {messages.map((msg) => {
+        {messages.map((msg, index) => {
           const isUser = msg.sender === "user";
+          const isFirstAi = !isUser && index === 0 && activeMission.openingAiPhonetic;
+
           return (
             <div
               key={msg.id}
@@ -384,19 +441,35 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
                 {isUser ? activeScenario.roleUser : activeScenario.roleAi}
               </span>
               <div
-                className={`rounded-2xl px-3.5 py-2.5 max-w-[85%] shadow-xs leading-relaxed ${
+                className={`rounded-2xl px-3.5 py-2.5 max-w-[88%] shadow-xs leading-relaxed space-y-1 ${
                   isUser
                     ? "bg-primary text-primary-foreground rounded-tr-xs"
                     : "bg-card border border-border text-foreground rounded-tl-xs"
                 }`}
               >
-                <p>{msg.text}</p>
+                {/* 1. Frase em Inglês */}
+                <p className="font-medium text-xs">{msg.text}</p>
+
+                {/* 2. Escrita Fonética no Diálogo Inicial */}
+                {isFirstAi && activeMission.openingAiPhonetic && (
+                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono italic">
+                    [ {activeMission.openingAiPhonetic} ]
+                  </p>
+                )}
+
+                {/* 3. Tradução em Português no Diálogo Inicial */}
+                {isFirstAi && activeMission.openingAiPortuguese && (
+                  <p className="text-[10px] text-muted-foreground border-t border-border/40 pt-0.5">
+                    {activeMission.openingAiPortuguese}
+                  </p>
+                )}
+
                 {!isUser && (
                   <button
                     onClick={() => speakText(msg.text, { rate: progress.audioSpeed })}
-                    className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground pt-1"
+                    className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground pt-0.5"
                   >
-                    <Volume2 className="h-3 w-3" /> Ouvir pronúncia
+                    <Volume2 className="h-3 w-3 text-primary" /> Ouvir pronúncia
                   </button>
                 )}
               </div>
@@ -413,21 +486,48 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 4. SUGESTÕES DE RESPOSTA RÁPIDA */}
-      {suggestedReplies.length > 0 && (
-        <div className="p-2 border-t border-border/40 bg-background/90">
-          <p className="text-[10px] text-muted-foreground font-medium mb-1 flex items-center gap-1">
-            <Lightbulb className="h-3 w-3 text-amber-500" /> Para sobreviver à conversa, diga:
-          </p>
-          <div className="flex flex-col gap-1">
-            {suggestedReplies.slice(0, 2).map((reply, idx) => (
-              <button
+      {/* 4. SUGESTÕES DE RESPOSTAS ESTRUTURADAS COM FONÉTICA E TRADUÇÃO */}
+      {structuredSuggestions.length > 0 && (
+        <div className="p-2 border-t border-border/50 bg-background/95 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] text-muted-foreground font-bold flex items-center gap-1">
+              <Lightbulb className="h-3 w-3 text-amber-500" /> Sugestões de Fala (com Fonética & Tradução):
+            </p>
+            <span className="text-[9px] text-muted-foreground">Toque para responder</span>
+          </div>
+
+          <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-0.5">
+            {structuredSuggestions.map((item, idx) => (
+              <div
                 key={idx}
-                onClick={() => handleSend(reply)}
-                className="text-left px-2.5 py-1.5 rounded-lg border border-border/70 bg-card hover:bg-muted text-[11px] text-foreground font-medium transition-colors line-clamp-1"
+                onClick={() => handleSend(item.english)}
+                className="group relative flex flex-col p-2 rounded-xl border border-border/70 bg-card hover:border-primary/60 hover:bg-primary/5 transition-all text-left cursor-pointer shadow-2xs"
               >
-                &ldquo;{reply}&rdquo;
-              </button>
+                <div className="flex items-start justify-between gap-1.5">
+                  {/* 1. Frase em Inglês */}
+                  <span className="text-xs font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
+                    &ldquo;{item.english}&rdquo;
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => handlePlaySound(e, item.english)}
+                    className="h-6 w-6 rounded-md hover:bg-muted text-muted-foreground hover:text-primary flex items-center justify-center shrink-0 transition-colors"
+                    title="Ouvir como falar"
+                  >
+                    <Volume2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                {/* 2. Escrita Fonética Acessível para falar */}
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono italic leading-tight mt-0.5">
+                  [ {item.phonetic} ]
+                </span>
+
+                {/* 3. Tradução em Português */}
+                <span className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
+                  {item.portuguese}
+                </span>
+              </div>
             ))}
           </div>
         </div>
@@ -477,6 +577,81 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
           </Button>
         </form>
       </div>
+
+      {/* MODAL DO ROTEIRO COMPLETO COM FONÉTICA E TRADUÇÃO */}
+      {showScriptModal && activeMission.script && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in">
+          <div className="bg-background rounded-2xl max-w-md w-full max-h-[85vh] flex flex-col border border-border shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-3.5 border-b border-border bg-muted/40">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-primary" />
+                <h3 className="text-xs font-bold text-foreground">
+                  Roteiro de Fala: {activeMission.title}
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowScriptModal(false)}
+                className="h-6 w-6 rounded-md hover:bg-muted text-muted-foreground flex items-center justify-center"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-3.5 overflow-y-auto space-y-3 divide-y divide-border/40 text-xs">
+              {activeMission.script.map((line: DialogueScriptLine) => {
+                const isUser = line.roleType === "user";
+                return (
+                  <div key={line.id} className="pt-2.5 first:pt-0 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                          isUser
+                            ? "bg-primary/10 text-primary border border-primary/20"
+                            : "bg-muted text-foreground border border-border"
+                        }`}
+                      >
+                        {line.speaker}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => handlePlaySound(e, line.english)}
+                        className="flex items-center gap-1 text-[11px] text-primary hover:underline font-semibold"
+                      >
+                        <Volume2 className="h-3.5 w-3.5" /> Ouvir
+                      </button>
+                    </div>
+
+                    {/* Inglês */}
+                    <p className="text-xs font-bold text-foreground">
+                      &ldquo;{line.english}&rdquo;
+                    </p>
+
+                    {/* Fonética */}
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono italic">
+                      [ {line.phonetic} ]
+                    </p>
+
+                    {/* Tradução */}
+                    <p className="text-[11px] text-muted-foreground">
+                      {line.portuguese}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="p-3 border-t border-border bg-card/60 flex justify-end">
+              <Button
+                size="sm"
+                onClick={() => setShowScriptModal(false)}
+                className="text-xs font-bold h-8"
+              >
+                Entendido, voltar à conversa
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal para criar situação personalizada */}
       {showCustomModal && (

@@ -261,13 +261,130 @@ Respond in strictly valid JSON format:
   };
 }
 
+export interface ScenarioChatResult {
+  replyText: string;
+  suggestedReplies: string[];
+  structuredSuggestions?: {
+    english: string;
+    phonetic: string;
+    portuguese: string;
+  }[];
+}
+
+const PHONETIC_MAP: Record<string, string> = {
+  the: "da",
+  a: "a",
+  an: "én",
+  i: "ái",
+  you: "iú",
+  he: "rí",
+  she: "shí",
+  we: "uí",
+  they: "dêi",
+  it: "it",
+  my: "mái",
+  your: "iór",
+  is: "íz",
+  are: "ar",
+  am: "ém",
+  have: "rév",
+  has: "réz",
+  can: "kén",
+  could: "cûd",
+  would: "uûd",
+  should: "shûd",
+  get: "guét",
+  take: "têik",
+  like: "láik",
+  want: "uónt",
+  need: "níd",
+  help: "rélp",
+  please: "plíz",
+  to: "tu",
+  go: "gou",
+  with: "uíd",
+  for: "fór",
+  from: "frâm",
+  where: "uér",
+  what: "uót",
+  when: "uén",
+  why: "uái",
+  how: "ráo",
+  much: "mâtch",
+  cost: "cóst",
+  price: "práis",
+  discount: "dís-cáunt",
+  cash: "késh",
+  card: "cárd",
+  coffee: "có-fi",
+  large: "lárdji",
+  latte: "lá-tei",
+  milk: "mílk",
+  hotel: "rou-tél",
+  room: "rúm",
+  subway: "sâb-uei",
+  train: "trêin",
+  station: "stêi-shân",
+  work: "uôrk",
+  day: "dêi",
+  today: "tu-dêi",
+  tomorrow: "tu-mó-rou",
+  issue: "í-shu",
+  problem: "pró-blêm",
+  agree: "a-grí",
+  think: "tĩnk",
+  because: "bi-cóz",
+  risk: "rísk",
+  launch: "lón-tch",
+  test: "tést",
+  safe: "sêif",
+  sure: "shûr",
+  good: "gúd",
+  great: "grêit",
+  awesome: "ó-sâm",
+  thanks: "ténks",
+  thank: "ténk",
+  one: "uân",
+  two: "tú",
+  three: "trí",
+  four: "fór",
+  five: "fáiv",
+  hello: "ré-lou",
+  hi: "rái",
+  hey: "rêi",
+  excuse: "éks-kiúz",
+  me: "mi",
+  yes: "iés",
+  no: "nóu",
+};
+
+export function generatePhoneticGuide(english: string): string {
+  const words = english.replace(/[.,!?;:"]/g, "").split(/\s+/);
+  return words
+    .map((w) => {
+      const lower = w.toLowerCase();
+      if (PHONETIC_MAP[lower]) return PHONETIC_MAP[lower];
+      // Regras fonéticas aproximadas
+      return lower
+        .replace(/th/g, "t")
+        .replace(/ph/g, "f")
+        .replace(/ch/g, "tch")
+        .replace(/sh/g, "sh")
+        .replace(/ee|ea/g, "i")
+        .replace(/oo/g, "u")
+        .replace(/w/g, "u")
+        .replace(/r\b/g, "r");
+    })
+    .join(" ");
+}
+
 // 2. CENÁRIO: Roleplay em situações reais
 export async function scenarioChat(
   scenario: Scenario,
   userInput: string,
   history: ChatMessage[],
   apiKey?: string
-): Promise<{ replyText: string; suggestedReplies: string[] }> {
+): Promise<ScenarioChatResult> {
   if (apiKey) {
     try {
       const systemPrompt = `You are playing the role of "${scenario.roleAi}" in the following situation: "${scenario.context}".
@@ -332,7 +449,19 @@ Provide your response strictly in JSON:
     replyText = `Thank you for sharing that. As the ${scenario.roleAi}, let's keep going: what is your next step in this situation?`;
   }
 
-  return { replyText, suggestedReplies };
+  const structuredSuggestions = suggestedReplies.map((reply) => {
+    const existing = scenario.structuredSuggestions?.find(
+      (s) => s.english.toLowerCase() === reply.toLowerCase()
+    );
+    if (existing) return existing;
+    return {
+      english: reply,
+      phonetic: generatePhoneticGuide(reply),
+      portuguese: "Toque para responder",
+    };
+  });
+
+  return { replyText, suggestedReplies, structuredSuggestions };
 }
 
 // 3. CARTÕES: Geração temática de vocabulário
