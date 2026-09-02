@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { TabType, UserProgress } from "@/types/language";
+import { TabType, UserProgress, WeeklyMission } from "@/types/language";
 import { loadUserProgress, saveUserProgress, addXP } from "@/services/storage";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
+import { DailyMissionBanner } from "@/components/DailyMissionBanner";
 import { ConversationTab } from "@/components/tabs/ConversationTab";
 import { ScenarioTab } from "@/components/tabs/ScenarioTab";
 import { AlphabetTab } from "@/components/tabs/AlphabetTab";
@@ -20,8 +21,10 @@ export const Route = createFileRoute("/")({
 function SmartLanguageApp() {
   const [activeTab, setActiveTab] = useState<TabType>("conversa");
   const [progress, setProgress] = useState<UserProgress>(loadUserProgress());
+  const [selectedMission, setSelectedMission] = useState<WeeklyMission | null>(null);
   const [isDailySprintOpen, setIsDailySprintOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showSessionStarter, setShowSessionStarter] = useState(true);
 
   useEffect(() => {
     // Carrega progresso persistido ao inicializar
@@ -43,6 +46,12 @@ function SmartLanguageApp() {
     handleUpdateProgress(completedState);
   };
 
+  const handleStartMission = (mission: WeeklyMission) => {
+    setSelectedMission(mission);
+    setActiveTab("cenario");
+    setShowSessionStarter(false);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans select-none antialiased">
       {/* Barra de Notificações Toast */}
@@ -55,8 +64,27 @@ function SmartLanguageApp() {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
+      {/* BANNER DA SESSÃO INICIAL: SITUAÇÃO REAL DO DIA (3 SEMANAS PROGRESSIVAS) */}
+      {showSessionStarter && activeTab === "conversa" && (
+        <div className="relative">
+          <DailyMissionBanner
+            progress={progress}
+            onStartMission={handleStartMission}
+            onUpdateProgress={handleUpdateProgress}
+          />
+          <div className="text-center pb-1">
+            <button
+              onClick={() => setShowSessionStarter(false)}
+              className="text-[10px] text-muted-foreground hover:underline font-medium"
+            >
+              Ocultar situação inicial e ir direto para o chat livre &darr;
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Conteúdo Principal com as 5 Abas */}
-      <main className="flex-1 pb-16 overflow-hidden">
+      <main className="flex-1 pb-16 overflow-hidden flex flex-col">
         {activeTab === "conversa" && (
           <ConversationTab
             progress={progress}
@@ -67,6 +95,7 @@ function SmartLanguageApp() {
           <ScenarioTab
             progress={progress}
             onUpdateProgress={handleUpdateProgress}
+            selectedMission={selectedMission}
           />
         )}
         {activeTab === "alfabeto" && (

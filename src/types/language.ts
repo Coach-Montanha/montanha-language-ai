@@ -65,6 +65,22 @@ export interface SentenceAnalysis {
   explanation: string;
 }
 
+export interface WeeklyMission {
+  id: string;
+  week: 1 | 2 | 3;
+  weekTitle: string;
+  title: string;
+  icon: string;
+  focus: string; // ex: "Sobrevivência", "Contexto & Trabalho", "Opinião & Debate"
+  situationDescription: string;
+  aiRole: string;
+  userRole: string;
+  openingAiDialogue: string;
+  survivalObjective: string;
+  survivalTipsPt: string;
+  sampleResponses: string[];
+}
+
 export interface UserProgress {
   streakDays: number;
   lastActiveDate: string;
@@ -75,4 +91,7 @@ export interface UserProgress {
   dailySprintDone: boolean;
   geminiApiKey?: string | undefined;
   audioSpeed: number; // 0.8, 1.0, 1.2
+  currentWeek?: (1 | 2 | 3) | undefined;
+  completedMissionIds?: string[] | undefined;
+  activeMissionId?: string | undefined;
 }
