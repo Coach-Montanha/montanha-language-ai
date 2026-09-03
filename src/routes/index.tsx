@@ -11,7 +11,6 @@ import {
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { LoginScreen } from "@/components/LoginScreen";
-import { DailyMissionBanner } from "@/components/DailyMissionBanner";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { ConversationTab } from "@/components/tabs/ConversationTab";
 import { ScenarioTab } from "@/components/tabs/ScenarioTab";
@@ -42,7 +41,6 @@ function SmartLanguageApp() {
   const [isDailySprintOpen, setIsDailySprintOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
-  const [showSessionStarter, setShowSessionStarter] = useState(true);
 
   const handleSelectLanguage = (lang: LanguageDefinition) => {
     const defaultTutor = getDefaultTutorForLanguage(lang.id);
@@ -141,7 +139,6 @@ function SmartLanguageApp() {
   const handleStartMission = (mission: WeeklyMission) => {
     setSelectedMission(mission);
     setActiveTab("cenario");
-    setShowSessionStarter(false);
   };
 
   // Se não estiver logado, exibe a tela de login e cadastro com senha de 4 números
@@ -169,25 +166,6 @@ function SmartLanguageApp() {
         onCycleFontSize={handleCycleGlobalFontSize}
         onOpenLanguageSelector={() => setIsLanguageModalOpen(true)}
       />
-
-      {/* BANNER DA SESSÃO INICIAL: SITUAÇÃO REAL DO DIA (3 SEMANAS PROGRESSIVAS) */}
-      {showSessionStarter && activeTab === "conversa" && (
-        <div className="relative">
-          <DailyMissionBanner
-            progress={progress}
-            onStartMission={handleStartMission}
-            onUpdateProgress={handleUpdateProgress}
-          />
-          <div className="text-center pb-1">
-            <button
-              onClick={() => setShowSessionStarter(false)}
-              className="text-[10px] text-muted-foreground hover:underline font-medium"
-            >
-              Ocultar situação inicial e ir direto para o chat livre com Leo &darr;
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Conteúdo Principal com as 5 Abas */}
       <main className="flex-1 pb-16 overflow-hidden flex flex-col">

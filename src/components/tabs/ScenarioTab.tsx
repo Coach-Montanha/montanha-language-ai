@@ -6,12 +6,17 @@ import {
   WeeklyMission,
   ScriptSuggestion,
   DialogueScriptLine,
+  SupportedLanguage,
 } from "@/types/language";
 import {
-  WEEKLY_MISSIONS,
   getMissionsByWeek,
+  getAvailableWeeksForLanguage,
+  getMissionsForLanguage,
   missionToScenario,
 } from "@/data/missions";
+import { getLanguageById } from "@/data/languages";
+import { getTutorsForLanguage } from "@/data/tutors";
+import { generateProceduralWeek } from "@/services/procedural-missions";
 import { scenarioChat, generatePhoneticGuide } from "@/services/ai-engine";
 import {
   speakText,
@@ -46,6 +51,8 @@ import {
   BookOpen,
   X,
   Play,
+  Layers,
+  Sparkle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -66,6 +73,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   ThumbsUp,
   ShieldAlert,
   TrendingUp,
+  BookOpen,
 };
 
 export const ScenarioTab: React.FC<ScenarioTabProps> = ({
@@ -73,12 +81,36 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
   onUpdateProgress,
   selectedMission,
 }) => {
-  const currentWeek = progress.currentWeek || 1;
-  const [activeWeek, setActiveWeek] = useState<1 | 2 | 3>(
-    selectedMission ? selectedMission.week : currentWeek
+  const currentLanguage: SupportedLanguage = progress.selectedLanguage || "en";
+  const langDef = getLanguageById(currentLanguage);
+  const tutors = getTutorsForLanguage(currentLanguage);
+  const activeTutor = tutors[0] || { name: "Tutor", gender: "male" };
+
+  const availableWeeks = getAvailableWeeksForLanguage(
+    currentLanguage,
+    progress.customMissions
   );
 
-  const initialMission = selectedMission || getMissionsByWeek(activeWeek)[0]!;
+  const initialWeek = selectedMission
+    ? selectedMission.week
+    : progress.currentWeek && availableWeeks.includes(progress.currentWeek)
+    ? progress.currentWeek
+    : availableWeeks[0] || 1;
+
+  const [activeWeek, setActiveWeek] = useState<number>(initialWeek);
+
+  // Missão ativa inicial
+  const missionsForWeek = getMissionsByWeek(
+    activeWeek,
+    currentLanguage,
+    progress.customMissions
+  );
+
+  const initialMission =
+    selectedMission ||
+    missionsForWeek[0] ||
+    getMissionsForLanguage(currentLanguage, progress.customMissions)[0]!;
+
   const [activeMission, setActiveMission] = useState<WeeklyMission>(initialMission);
   const [activeScenario, setActiveScenario] = useState<Scenario>(
     missionToScenario(initialMission)
@@ -89,6 +121,8 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
       id: "sc-init",
       sender: "tutor",
       text: initialMission.openingAiDialogue,
+      phonetic: initialMission.openingAiPhonetic,
+      translationPt: initialMission.openingAiPortuguese,
       timestamp: Date.now(),
     },
   ]);
@@ -111,30 +145,47 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Se uma missão foi selecionada vinda do banner inicial
+  // Se o idioma for alterado no cabeçalho ou por fora
+  useEffect(() => {
+    const langWeeks = getAvailableWeeksForLanguage(
+      currentLanguage,
+      progress.customMissions
+    );
+    const targetW = langWeeks[0] || 1;
+    setActiveWeek(targetW);
+
+    const weekMissions = getMissionsByWeek(
+      targetW,
+      currentLanguage,
+      progress.customMissions
+    );
+    const firstOfLang =
+      weekMissions[0] ||
+      getMissionsForLanguage(currentLanguage, progress.customMissions)[0];
+
+    if (firstOfLang) {
+      handleSelectMission(firstOfLang);
+    }
+  }, [currentLanguage]);
+
+  // Se uma missão específica foi passada como prop
   useEffect(() => {
     if (selectedMission) {
       setActiveWeek(selectedMission.week);
-      setActiveMission(selectedMission);
-      const sc = missionToScenario(selectedMission);
-      setActiveScenario(sc);
-      setMessages([
-        {
-          id: `sc-init-${Date.now()}`,
-          sender: "tutor",
-          text: selectedMission.openingAiDialogue,
-          timestamp: Date.now(),
-        },
-      ]);
-      setStructuredSuggestions(selectedMission.structuredSuggestions || []);
-      speakText(selectedMission.openingAiDialogue, { rate: progress.audioSpeed });
+      handleSelectMission(selectedMission);
     }
   }, [selectedMission]);
 
-  const handleSelectWeek = (week: 1 | 2 | 3) => {
+  const handleSelectWeek = (week: number) => {
     setActiveWeek(week);
-    const firstOfTargetWeek = getMissionsByWeek(week)[0]!;
-    handleSelectMission(firstOfTargetWeek);
+    const missions = getMissionsByWeek(
+      week,
+      currentLanguage,
+      progress.customMissions
+    );
+    if (missions.length > 0) {
+      handleSelectMission(missions[0]!);
+    }
   };
 
   const handleSelectMission = (mission: WeeklyMission) => {
@@ -146,11 +197,58 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
         id: `sc-init-${Date.now()}`,
         sender: "tutor",
         text: mission.openingAiDialogue,
+        phonetic: mission.openingAiPhonetic,
+        translationPt: mission.openingAiPortuguese,
         timestamp: Date.now(),
       },
     ]);
     setStructuredSuggestions(mission.structuredSuggestions || []);
-    speakText(mission.openingAiDialogue, { rate: progress.audioSpeed });
+    speakText(mission.openingAiDialogue, {
+      rate: progress.audioSpeed,
+      lang: langDef.speechLangCode,
+      gender: activeTutor.gender,
+    });
+  };
+
+  // Gerador procedural de mais semanas com 1 clique
+  const handleCreateMoreWeeks = () => {
+    const currentWeeks = getAvailableWeeksForLanguage(
+      currentLanguage,
+      progress.customMissions
+    );
+    const maxWeek = Math.max(...currentWeeks, 3);
+    const nextWeekNumber = maxWeek + 1;
+
+    try {
+      const generatedMissions = generateProceduralWeek(
+        currentLanguage,
+        nextWeekNumber
+      );
+
+      const updatedCustom = [
+        ...(progress.customMissions || []),
+        ...generatedMissions,
+      ];
+
+      onUpdateProgress({
+        ...progress,
+        customMissions: updatedCustom,
+        currentWeek: nextWeekNumber,
+      });
+
+      setActiveWeek(nextWeekNumber);
+      if (generatedMissions[0]) {
+        handleSelectMission(generatedMissions[0]);
+      }
+
+      toast.success(
+        `🎉 Semana ${nextWeekNumber} gerada para ${langDef.name}! ${generatedMissions.length} novas situações adicionadas.`,
+        { duration: 4000 }
+      );
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível gerar mais semanas no momento.");
+    }
   };
 
   const handleSend = async (textToSend?: string) => {
@@ -181,74 +279,80 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
         id: `ai-${Date.now()}`,
         sender: "tutor",
         text: res.replyText,
+        phonetic: generatePhoneticGuide(res.replyText),
         timestamp: Date.now(),
       };
 
       setMessages([...newHistory, aiMsg]);
+      speakText(res.replyText, {
+        rate: progress.audioSpeed,
+        lang: langDef.speechLangCode,
+        gender: activeTutor.gender,
+      });
+
       if (res.structuredSuggestions && res.structuredSuggestions.length > 0) {
         setStructuredSuggestions(res.structuredSuggestions);
-      } else {
+      } else if (res.suggestedReplies && res.suggestedReplies.length > 0) {
         setStructuredSuggestions(
           res.suggestedReplies.map((r) => ({
             english: r,
             phonetic: generatePhoneticGuide(r),
-            portuguese: "Toque para responder",
+            portuguese: "Sugestão de resposta rápida",
           }))
         );
       }
-
-      speakText(res.replyText, { rate: progress.audioSpeed });
-
-      const updated = addXP(10);
-      onUpdateProgress(updated);
-    } catch (e) {
-      console.error(e);
-      toast.error("Erro ao simular resposta do cenário.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao processar conversa no cenário.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleMicToggle = () => {
+  const handleToggleRecord = () => {
     if (!isSpeechRecognitionSupported()) {
-      toast.error("Reconhecimento de voz não suportado neste navegador.");
+      toast.error("Reconhecimento de fala não suportado neste navegador.");
       return;
     }
 
     if (isRecording) {
       setIsRecording(false);
+      stopSpeaking();
       return;
     }
 
-    setIsRecording(true);
-    const recognizer = createSpeechRecognizer({
-      onInterim: (text) => setInput(text),
-      onFinal: (transcript) => {
+    const recognizer = createSpeechRecognizer(
+      langDef.speechLangCode,
+      (text) => {
         setIsRecording(false);
-        handleSend(transcript);
+        handleSend(text);
       },
-      onError: (err) => {
+      (err) => {
         setIsRecording(false);
-        toast.error(err);
+        toast.error(`Erro no microfone: ${err}`);
       },
-      onEnd: () => setIsRecording(false),
-    });
+      () => setIsRecording(false)
+    );
 
     if (recognizer) {
+      setIsRecording(true);
       recognizer.start();
     }
   };
 
   const handleCompleteMission = () => {
-    const currentCompleted = progress.completedMissionIds || [];
-    if (!currentCompleted.includes(activeMission.id)) {
-      const updatedList = [...currentCompleted, activeMission.id];
-      const updated = addXP(30);
+    const completed = progress.completedMissionIds || [];
+    if (!completed.includes(activeMission.id)) {
+      const updatedMissions = [...completed, activeMission.id];
+      const withXp = addXP(30);
       onUpdateProgress({
-        ...updated,
-        completedMissionIds: updatedList,
+        ...progress,
+        ...withXp,
+        completedMissionIds: updatedMissions,
       });
-      toast.success(`🎉 Sobreviveu à conversa! +30 XP na ${activeMission.weekTitle}`);
+      toast.success(
+        `🎉 Sobreviveu à situação! +30 XP na ${activeMission.weekTitle}`
+      );
     } else {
       toast.info("Situação já concluída anteriormente!");
     }
@@ -256,113 +360,107 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
 
   const handlePlaySound = (e: React.MouseEvent, text: string) => {
     e.stopPropagation();
-    speakText(text, { rate: progress.audioSpeed });
+    speakText(text, {
+      rate: progress.audioSpeed,
+      lang: langDef.speechLangCode,
+      gender: activeTutor.gender,
+    });
   };
 
-  const handleCreateCustomScenario = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customTitle.trim()) return;
+  const missionsInCurrentWeek = getMissionsByWeek(
+    activeWeek,
+    currentLanguage,
+    progress.customMissions
+  );
 
-    const custom: Scenario = {
-      id: `custom-sc-${Date.now()}`,
-      title: customTitle,
-      icon: "Compass",
-      roleAi: customRole.trim() || "Atendente",
-      roleUser: "Você",
-      description: `Simulação de: ${customTitle}`,
-      context: `You are in a realistic survival roleplay about: ${customTitle}. Act naturally as ${customRole || "the other party"}. Challenge the user to survive the conversation.`,
-      initialAiMessage: `Hey there! Ready to practice: ${customTitle}. What's your first move?`,
-      sampleReplies: [
-        "Hello! I would like more information about this, please.",
-        "Could you help me resolve this issue?",
-        "Thank you for your help!",
-      ],
-      structuredSuggestions: [
-        {
-          english: "Hello! I would like more information about this, please.",
-          phonetic: "ré-lou! ái uûd láik mór in-fór-mêi-shân a-báut dís, plíz.",
-          portuguese: "Olá! Gostaria de mais informações sobre isso, por favor.",
-        },
-        {
-          english: "Could you help me resolve this issue?",
-          phonetic: "cûd iú rélp mi ri-zólv dís í-shu?",
-          portuguese: "Você poderia me ajudar a resolver esse problema?",
-        },
-      ],
-    };
-
-    setShowCustomModal(false);
-    setCustomTitle("");
-    setCustomRole("");
-    setActiveScenario(custom);
-    setMessages([
-      {
-        id: `sc-init-${Date.now()}`,
-        sender: "tutor",
-        text: custom.initialAiMessage,
-        timestamp: Date.now(),
-      },
-    ]);
-    setStructuredSuggestions(custom.structuredSuggestions || []);
-    toast.success("Situação personalizada iniciada com o Leo!");
-  };
-
-  const missionsInCurrentWeek = getMissionsByWeek(activeWeek);
   const isMissionCompleted = (progress.completedMissionIds || []).includes(
     activeMission.id
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8.5rem)] max-w-lg mx-auto w-full">
-      {/* 1. SELETOR DE SEMANAS (Sobrevivência, Contexto, Opinião) */}
-      <div className="p-2 border-b border-border bg-card/60 space-y-1.5">
+    <div className="flex flex-col h-[calc(100vh-7.5rem)] max-w-lg mx-auto w-full">
+      {/* 1. CABEÇALHO DA TRILHA DE SITUAÇÕES REAIS */}
+      <div className="p-2 border-b border-border bg-card/70 space-y-2">
+        {/* Barra superior: Idioma, Ações e Botão Procedural */}
         <div className="flex items-center justify-between px-1">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-            Trilha de Sobrevivência Real
-          </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-base">{langDef.flag}</span>
+            <div>
+              <span className="text-[11px] font-extrabold text-foreground tracking-tight block">
+                Situações da Vida Real
+              </span>
+              <span className="text-[10px] text-muted-foreground block -mt-0.5">
+                {langDef.name} • Tutor {activeTutor.name}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            {/* Botão Procedural: Criar Mais Semanas */}
+            <Button
+              size="sm"
+              variant="default"
+              onClick={handleCreateMoreWeeks}
+              className="h-7 text-[10px] px-2.5 gap-1 rounded-lg font-bold shadow-xs bg-primary text-primary-foreground hover:bg-primary/90"
+              title="Gerar nova semana procedural com situações reais"
+            >
+              <Sparkles className="h-3 w-3 text-amber-300" />
+              <span>+ Criar Semana</span>
+            </Button>
+
             {activeMission.script && (
               <button
                 type="button"
                 onClick={() => setShowScriptModal(true)}
-                className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded-md"
+                className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-md"
+                title="Ver roteiro completo com fonética e tradução"
               >
-                <BookOpen className="h-3.5 w-3.5" /> Roteiro Completo
+                <BookOpen className="h-3 w-3" /> Roteiro
               </button>
             )}
-            <button
-              onClick={() => setShowCustomModal(true)}
-              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground flex items-center gap-0.5"
-            >
-              <PlusCircle className="h-3.5 w-3.5" /> Outro
-            </button>
           </div>
         </div>
 
-        {/* Abas das 3 Semanas */}
-        <div className="grid grid-cols-3 gap-1 p-0.5 bg-muted/60 rounded-xl border border-border/40">
-          {[
-            { week: 1 as const, label: "Semana 1", desc: "Sobrevivência" },
-            { week: 2 as const, label: "Semana 2", desc: "Teu Contexto" },
-            { week: 3 as const, label: "Semana 3", desc: "Opinião" },
-          ].map((w) => (
-            <button
-              key={w.week}
-              onClick={() => handleSelectWeek(w.week)}
-              className={`py-1 px-1.5 rounded-lg text-center transition-all ${
-                activeWeek === w.week
-                  ? "bg-background text-primary shadow-xs border border-border font-bold"
-                  : "text-muted-foreground hover:text-foreground font-medium"
-              }`}
-            >
-              <div className="text-[10px] font-extrabold uppercase">{w.label}</div>
-              <div className="text-[9px] truncate">{w.desc}</div>
-            </button>
-          ))}
+        {/* Seletor Dinâmico de Semanas (Rolagem horizontal para semanas infinitas) */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar pt-0.5">
+          {availableWeeks.map((w) => {
+            const isSel = activeWeek === w;
+            const weekMissionsList = getMissionsByWeek(
+              w,
+              currentLanguage,
+              progress.customMissions
+            );
+            const weekDoneCount = weekMissionsList.filter((m) =>
+              (progress.completedMissionIds || []).includes(m.id)
+            ).length;
+
+            return (
+              <button
+                key={w}
+                onClick={() => handleSelectWeek(w)}
+                className={`shrink-0 py-1 px-2.5 rounded-lg text-left transition-all border ${
+                  isSel
+                    ? "bg-background text-primary border-primary shadow-xs font-bold"
+                    : "bg-muted/50 text-muted-foreground hover:text-foreground border-transparent font-medium"
+                }`}
+              >
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-extrabold uppercase">
+                    Semana {w}
+                  </span>
+                  {weekDoneCount > 0 && (
+                    <span className="text-[8px] bg-emerald-500/15 text-emerald-600 px-1 py-0.2 rounded font-bold">
+                      {weekDoneCount}/{weekMissionsList.length}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Carrossel de Situações da Semana */}
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar pt-0.5">
+        {/* Carrossel de Situações da Semana Escolhida */}
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
           {missionsInCurrentWeek.map((m) => {
             const Icon = ICON_MAP[m.icon] || Coffee;
             const isSelected = activeMission.id === m.id;
@@ -381,7 +479,11 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
                 <Icon className="h-3.5 w-3.5" />
                 <span>{m.title}</span>
                 {isDone && (
-                  <CheckCircle2 className={`h-3 w-3 ${isSelected ? "text-white" : "text-emerald-500"}`} />
+                  <CheckCircle2
+                    className={`h-3 w-3 ${
+                      isSelected ? "text-white" : "text-emerald-500"
+                    }`}
+                  />
                 )}
               </button>
             );
@@ -389,10 +491,10 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
         </div>
       </div>
 
-      {/* 2. BARRA DE METAS DA SITUAÇÃO (Objetivo & Dica do Leo) */}
-      <div className="px-3 py-2 bg-muted/40 border-b border-border text-[11px] space-y-1">
+      {/* 2. BRIEFING DA SITUAÇÃO (História, Objetivo e Dica do Tutor) */}
+      <div className="px-3 py-2 bg-muted/40 border-b border-border text-[11px] space-y-1.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <Badge variant="outline" className="text-[9px] bg-background font-semibold">
               Papel IA: <strong className="ml-1 text-primary">{activeScenario.roleAi}</strong>
             </Badge>
@@ -416,14 +518,18 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
           </Button>
         </div>
 
-        {activeMission && (
-          <div className="text-[10px] text-muted-foreground flex items-center gap-1 truncate">
-            <Target className="h-3 w-3 text-primary shrink-0" />
-            <span className="truncate">
-              <strong>Meta:</strong> {activeMission.survivalObjective}
-            </span>
-          </div>
-        )}
+        {/* História e contexto realista */}
+        <p className="text-[10px] text-muted-foreground leading-snug line-clamp-2">
+          {activeMission.situationDescription}
+        </p>
+
+        {/* Objetivo de Sobrevivência */}
+        <div className="text-[10px] text-foreground flex items-center gap-1 truncate font-medium">
+          <Target className="h-3 w-3 text-primary shrink-0" />
+          <span className="truncate">
+            <strong>Meta:</strong> {activeMission.survivalObjective}
+          </span>
+        </div>
       </div>
 
       {/* 3. HISTÓRICO DO DIÁLOGO DE SOBREVIVÊNCIA */}
@@ -447,30 +553,33 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
                     : "bg-card border border-border text-foreground rounded-tl-xs"
                 }`}
               >
-                {/* 1. Frase em Inglês */}
-                <p className="font-medium text-xs">{msg.text}</p>
+                {/* 1. Frase no Idioma Nativo */}
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium text-xs sm:text-sm">{msg.text}</p>
+                  {!isUser && (
+                    <button
+                      type="button"
+                      onClick={(e) => handlePlaySound(e, msg.text)}
+                      className="text-muted-foreground hover:text-primary transition-colors p-0.5 shrink-0"
+                      title="Ouvir pronúncia"
+                    >
+                      <Volume2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
 
-                {/* 2. Escrita Fonética no Diálogo Inicial */}
-                {isFirstAi && activeMission.openingAiPhonetic && (
-                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono italic">
-                    [ {activeMission.openingAiPhonetic} ]
+                {/* 2. Escrita Fonética em Português */}
+                {(msg.phonetic || (isFirstAi && activeMission.openingAiPhonetic)) && (
+                  <p className="text-[10px] sm:text-[11px] font-mono tracking-tight opacity-90 border-t border-border/20 pt-0.5 text-emerald-600 dark:text-emerald-400">
+                    [ {msg.phonetic || activeMission.openingAiPhonetic} ]
                   </p>
                 )}
 
-                {/* 3. Tradução em Português no Diálogo Inicial */}
-                {isFirstAi && activeMission.openingAiPortuguese && (
-                  <p className="text-[10px] text-muted-foreground border-t border-border/40 pt-0.5">
-                    {activeMission.openingAiPortuguese}
+                {/* 3. Tradução para o Português */}
+                {(msg.translationPt || (isFirstAi && activeMission.openingAiPortuguese)) && (
+                  <p className="text-[10px] opacity-75 italic border-t border-border/20 pt-0.5">
+                    {msg.translationPt || activeMission.openingAiPortuguese}
                   </p>
-                )}
-
-                {!isUser && (
-                  <button
-                    onClick={() => speakText(msg.text, { rate: progress.audioSpeed })}
-                    className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground pt-0.5"
-                  >
-                    <Volume2 className="h-3 w-3 text-primary" /> Ouvir pronúncia
-                  </button>
                 )}
               </div>
             </div>
@@ -478,79 +587,66 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
         })}
 
         {isLoading && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground pl-2">
-            <Sparkles className="h-3.5 w-3.5 animate-spin text-primary" />
+          <div className="flex items-center gap-2 text-muted-foreground text-xs p-2 animate-pulse">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
             <span>{activeScenario.roleAi} está respondendo...</span>
           </div>
         )}
+
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 4. SUGESTÕES DE RESPOSTAS ESTRUTURADAS COM FONÉTICA E TRADUÇÃO */}
-      {structuredSuggestions.length > 0 && (
-        <div className="p-2 border-t border-border/50 bg-background/95 space-y-1.5">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] text-muted-foreground font-bold flex items-center gap-1">
-              <Lightbulb className="h-3 w-3 text-amber-500" /> Sugestões de Fala (com Fonética & Tradução):
-            </p>
-            <span className="text-[9px] text-muted-foreground">Toque para responder</span>
+      {/* 4. SUGESTÕES RÁPIDAS DE RESPOSTA */}
+      {structuredSuggestions && structuredSuggestions.length > 0 && !isLoading && (
+        <div className="px-3 py-1.5 bg-muted/40 border-t border-border space-y-1">
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold px-0.5">
+            <span className="flex items-center gap-1">
+              <Lightbulb className="h-3 w-3 text-amber-500" />
+              O que responder agora ({langDef.name}):
+            </span>
+            <span className="text-[9px] opacity-75">Toque para enviar com fonética</span>
           </div>
-
-          <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-0.5">
-            {structuredSuggestions.map((item, idx) => (
-              <div
+          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            {structuredSuggestions.map((sug, idx) => (
+              <button
                 key={idx}
-                onClick={() => handleSend(item.english)}
-                className="group relative flex flex-col p-2 rounded-xl border border-border/70 bg-card hover:border-primary/60 hover:bg-primary/5 transition-all text-left cursor-pointer shadow-2xs"
+                type="button"
+                onClick={() => handleSend(sug.english)}
+                className="shrink-0 max-w-[240px] text-left p-2 rounded-xl bg-background border border-border/80 hover:border-primary/60 hover:bg-primary/5 transition-all text-xs group shadow-2xs space-y-0.5"
               >
-                <div className="flex items-start justify-between gap-1.5">
-                  {/* 1. Frase em Inglês */}
-                  <span className="text-xs font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
-                    &ldquo;{item.english}&rdquo;
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => handlePlaySound(e, item.english)}
-                    className="h-6 w-6 rounded-md hover:bg-muted text-muted-foreground hover:text-primary flex items-center justify-center shrink-0 transition-colors"
-                    title="Ouvir como falar"
-                  >
-                    <Volume2 className="h-3.5 w-3.5" />
-                  </button>
+                <div className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                  &ldquo;{sug.english}&rdquo;
                 </div>
-
-                {/* 2. Escrita Fonética Acessível para falar */}
-                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono italic leading-tight mt-0.5">
-                  [ {item.phonetic} ]
-                </span>
-
-                {/* 3. Tradução em Português */}
-                <span className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
-                  {item.portuguese}
-                </span>
-              </div>
+                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono truncate">
+                  [ {sug.phonetic} ]
+                </div>
+                <div className="text-[9px] text-muted-foreground truncate">
+                  {sug.portuguese}
+                </div>
+              </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* 5. ENTRADA DE VOZ (STT) OU DIGITAÇÃO */}
-      <div className="p-2 border-t border-border bg-card/60">
+      {/* 5. ÁREA DE DIGITAÇÃO & MICROFONE */}
+      <div className="p-2.5 border-t border-border bg-card/60">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSend();
           }}
-          className="flex items-center gap-1.5"
+          className="flex items-center gap-2"
         >
           <Button
             type="button"
+            variant="outline"
             size="icon"
-            variant={isRecording ? "destructive" : "outline"}
-            onClick={handleMicToggle}
+            onClick={handleToggleRecord}
             className={`h-9 w-9 shrink-0 rounded-xl transition-all ${
               isRecording ? "bg-red-500 text-white animate-pulse" : ""
             }`}
-            title="Responder por voz em inglês"
+            title={`Responder por voz em ${langDef.name}`}
           >
             {isRecording ? (
               <MicOff className="h-4 w-4" />
@@ -562,7 +658,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`Fale ou responda como ${activeScenario.roleUser}...`}
+            placeholder={`Fale ou responda como ${activeScenario.roleUser} em ${langDef.name}...`}
             className="text-xs h-9 rounded-xl flex-1 bg-background"
             disabled={isLoading}
           />
@@ -586,7 +682,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
               <div className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-primary" />
                 <h3 className="text-xs font-bold text-foreground">
-                  Roteiro de Fala: {activeMission.title}
+                  Roteiro de Fala: {activeMission.title} ({langDef.name})
                 </h3>
               </div>
               <button
@@ -621,7 +717,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
                       </button>
                     </div>
 
-                    {/* Inglês */}
+                    {/* Frase no idioma nativo */}
                     <p className="text-xs font-bold text-foreground">
                       &ldquo;{line.english}&rdquo;
                     </p>
@@ -649,49 +745,6 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
                 Entendido, voltar à conversa
               </Button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal para criar situação personalizada */}
-      {showCustomModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="bg-background rounded-2xl p-5 w-full max-w-sm border border-border shadow-xl space-y-3">
-            <h3 className="text-sm font-bold text-foreground">
-              Criar Situação Personalizada
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Diga qualquer situação do seu dia a dia para praticar sobrevivência com o Leo:
-            </p>
-            <form onSubmit={handleCreateCustomScenario} className="space-y-3">
-              <Input
-                placeholder="Ex: Alugar um carro e negociar o seguro"
-                value={customTitle}
-                onChange={(e) => setCustomTitle(e.target.value)}
-                className="text-xs"
-                required
-              />
-              <Input
-                placeholder="Papel da IA (Ex: Atendente da Hertz/Avis)"
-                value={customRole}
-                onChange={(e) => setCustomRole(e.target.value)}
-                className="text-xs"
-              />
-              <div className="flex justify-end gap-2 pt-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowCustomModal(false)}
-                  className="text-xs"
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" size="sm" className="text-xs">
-                  Começar
-                </Button>
-              </div>
-            </form>
           </div>
         </div>
       )}

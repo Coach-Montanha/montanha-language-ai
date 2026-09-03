@@ -1,4 +1,5 @@
-import { WeeklyMission, Scenario } from "@/types/language";
+import { WeeklyMission, Scenario, SupportedLanguage } from "@/types/language";
+import { MULTILINGUAL_MISSIONS } from "./multilingual-missions";
 
 export const WEEKLY_MISSIONS: WeeklyMission[] = [
   // ================= SEMANA 1: SOBREVIVÊNCIA =================
@@ -592,15 +593,47 @@ export const WEEKLY_MISSIONS: WeeklyMission[] = [
   },
 ];
 
-export function getMissionsByWeek(week: 1 | 2 | 3): WeeklyMission[] {
-  return WEEKLY_MISSIONS.filter((m) => m.week === week);
+export const ALL_MISSIONS: WeeklyMission[] = [
+  ...WEEKLY_MISSIONS.map((m) => ({ ...m, language: (m.language || "en") as SupportedLanguage })),
+  ...MULTILINGUAL_MISSIONS,
+];
+
+export function getMissionsForLanguage(
+  language: SupportedLanguage = "en",
+  customMissions: WeeklyMission[] = []
+): WeeklyMission[] {
+  const builtIn = ALL_MISSIONS.filter((m) => (m.language || "en") === language);
+  const custom = customMissions.filter((m) => (m.language || "en") === language);
+  return [...builtIn, ...custom];
 }
 
-export function getMissionById(id: string): WeeklyMission | undefined {
-  return WEEKLY_MISSIONS.find((m) => m.id === id);
+export function getMissionsByWeek(
+  week: number,
+  language: SupportedLanguage = "en",
+  customMissions: WeeklyMission[] = []
+): WeeklyMission[] {
+  const allForLang = getMissionsForLanguage(language, customMissions);
+  return allForLang.filter((m) => m.week === week);
+}
+
+export function getMissionById(
+  id: string,
+  customMissions: WeeklyMission[] = []
+): WeeklyMission | undefined {
+  return [...ALL_MISSIONS, ...customMissions].find((m) => m.id === id);
+}
+
+export function getAvailableWeeksForLanguage(
+  language: SupportedLanguage = "en",
+  customMissions: WeeklyMission[] = []
+): number[] {
+  const all = getMissionsForLanguage(language, customMissions);
+  const weeks = Array.from(new Set(all.map((m) => m.week))).sort((a, b) => a - b);
+  return weeks.length > 0 ? weeks : [1];
 }
 
 export function missionToScenario(mission: WeeklyMission): Scenario {
+  const lang = mission.language || "en";
   return {
     id: mission.id,
     title: mission.title,
@@ -608,7 +641,7 @@ export function missionToScenario(mission: WeeklyMission): Scenario {
     roleAi: mission.aiRole,
     roleUser: mission.userRole,
     description: mission.situationDescription,
-    context: `You are playing ${mission.aiRole} in this realistic survival roleplay: "${mission.situationDescription}". Your partner is ${mission.userRole}. Goal: ${mission.survivalObjective}. Keep your answers natural, authentic, in conversational English with Chicago warmth and directness.`,
+    context: `You are playing ${mission.aiRole} in this realistic survival roleplay: "${mission.situationDescription}". Your partner is ${mission.userRole}. Goal: ${mission.survivalObjective}. Language: ${lang}. Speak naturally and authentically in this language with great kindness and patience, correcting any mistakes.`,
     initialAiMessage: mission.openingAiDialogue,
     sampleReplies: mission.sampleResponses,
     structuredSuggestions: mission.structuredSuggestions,

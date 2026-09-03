@@ -363,6 +363,8 @@ export function getTutorsByLanguage(language: SupportedLanguage): TutorPersona[]
   return TUTORS.filter((t) => t.language === language);
 }
 
+export const getTutorsForLanguage = getTutorsByLanguage;
+
 export function getDefaultTutorForLanguage(language: SupportedLanguage): TutorPersona {
   const list = getTutorsByLanguage(language);
   return list[0] || DEFAULT_TUTOR;

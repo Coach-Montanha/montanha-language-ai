@@ -15,7 +15,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: "conversa", label: "Conversa", icon: MessageSquareText },
-  { id: "cenario", label: "Cenário", icon: Compass },
+  { id: "cenario", label: "Situações", icon: Compass },
   { id: "alfabeto", label: "Alfabeto", icon: SpellCheck },
   { id: "cartoes", label: "Cartões", icon: Layers },
   { id: "destrinchar", label: "Destrinchar", icon: Split },

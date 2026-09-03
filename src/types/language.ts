@@ -86,7 +86,8 @@ export interface SentenceAnalysis {
 
 export interface WeeklyMission {
   id: string;
-  week: 1 | 2 | 3;
+  language?: SupportedLanguage | undefined;
+  week: number;
   weekTitle: string;
   title: string;
   icon: string;
@@ -146,7 +147,8 @@ export interface UserProgress {
   dailySprintDone: boolean;
   geminiApiKey?: string | undefined;
   audioSpeed: number; // 0.7, 0.85, 1.0, 1.2
-  currentWeek?: (1 | 2 | 3) | undefined;
+  currentWeek?: number | undefined;
+  customMissions?: WeeklyMission[] | undefined;
   completedMissionIds?: string[] | undefined;
   activeMissionId?: string | undefined;
   selectedTutorId?: string | undefined;
