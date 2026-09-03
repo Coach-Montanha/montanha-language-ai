@@ -258,155 +258,307 @@ Respond in strictly valid JSON format:
     }
   }
 
-  // Motor Inteligente Local (Offline / Sem API Key) com suporte a múltiplos idiomas e personalidade
+  // Motor Inteligente Local (Offline / Sem API Key) com detecção semântica contextual por idioma
   const localCorrection = checkGrammarLocal(userInput);
-  const lower = userInput.toLowerCase();
+  const lower = userInput.toLowerCase().trim();
+  const historyLen = history.length;
 
   let replyText = "";
   let translationPt = "";
 
-  if (activeTutor.language === "es") {
-    if (lower.includes("hola") || lower.includes("buenos") || lower.includes("oi") || lower.includes("ola")) {
-      replyText = `¡Hola! Me alegra muchísimo hablar contigo hoy. ¿Cómo te encuentras?`;
-      translationPt = `Olá! Fico muito feliz em falar com você hoje. Como você está?`;
-    } else if (lower.includes("como estas") || lower.includes("cómo estás") || lower.includes("que tal")) {
-      replyText = `¡Estoy muy bien, gracias por preguntar! Con muchas ganas de practicar español contigo. ¿Qué planes tienes hoy?`;
-      translationPt = `Estou muito bem, obrigado por perguntar! Com muita vontade de praticar espanhol com você. Que planos você tem hoje?`;
+  // ================= 🇩🇪 ALEMÃO =================
+  if (activeTutor.language === "de") {
+    if (
+      lower.includes("verbessern") ||
+      lower.includes("deutsch") ||
+      lower.includes("lernen") ||
+      lower.includes("üben") ||
+      lower.includes("sprache") ||
+      lower.includes("aprender") ||
+      lower.includes("estudar")
+    ) {
+      replyText = `Das ist ein großartiges Ziel! Regelmäßiges Üben jeden Tag macht einen riesigen Unterschied. Worauf möchtest du dich heute konzentrieren: auf neue Wörter oder freies Sprechen?`;
+      translationPt = `Esse é um grande objetivo! Praticar com regularidade todos os dias faz uma enorme diferença. No que você gostaria de focar hoje: palavras novas ou fala livre?`;
+    } else if (
+      lower.includes("mein tag") ||
+      lower.includes("beschäftigt") ||
+      lower.includes("müde") ||
+      lower.includes("anstrengend") ||
+      lower.includes("arbeit") ||
+      lower.includes("feierabend")
+    ) {
+      replyText = `Ein intensiver Tag! Dann lass uns jetzt ganz entspannt plaudern und den Tag ausklingen lassen. Was war heute dein schönster Moment?`;
+      translationPt = `Um dia intenso! Então vamos bater um papo bem relaxado agora para encerrar o dia. Qual foi o seu momento mais agradável hoje?`;
+    } else if (
+      lower.includes("kaffee") ||
+      lower.includes("milch") ||
+      lower.includes("brezel") ||
+      lower.includes("bestellen") ||
+      lower.includes("essen") ||
+      lower.includes("trinken") ||
+      lower.includes("croissant")
+    ) {
+      replyText = `Ein frischer Kaffee mit Milch und eine knusprige Brezel sind einfach unschlagbar! Trinkst du deinen Kaffee lieber morgens oder am Nachmittag?`;
+      translationPt = `Um café fresco com leite e um pretzel crocante são simplesmente imbatíveis! Você prefere tomar seu café de manhã ou à tarde?`;
+    } else if (
+      lower.includes("freut mich") ||
+      lower.includes("kennenzulernen") ||
+      lower.includes("ich heiße") ||
+      lower.includes("mein name")
+    ) {
+      replyText = `Die Freude ist ganz meinerseits! Ich bin ${activeTutor.name} aus ${activeTutor.city} und begleite dich Schritt für Schritt. Worüber möchtest du sprechen?`;
+      translationPt = `O prazer é todo meu! Eu sou o ${activeTutor.name} de ${activeTutor.city} e vou te guiar passo a passo. Sobre o que você gostaria de conversar?`;
+    } else if (
+      lower.includes("wie geht") ||
+      lower.includes("alles gut") ||
+      lower.includes("wie steht")
+    ) {
+      replyText = `Mir geht es blendend, danke der Nachfrage! Ich freue mich sehr darauf, mit dir Deutsch zu üben. Und wie fühlst du dich heute?`;
+      translationPt = `Estou ótimo, obrigado por perguntar! Fico muito feliz em praticar alemão com você. E como você está se sentindo hoje?`;
+    } else if (
+      lower.includes("woher") ||
+      lower.includes("stadt") ||
+      lower.includes("berlin") ||
+      lower.includes("münchen") ||
+      lower.includes("deutschland")
+    ) {
+      replyText = `Ich lebe in ${activeTutor.city}, einer wunderbaren Stadt voller Kultur und Charme! Warst du schon einmal hier oder möchtest du bald reisen?`;
+      translationPt = `Eu moro em ${activeTutor.city}, uma cidade maravilhosa cheia de cultura e charme! Você já esteve aqui ou gostaria de viajar em breve?`;
+    } else if (lower.includes("danke") || lower.includes("vielen dank")) {
+      replyText = `Sehr gerne, mein Freund! Genau dafür bin ich da. Was möchtest du als Nächstes ausprobieren?`;
+      translationPt = `De nada, meu amigo! É exatamente para isso que estou aqui. O que você gostaria de experimentar a seguir?`;
+    } else if (/^\s*(hallo|hi|hey|guten tag|guten morgen|guten abend)[!.,]?\s*$/i.test(lower)) {
+      if (historyLen <= 1) {
+        replyText = `Hallo! Herzlich willkommen! Ich bin ${activeTutor.name}. Wie geht es dir heute?`;
+        translationPt = `Olá! Boas-vindas! Eu sou o ${activeTutor.name}. Como você está hoje?`;
+      } else {
+        replyText = `Hallo nochmals! Schön, dass wir im Gespräch sind. Woran denkst du gerade?`;
+        translationPt = `Olá novamente! Que bom continuarmos conversando. No que você está pensando agora?`;
+      }
+    } else {
+      const deResponses = [
+        {
+          de: `Das ist wirklich sehr interessant! Erzähl mir gern noch ein bisschen mehr darüber auf Deutsch.`,
+          pt: `Isso é realmente muito interessante! Fique à vontade para me contar um pouco mais sobre isso em alemão.`,
+        },
+        {
+          de: `Du drückst dich schon richtig gut aus! Was ist deine Meinung dazu?`,
+          pt: `Você já está se expressando muito bem! Qual é a sua opinião sobre isso?`,
+        },
+        {
+          de: `Schritt für Schritt wird dein Deutsch immer sicherer. Wie siehst du das persönlich?`,
+          pt: `Passo a passo o seu alemão está ficando cada vez mais seguro. Como você vê isso pessoalmente?`,
+        },
+      ];
+      const picked = deResponses[Math.floor(Math.random() * deResponses.length)]!;
+      replyText = picked.de;
+      translationPt = picked.pt;
+    }
+  }
+
+  // ================= 🇪🇸 ESPANHOL =================
+  else if (activeTutor.language === "es") {
+    if (
+      lower.includes("aprender") ||
+      lower.includes("español") ||
+      lower.includes("mejorar") ||
+      lower.includes("estudiar") ||
+      lower.includes("practicar")
+    ) {
+      replyText = `¡Es un objetivo fantástico! Practicar español con constancia abre muchísimas puertas. ¿Qué parte te parece más interesante: hablar con soltura o ampliar vocabulario?`;
+      translationPt = `É um objetivo fantástico! Praticar espanhol com constância abre muitas portas. Qual parte você acha mais interessante: falar com naturalidade ou ampliar o vocabulário?`;
+    } else if (lower.includes("mi día") || lower.includes("cansado") || lower.includes("ocupado") || lower.includes("trabajo")) {
+      replyText = `¡Un día muy productivo! Ahora tómate este momento para relajarte y disfrutar del español. ¿Qué fue lo más destacado de tu jornada?`;
+      translationPt = `Um dia muito produtivo! Agora aproveite este momento para relaxar e curtir o espanhol. O que foi o ponto alto do seu dia?`;
+    } else if (lower.includes("café") || lower.includes("tapas") || lower.includes("churros") || lower.includes("pedir")) {
+      replyText = `¡Un café con leche templada y unas tapas siempre alegran el día! ¿Te gusta más el ambiente de las terrazas o el interior de los bares?`;
+      translationPt = `Um café com leite morno e umas tapas sempre alegram o dia! Você gosta mais do ambiente das mesas na calçada ou do interior dos bares?`;
+    } else if (lower.includes("mucho gusto") || lower.includes("encantado") || lower.includes("me llamo") || lower.includes("mi nombre")) {
+      replyText = `¡El gusto es todo mío! Me llamo ${activeTutor.name}, de ${activeTutor.city}. Vamos a avanzar juntos sin miedo a equivocarte. ¿De qué te apetece hablar hoy?`;
+      translationPt = `O prazer é todo meu! Meu nome é ${activeTutor.name}, de ${activeTutor.city}. Vamos avançar juntos sem medo de errar. Sobre o que você tem vontade de falar hoje?`;
+    } else if (lower.includes("como estas") || lower.includes("cómo estás") || lower.includes("qué tal")) {
+      replyText = `¡Estoy fenomenal, gracias por preguntar! Con toda la energía para charlar contigo. ¿Y tú, cómo te encuentras hoy?`;
+      translationPt = `Estou fenomenal, obrigado por perguntar! Com toda a energia para conversar com você. E você, como está hoje?`;
+    } else if (/^\s*(hola|buenos días|buenas tardes|buenas)\b/i.test(lower)) {
+      if (historyLen <= 1) {
+        replyText = `¡Hola! Me alegra muchísimo hablar contigo hoy. ¿Cómo te encuentras?`;
+        translationPt = `Olá! Fico muito feliz em falar com você hoje. Como você está?`;
+      } else {
+        replyText = `¡Hola de nuevo! Qué bueno seguir charlando. ¿En qué estás pensando?`;
+        translationPt = `Olá de novo! Que bom continuarmos conversando. No que você está pensando?`;
+      }
     } else {
       replyText = `¡Eso suena muy interesante! Cuéntame un poco más sobre eso, amigo.`;
       translationPt = `Isso parece muito interessante! Me conte um pouco mais sobre isso, amigo.`;
     }
-  } else if (activeTutor.language === "ja") {
-    if (lower.includes("konnichiwa") || lower.includes("ohayou") || lower.includes("oi") || lower.includes("ola")) {
-      replyText = `Konnichiwa! Issho ni Nihongo o renshuu shimashou. Kyou wa donna hi deshita ka?`;
-      translationPt = `Olá! Vamos praticar japonês juntos. Como foi o seu dia hoje?`;
+  }
+
+  // ================= 🇮🇹 ITALIANO =================
+  else if (activeTutor.language === "it") {
+    if (lower.includes("imparare") || lower.includes("italiano") || lower.includes("migliorare") || lower.includes("studiare")) {
+      replyText = `È un obiettivo meraviglioso! L'italiano è una lingua musicale e passionale. Cosa ti affascina di più: la cultura, i viaggi o la conversazione quotidiana?`;
+      translationPt = `É um objetivo maravilhoso! O italiano é uma língua musical e apaixonante. O que mais te fascina: a cultura, viagens ou a conversa do dia a dia?`;
+    } else if (lower.includes("caffè") || lower.includes("cappuccino") || lower.includes("mangiare") || lower.includes("pizza") || lower.includes("pasta")) {
+      replyText = `Un buon caffè espresso al banco è il vero rito italiano! Lo preferisci amaro, macchiato o con un cornetto caldo?`;
+      translationPt = `Um bom café espresso no balcão é o verdadeiro ritual italiano! Você prefere puro, com pingo de leite ou com um cornetto quentinho?`;
+    } else if (lower.includes("piacere") || lower.includes("mi chiamo") || lower.includes("il mio nome")) {
+      replyText = `Piacere mio! Sono ${activeTutor.name} da ${activeTutor.city}. Sarà una bellissima avventura linguistica. Di cosa ti va di parlare oggi?`;
+      translationPt = `Prazer meu! Eu sou o(a) ${activeTutor.name} de ${activeTutor.city}. Será uma linda aventura linguística. Sobre o que você gostaria de falar hoje?`;
+    } else if (lower.includes("come stai") || lower.includes("tutto bene")) {
+      replyText = `Sto benissimo, grazie di cuore! Sempre pronto a fare due chiacchiere in italiano con te. E a te, com'è andata la giornata?`;
+      translationPt = `Estou muito bem, de coração obrigado! Sempre pronto para bater um papo em italiano com você. E você, como foi seu dia?`;
+    } else if (/^\s*(ciao|buongiorno|buonasera|salve)\b/i.test(lower)) {
+      if (historyLen <= 1) {
+        replyText = `Ciao! Che grandissimo piacere parlare con te. Come sta andando la tua giornata?`;
+        translationPt = `Olá! Que enorme prazer falar com você. Como está indo o seu dia?`;
+      } else {
+        replyText = `Ciao di nuovo! Che bello continuare la nostra conversazione. A cosa stai pensando?`;
+        translationPt = `Olá novamente! Que bom continuar nossa conversa. No que você está pensando?`;
+      }
+    } else {
+      replyText = `È davvero molto interessante! Raccontami qualcosa in più su questo.`;
+      translationPt = `É realmente muito interessante! Me conte algo mais a respeito disso.`;
+    }
+  }
+
+  // ================= 🇫🇷 FRANCÊS =================
+  else if (activeTutor.language === "fr") {
+    if (lower.includes("apprendre") || lower.includes("français") || lower.includes("améliorer") || lower.includes("pratiquer")) {
+      replyText = `C'est un magnifique projet ! La langue française est d'une grande élégance. Quel domaine vous attire le plus : la conversation de tous les jours, les voyages ou la culture ?`;
+      translationPt = `É um projeto magnífico! A língua francesa é de grande elegância. Qual área mais te atrai: conversa cotidiana, viagens ou cultura?`;
+    } else if (lower.includes("café") || lower.includes("croissant") || lower.includes("baguette") || lower.includes("boulangerie")) {
+      replyText = `Ah, un café avec un croissant croustillant dans une terrasse parisienne ! C'est l'art de vivre à la française. Vous le prenez plutôt le matin ou l'après-midi ?`;
+      translationPt = `Ah, um café com um croissant crocante numa mesa de calçada parisiense! É a arte de viver francesa. Você prefere de manhã ou à tarde?`;
+    } else if (lower.includes("enchanté") || lower.includes("je m'appelle") || lower.includes("mon nom")) {
+      replyText = `Enchanté ! Je suis ${activeTutor.name} de ${activeTutor.city}. C'est un réel plaisir de vous accompagner. De quoi aimeriez-vous parler aujourd'hui ?`;
+      translationPt = `Muito prazer! Eu sou o(a) ${activeTutor.name} de ${activeTutor.city}. É um verdadeiro prazer te acompanhar. Sobre o que gostaria de conversar hoje?`;
+    } else if (lower.includes("comment allez-vous") || lower.includes("ça va")) {
+      replyText = `Je vais merveilleusement bien, merci de demander ! Je suis ravi d'échanger avec vous. Et vous, comment vous sentez-vous aujourd'hui ?`;
+      translationPt = `Vou maravilhosamente bem, obrigado por perguntar! Estou encantado em conversar com você. E você, como se sente hoje?`;
+    } else if (/^\s*(bonjour|salut|coucou|bonsoir)\b/i.test(lower)) {
+      if (historyLen <= 1) {
+        replyText = `Bonjour ! Quel grand plaisir d'échanger avec vous. Comment allez-vous aujourd'hui ?`;
+        translationPt = `Bom dia! Que grande prazer conversar com você. Como vai você hoje?`;
+      } else {
+        replyText = `Rebonjour ! C'est un plaisir de poursuivre notre échange. À quoi pensez-vous en ce moment ?`;
+        translationPt = `Olá de novo! É um prazer continuar nossa conversa. No que você está pensando no momento?`;
+      }
+    } else {
+      replyText = `C'est vraiment très intéressant ! Racontez-moi un peu plus à ce sujet.`;
+      translationPt = `Isso é realmente muito interessante! Me conte um pouco mais a esse respeito.`;
+    }
+  }
+
+  // ================= 🇯🇵 JAPONÊS =================
+  else if (activeTutor.language === "ja") {
+    if (lower.includes("renshuu") || lower.includes("nihongo") || lower.includes("benkyou") || lower.includes("aprender")) {
+      replyText = `Totemo subarashii mokuhyou desu ne! Mainichi sukoshizutsu hanashimashou. Donna koto ni kyoumi ga arimasu ka?`;
+      translationPt = `Um objetivo maravilhoso! Vamos falar um pouco todos os dias. Em que tipo de assunto você tem interesse?`;
+    } else if (lower.includes("hajimemashite") || lower.includes("namae")) {
+      replyText = `Hajimemashite! ${activeTutor.name} desu. Douzo yoroshiku onegaishimasu! Issho ni tanoshiku Nihongo o manabimashou.`;
+      translationPt = `Muito prazer! Eu sou ${activeTutor.name}. Encantado em conhecê-lo! Vamos aprender japonês juntos de forma divertida.`;
+    } else if (/^\s*(konnichiwa|ohayou|konbanwa)\b/i.test(lower)) {
+      if (historyLen <= 1) {
+        replyText = `Konnichiwa! Issho ni Nihongo o renshuu shimashou. Kyou wa donna hi deshita ka?`;
+        translationPt = `Olá! Vamos praticar japonês juntos. Como foi o seu dia hoje?`;
+      } else {
+        replyText = `Konnichiwa! Motto hanashimashou. Ima nani o kangaete imasu ka?`;
+        translationPt = `Olá de novo! Vamos conversar mais. No que você está pensando agora?`;
+      }
     } else {
       replyText = `Sore wa totemo omoshiroi desu ne! Motto oshiete kudasai.`;
       translationPt = `Isso é muito interessante! Por favor, me conte mais sobre isso.`;
     }
-  } else if (activeTutor.language === "el-koine") {
-    if (lower.includes("chaire") || lower.includes("paz") || lower.includes("oi") || lower.includes("ola")) {
+  }
+
+  // ================= 🇬🇷 GREGO KOINÉ =================
+  else if (activeTutor.language === "el-koine") {
+    if (lower.includes("mathein") || lower.includes("koine") || lower.includes("logos") || lower.includes("aprender")) {
+      replyText = `Makários ho zeton ten sophian! Anaginóskomen kai manthánomen toùs theíous lógous.`;
+      translationPt = `Bem-aventurado o que busca a sabedoria! Lemos e aprendemos as santas palavras.`;
+    } else if (/^\s*(chaire|chairete|eirene)\b/i.test(lower)) {
       replyText = `Cháirete! Cháris hymîn kaì eirênê apò Theou. Tí theleis matheîn sêmeron?`;
       translationPt = `Alegrai-vos! Graça e paz a vós da parte de Deus. O que desejas aprender hoje?`;
     } else {
       replyText = `Kálon kaì thaumastón estin! Anaginóskomen tàs graphás met' eunoías.`;
-      translationPt = `Isso é belo e maravilhoso! Lemos os textos sagrados com dedicação.`;
+      translationPt = `Isso é belo e maravilhoso! Lemos os textos com dedicação e bom ânimo.`;
     }
-  } else if (activeTutor.language === "it") {
-    if (lower.includes("ciao") || lower.includes("buongiorno") || lower.includes("oi") || lower.includes("ola")) {
-      replyText = `Ciao! Che grandissimo piacere parlare con te. Come sta andando la tua giornata?`;
-      translationPt = `Olá! Que enorme prazer falar com você. Como está indo o seu dia?`;
-    } else {
-      replyText = `È davvero molto interessante! Raccontami qualcosa in più.`;
-      translationPt = `É realmente muito interessante! Me conte algo mais a respeito.`;
-    }
-  } else if (activeTutor.language === "fr") {
-    if (lower.includes("bonjour") || lower.includes("salut") || lower.includes("oi") || lower.includes("ola")) {
-      replyText = `Bonjour ! Quel grand plaisir d'échanger avec vous. Comment allez-vous aujourd'hui ?`;
-      translationPt = `Bom dia! Que grande prazer conversar com você. Como vai você hoje?`;
-    } else {
-      replyText = `C'est vraiment très intéressant ! Racontez-moi un peu plus.`;
-      translationPt = `Isso é realmente muito interessante! Me conte um pouco mais.`;
-    }
-  } else if (activeTutor.language === "de") {
-    if (lower.includes("hallo") || lower.includes("guten") || lower.includes("tag") || lower.includes("morgen") || lower.includes("oi") || lower.includes("ola")) {
-      replyText = `Hallo! Herzlich willkommen. Schön, dich kennenzulernen! Wie geht es dir heute?`;
-      translationPt = `Olá! Boas-vindas. Muito bom te conhecer! Como vai você hoje?`;
-    } else if (lower.includes("wie geht") || lower.includes("alles gut")) {
-      replyText = `Mir geht es super, danke der Nachfrage! Ich freue mich sehr darauf, mit dir Deutsch zu üben.`;
-      translationPt = `Estou ótimo, obrigado por perguntar! Fico muito feliz em praticar alemão com você.`;
-    } else {
-      replyText = `Das ist wirklich sehr interessant! Erzähl mir gern noch ein bisschen mehr darüber.`;
-      translationPt = `Isso é realmente muito interessante! Fique à vontade para me contar um pouco mais sobre isso.`;
-    }
-  } else
-
-  if (lower.includes("hello") || lower.includes("hi ") || lower.startsWith("hi")) {
-    if (activeTutor.id === "emma") {
-      replyText = `Hello darling! Emma here from London. It is a true delight to speak with you! How has your day been so far?`;
-      translationPt = `Olá querido(a)! Aqui é a Emma de Londres. É uma alegria falar com você! Como tem sido o seu dia até agora?`;
-    } else if (activeTutor.id === "sophia") {
-      replyText = `Hi there! Sophia here from New York! So excited to practice with you today. How is everything going?`;
-      translationPt = `Oi! Aqui é a Sophia de Nova York! Muito animada para praticar com você hoje. Como estão as coisas?`;
-    } else if (activeTutor.id === "lucas") {
-      replyText = `Hey! Lucas here from Toronto. Really glad you're here. How has your day been treating you?`;
-      translationPt = `Oi! Aqui é o Lucas de Toronto. Muito feliz de você estar aqui. Como o seu dia está te tratando?`;
-    } else {
-      replyText = `Hey there! Leo here, straight out of Chicago! Great to talk to you. How's your day treating you so far?`;
-      translationPt = `E aí! Aqui é o Leo, direto de Chicago! Muito bom falar com você. Como está sendo o seu dia até agora?`;
-    }
-  } else if (lower.includes("where are you from") || lower.includes("city")) {
-    replyText = `I'm from ${activeTutor.city}, ${activeTutor.country}! ${activeTutor.bioPt.split(".")[0]}. Have you ever visited?`;
-    translationPt = `Eu sou de ${activeTutor.city}, ${activeTutor.country}! Você já visitou algum dia?`;
-  } else if (lower.includes("my name is") || lower.includes("i am ") || lower.includes("i'm ")) {
-    if (activeTutor.id === "emma") {
-      replyText = `It is such a pleasure to meet you! Never worry about making mistakes with me — we'll gently polish every phrase together.`;
-      translationPt = `É um grande prazer te conhecer! Nunca se preocupe em errar comigo — vamos polir cada frase gentilmente juntos.`;
-    } else if (activeTutor.id === "sophia") {
-      replyText = `Awesome to meet you! I love your motivation. Speak freely — I'll catch every little detail and help you sound confident!`;
-      translationPt = `Incrível te conhecer! Adorei sua motivação. Fale à vontade — vou notar cada detalhe e te ajudar a falar com confiança!`;
-    } else if (activeTutor.id === "lucas") {
-      replyText = `Great to meet you! There's absolutely zero rush here. We'll take our time and master this step by step.`;
-      translationPt = `Muito bom te conhecer! Não há pressa alguma aqui. Vamos no seu tempo e dominar isso passo a passo.`;
-    } else {
-      replyText = `Nice to meet you, my friend! Love the energy. Don't worry about slips with me — I'll catch every little mistake so you speak like a local!`;
-      translationPt = `Prazer em te conhecer, meu amigo! Adorei a energia. Não se preocupe com deslizes — vou pegar cada errinho para você falar como um nativo!`;
-    }
-  } else if (lower.includes("how are you")) {
-    if (activeTutor.id === "emma") {
-      replyText = `I'm doing splendidly, thank you! Just enjoying a lovely cup of tea. What would you like to explore today?`;
-      translationPt = `Estou esplendidamente bem, obrigada! Apenas aproveitando uma deliciosa xícara de chá. O que gostaria de explorar hoje?`;
-    } else if (activeTutor.id === "sophia") {
-      replyText = `I'm feeling great and energized! Ready to practice real-world communication with you. What are you up to today?`;
-      translationPt = `Estou me sentindo ótima e cheia de energia! Pronta para praticar conversas da vida real com você. O que vai fazer hoje?`;
-    } else if (activeTutor.id === "lucas") {
-      replyText = `Doing really well, thanks for asking! Ready to practice whenever you are. What's on your mind?`;
-      translationPt = `Indo muito bem, obrigado por perguntar! Pronto para praticar quando você quiser. No que você está pensando?`;
-    } else {
-      replyText = `I'm doing fantastic! Just grabbed a hot coffee, ready to practice some real-world English with you. What are you working on today?`;
-      translationPt = `Estou fantástico! Acabei de pegar um café quente, pronto para praticar inglês da vida real com você. Em que você está trabalhando hoje?`;
-    }
-  } else if (lower.includes("good morning")) {
-    replyText = `Good morning! Hope your morning is off to a peaceful start. What is on your agenda for today?`;
-    translationPt = `Bom dia! Espero que sua manhã tenha começado com tranquilidade. O que está na sua agenda hoje?`;
-  } else if (lower.includes("good night")) {
-    replyText = `Good night! Rest well and sleep peacefully. We will continue our practice tomorrow!`;
-    translationPt = `Boa noite! Descanse bem e durma em paz. Continuaremos nosso treino amanhã!`;
-  } else if (lower.includes("help") || lower.includes("dúvida") || lower.includes("portugues")) {
-    replyText = `I am right here with you! Feel free to ask anything, no matter how small. I am happy to help!`;
-    translationPt = `Estou bem aqui ao seu lado! Sinta-se à vontade para perguntar qualquer coisa, por menor que seja. Fico feliz em ajudar!`;
-  } else if (userInput.split(" ").length < 3) {
-    replyText = `Short and sweet! Let's challenge yourself: try making a full sentence explaining why! What do you think?`;
-    translationPt = `Curto e direto! Vamos se desafiar: tente montar uma frase completa explicando o porquê! O que você acha?`;
-  } else {
-    const generalReplies = [
-      {
-        en: `That sounds very interesting! Could you tell me a little bit more about that?`,
-        pt: `Isso parece muito interessante! Você poderia me contar um pouco mais sobre isso?`,
-      },
-      {
-        en: `I completely understand what you mean. How does that usually work out for you?`,
-        pt: `Eu entendo perfeitamente o que você quer dizer. Como isso geralmente funciona para você?`,
-      },
-      {
-        en: `You expressed that very nicely! What was the most exciting part of it for you?`,
-        pt: `Você expressou isso muito bem! Qual foi a parte mais emocionante disso para você?`,
-      },
-      {
-        en: `Step by step you are sounding clearer and clearer. What happened next?`,
-        pt: `Passo a passo você está soando cada vez mais claro. O que aconteceu depois?`,
-      },
-      {
-        en: `I really appreciate you sharing that with me! How did that make you feel?`,
-        pt: `Agradeço muito por você compartilhar isso comigo! Como isso fez você se sentir?`,
-      },
-    ];
-    const picked = generalReplies[Math.floor(Math.random() * generalReplies.length)]!;
-    replyText = picked.en;
-    translationPt = picked.pt;
   }
 
-  const phonetic = generatePhoneticGuide(replyText);
+  // ================= 🇺🇸 INGLÊS =================
+  else {
+    if (
+      lower.includes("improve") ||
+      lower.includes("learn") ||
+      lower.includes("english") ||
+      lower.includes("speaking") ||
+      lower.includes("pronunciation") ||
+      lower.includes("aprender")
+    ) {
+      replyText = `That is an awesome goal! Consistency is everything in language learning: just 10 minutes a day makes a huge difference. Which skill do you want to conquer first: speaking freely or expanding your vocabulary?`;
+      translationPt = `Esse é um objetivo incrível! A consistência é tudo no aprendizado de idiomas: apenas 10 minutos por dia fazem uma diferença enorme. Qual habilidade você quer conquistar primeiro: falar livremente ou expandir seu vocabulário?`;
+    } else if (
+      lower.includes("my day") ||
+      lower.includes("busy") ||
+      lower.includes("tired") ||
+      lower.includes("exhausted") ||
+      lower.includes("work")
+    ) {
+      replyText = `Sounds like quite a packed day! Take a deep breath — our chat is a safe space to unwind and practice. What was the most memorable part of your day?`;
+      translationPt = `Parece que foi um dia bem cheio! Respire fundo — nossa conversa é um espaço seguro para relaxar e praticar. Qual foi a parte mais memorável do seu dia?`;
+    } else if (
+      lower.includes("coffee") ||
+      lower.includes("latte") ||
+      lower.includes("tea") ||
+      lower.includes("breakfast")
+    ) {
+      replyText = `A hot coffee is always the right choice! How do you take yours: black, or with a splash of oat milk and sugar?`;
+      translationPt = `Um café quente é sempre a escolha certa! Como você prefere o seu: puro, ou com um pouco de leite de aveia e açúcar?`;
+    } else if (
+      lower.includes("nice to meet") ||
+      lower.includes("pleasure to meet") ||
+      lower.includes("my name is") ||
+      lower.includes("i am") ||
+      lower.includes("i'm")
+    ) {
+      replyText = `The pleasure is all mine! I'm ${activeTutor.name} from ${activeTutor.city}. We're going to take this step by step with zero judgment. What would you love to talk about today?`;
+      translationPt = `O prazer é todo meu! Eu sou ${activeTutor.name} de ${activeTutor.city}. Vamos passo a passo sem julgamentos. Sobre o que você adoraria conversar hoje?`;
+    } else if (lower.includes("how are you") || lower.includes("how's it going")) {
+      replyText = `I'm doing fantastic, thanks for asking! Ready and pumped to practice real-world communication with you. How are you feeling right now?`;
+      translationPt = `Estou fantástico, obrigado por perguntar! Pronto e super animado para praticar conversas da vida real com você. Como você está se sentindo agora?`;
+    } else if (lower.includes("where are you from") || lower.includes("city")) {
+      replyText = `I'm from ${activeTutor.city}, ${activeTutor.country}! A vibrant city with incredible culture. Have you ever visited, or do you plan to travel here?`;
+      translationPt = `Eu sou de ${activeTutor.city}, ${activeTutor.country}! Uma cidade vibrante com uma cultura incrível. Você já visitou, ou planeja viajar para cá?`;
+    } else if (/^\s*(hello|hi|hey|good morning|good evening)\b/i.test(lower)) {
+      if (historyLen <= 1) {
+        replyText = `Hey there! Great to talk to you. How's your day treating you so far?`;
+        translationPt = `E aí! Muito bom falar com você. Como está sendo o seu dia até agora?`;
+      } else {
+        replyText = `Hey again! Glad we're keeping the conversation going. What's on your mind?`;
+        translationPt = `Olá de novo! Fico feliz que estamos continuando nossa conversa. No que você está pensando?`;
+      }
+    } else {
+      const generalReplies = [
+        {
+          en: `That sounds really interesting! Could you tell me a little bit more about that?`,
+          pt: `Isso parece muito interessante! Você poderia me contar um pouco mais sobre isso?`,
+        },
+        {
+          en: `You expressed that clearly! What made you think of that today?`,
+          pt: `Você expressou isso claramente! O que fez você pensar nisso hoje?`,
+        },
+        {
+          en: `Step by step your confidence is growing. How do you feel about that?`,
+          pt: `Passo a passo sua confiança está crescendo. Como você se sente sobre isso?`,
+        },
+      ];
+      const picked = generalReplies[Math.floor(Math.random() * generalReplies.length)]!;
+      replyText = picked.en;
+      translationPt = picked.pt;
+    }
+  }
+
+  const phonetic = generatePhoneticGuide(replyText, activeTutor.language);
 
   return {
     replyText,
@@ -513,8 +665,122 @@ const PHONETIC_MAP: Record<string, string> = {
   no: "nóu",
 };
 
-export function generatePhoneticGuide(english: string): string {
-  const words = english.replace(/[.,!?;:"]/g, "").split(/\s+/);
+export function generatePhoneticGuide(
+  text: string,
+  language: SupportedLanguage = "en"
+): string {
+  if (language === "de") {
+    const deWords = text.replace(/[.,!?;:"'«»]/g, "").split(/\s+/);
+    return deWords
+      .map((w) => {
+        const lower = w.toLowerCase();
+        const deMap: Record<string, string> = {
+          hallo: "rá-lo",
+          wie: "vi",
+          geht: "guêt",
+          es: "es",
+          dir: "dír",
+          ihnen: "í-nen",
+          heute: "rói-te",
+          ich: "ikh",
+          bin: "bin",
+          schön: "chên",
+          dich: "dikh",
+          sie: "zí",
+          kennenzulernen: "kên-nen-tsu-lêr-nen",
+          möchte: "mêkh-te",
+          mein: "máin",
+          deutsch: "dóitsh",
+          jeden: "iê-den",
+          tag: "ták",
+          verbessern: "fer-bé-sern",
+          bitte: "bí-te",
+          kaffee: "ca-fê",
+          mit: "mit",
+          milch: "mílkh",
+          bestellen: "be-chtê-len",
+          brezel: "bré-tsel",
+          danke: "dán-ke",
+          sehr: "zêr",
+          gut: "gut",
+          super: "zú-per",
+          herzlich: "rêrts-likh",
+          willkommen: "vil-kó-men",
+          was: "vas",
+          machst: "makhst",
+          du: "du",
+          woher: "vo-rêr",
+          kommst: "komst",
+          aus: "áus",
+          stadt: "chtát",
+          großartig: "grôss-ár-tikh",
+          ziel: "tsíl",
+          wunderbar: "vún-der-bar",
+          freut: "fróit",
+          mich: "mikh",
+        };
+        if (deMap[lower]) return deMap[lower];
+
+        return lower
+          .replace(/^h/g, "r")
+          .replace(/sch/g, "ch")
+          .replace(/^sp/g, "chp")
+          .replace(/^st/g, "cht")
+          .replace(/ch/g, "kh")
+          .replace(/ei/g, "ái")
+          .replace(/ie/g, "í")
+          .replace(/eu|äu/g, "ói")
+          .replace(/ä/g, "é")
+          .replace(/ö/g, "ê")
+          .replace(/ü/g, "ü")
+          .replace(/ß/g, "ss")
+          .replace(/w/g, "v")
+          .replace(/^v/g, "f")
+          .replace(/z/g, "ts")
+          .replace(/^j/g, "i");
+      })
+      .join(" ");
+  }
+
+  if (language === "es") {
+    return text
+      .toLowerCase()
+      .replace(/ll/g, "y")
+      .replace(/ñ/g, "nh")
+      .replace(/j/g, "r")
+      .replace(/ge/g, "re")
+      .replace(/gi/g, "ri")
+      .replace(/z/g, "s")
+      .replace(/ce/g, "se")
+      .replace(/ci/g, "si")
+      .replace(/v/g, "b");
+  }
+
+  if (language === "it") {
+    return text
+      .toLowerCase()
+      .replace(/che/g, "que")
+      .replace(/chi/g, "qui")
+      .replace(/ce/g, "tche")
+      .replace(/ci/g, "tchi")
+      .replace(/ge/g, "dje")
+      .replace(/gi/g, "dji")
+      .replace(/gli/g, "lhi")
+      .replace(/gn/g, "nh");
+  }
+
+  if (language === "fr") {
+    return text
+      .toLowerCase()
+      .replace(/ou/g, "u")
+      .replace(/oi/g, "uá")
+      .replace(/eau|au/g, "ô")
+      .replace(/ai|ei/g, "ê")
+      .replace(/ch/g, "ch")
+      .replace(/qu/g, "k");
+  }
+
+  const words = text.replace(/[.,!?;:"]/g, "").split(/\s+/);
   return words
     .map((w) => {
       const lower = w.toLowerCase();
@@ -533,10 +799,56 @@ export function generatePhoneticGuide(english: string): string {
     .join(" ");
 }
 
-export function getPortugueseTranslation(english: string): string {
-  const lower = english.toLowerCase().trim();
+export function getPortugueseTranslation(
+  text: string,
+  language: SupportedLanguage = "en"
+): string {
+  const lower = text.toLowerCase().trim();
 
-  // Saudações iniciais dos tutores
+  // Alemão
+  if (language === "de" || lower.includes("deutsch") || lower.includes("hallo! ich bin max") || lower.includes("hannah")) {
+    if (lower.includes("großartiges ziel") || lower.includes("ziel")) {
+      return "Esse é um grande objetivo! Praticar com regularidade todos os dias faz uma enorme diferença. No que você gostaria de focar hoje: palavras novas ou fala livre?";
+    }
+    if (lower.includes("intensiver tag") || lower.includes("arbeit")) {
+      return "Um dia intenso! Então vamos bater um papo bem relaxado agora para encerrar o dia. Qual foi o seu momento mais agradável hoje?";
+    }
+    if (lower.includes("frischer kaffee") || lower.includes("brezel")) {
+      return "Um café fresco com leite e um pretzel crocante são simplesmente imbatíveis! Você prefere tomar seu café de manhã ou à tarde?";
+    }
+    if (lower.includes("freude ist ganz meinerseits")) {
+      return "O prazer é todo meu! Eu sou o seu tutor e vou te guiar passo a passo. Sobre o que você gostaria de conversar?";
+    }
+    if (lower.includes("mir geht es blendend")) {
+      return "Estou ótimo, obrigado por perguntar! Fico muito feliz em praticar alemão com você. E como você está se sentindo hoje?";
+    }
+    if (lower.includes("ich lebe in")) {
+      return "Eu moro numa cidade maravilhosa cheia de cultura e charme! Você já esteve aqui na Alemanha ou gostaria de viajar em breve?";
+    }
+    if (lower.includes("sehr gerne, mein freund")) {
+      return "De nada, meu amigo! É exatamente para isso que estou aqui. O que você gostaria de experimentar a seguir?";
+    }
+    if (lower.includes("herzlich willkommen") || lower.includes("schön, dich")) {
+      return "Olá! Boas-vindas. Muito bom te conhecer! Como vai você hoje?";
+    }
+    return "Resposta de conversação do seu tutor em alemão.";
+  }
+
+  // Espanhol
+  if (language === "es" || lower.includes("español")) {
+    if (lower.includes("objetivo fantástico")) {
+      return "É um objetivo fantástico! Praticar espanhol com constância abre muitas portas. Qual parte você acha mais interessante: falar com naturalidade ou ampliar o vocabulário?";
+    }
+    if (lower.includes("café con leche")) {
+      return "Um café com leite morno e umas tapas sempre alegram o dia! Você gosta mais do ambiente das mesas na calçada ou do interior dos bares?";
+    }
+    if (lower.includes("gusto es todo mío")) {
+      return "O prazer é todo meu! Vamos avançar juntos sem medo de errar. Sobre o que você tem vontade de falar hoje?";
+    }
+    return "Resposta de conversação do seu tutor em espanhol.";
+  }
+
+  // Saudações iniciais dos tutores em inglês
   if (lower.includes("straight out of chicago") || (lower.includes("leo") && lower.includes("chicago"))) {
     return "Olá! Eu sou o Leo de Chicago. Super animado para conversar com você! Não se preocupe em errar — vou corrigir com carinho cada deslize para você soar natural. Como tem sido o seu dia?";
   }
@@ -561,7 +873,7 @@ export function getPortugueseTranslation(english: string): string {
     return "Estou esplendidamente bem, muito obrigada! O que gostaria de explorar hoje?";
   }
   if (lower.includes("doing fantastic")) {
-    return "Estou me sentindo fantástico! Pronto para praticar inglês da vida real com você. O que você está fazendo hoje?";
+    return "Estou me sentindo fantástico! Pronto para praticar conversas da vida real com você. O que você está fazendo hoje?";
   }
   if (lower.includes("doing really well")) {
     return "Estou muito bem, obrigado por perguntar! Pronto para praticar quando você quiser. No que você está pensando?";
@@ -575,20 +887,20 @@ export function getPortugueseTranslation(english: string): string {
   if (lower.includes("right here with you") || lower.includes("happy to help")) {
     return "Estou bem aqui ao seu lado! Fique à vontade para perguntar qualquer coisa, por menor que seja.";
   }
-  if (lower.includes("sounds very interesting")) {
+  if (lower.includes("sounds very interesting") || lower.includes("sounds really interesting")) {
     return "Isso parece muito interessante! Você poderia me contar um pouco mais sobre isso?";
   }
   if (lower.includes("completely understand what you mean")) {
     return "Eu entendo perfeitamente o que você quer dizer. Como isso costuma funcionar para você?";
   }
-  if (lower.includes("expressed that very nicely")) {
-    return "Você expressou isso muito bem! Qual foi a parte mais emocionante disso para você?";
+  if (lower.includes("expressed that very nicely") || lower.includes("expressed that clearly")) {
+    return "Você expressou isso muito bem! O que fez você pensar nisso hoje?";
   }
-  if (lower.includes("sounding clearer and clearer")) {
-    return "Passo a passo você está soando cada vez mais claro. O que aconteceu depois?";
+  if (lower.includes("sounding clearer and clearer") || lower.includes("confidence is growing")) {
+    return "Passo a passo você está soando cada vez mais claro e seguro. Como você se sente sobre isso?";
   }
 
-  return "Resposta do tutor acompanhando nossa conversa em inglês.";
+  return "Resposta do tutor acompanhando nosso diálogo.";
 }
 
 // 2. CENÁRIO: Roleplay em situações reais

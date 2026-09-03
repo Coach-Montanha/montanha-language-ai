@@ -281,8 +281,12 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         id: tutorMsgId,
         sender: "tutor",
         text: response.replyText,
-        phonetic: response.phonetic || generatePhoneticGuide(response.replyText),
-        translationPt: response.translationPt || getPortugueseTranslation(response.replyText),
+        phonetic:
+          response.phonetic ||
+          generatePhoneticGuide(response.replyText, activeTutor.language),
+        translationPt:
+          response.translationPt ||
+          getPortugueseTranslation(response.replyText, activeTutor.language),
         correction: response.correction,
         timestamp: Date.now(),
       };
