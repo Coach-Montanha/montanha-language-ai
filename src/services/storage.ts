@@ -111,3 +111,83 @@ export function saveCustomFlashcard(card: Flashcard): Flashcard[] {
   }
   return updated;
 }
+
+// ================= TOP 200 PROGRESS STORAGE =================
+import { Top200Progress } from "@/data/top200/types";
+import { SupportedLanguage } from "@/types/language";
+
+export function getTop200StorageKey(language: SupportedLanguage): string {
+  return `smart_language_top200_${language}_v1`;
+}
+
+export function loadTop200Progress(language: SupportedLanguage): Top200Progress {
+  const defaultProgress: Top200Progress = {
+    currentIndex: 0,
+    masteredIds: [],
+    reviewQueue: [],
+  };
+
+  if (typeof window === "undefined") return defaultProgress;
+
+  try {
+    const raw = localStorage.getItem(getTop200StorageKey(language));
+    if (!raw) return defaultProgress;
+    return { ...defaultProgress, ...JSON.parse(raw) };
+  } catch (e) {
+    console.error("Erro ao carregar progresso Top 200:", e);
+    return defaultProgress;
+  }
+}
+
+export function saveTop200Progress(
+  language: SupportedLanguage,
+  progress: Top200Progress
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(getTop200StorageKey(language), JSON.stringify(progress));
+  } catch (e) {
+    console.error("Erro ao salvar progresso Top 200:", e);
+  }
+}
+
+export function markTop200WordMastered(
+  language: SupportedLanguage,
+  wordId: string
+): Top200Progress {
+  const current = loadTop200Progress(language);
+  const updatedMastered = Array.from(new Set([...current.masteredIds, wordId]));
+  const updatedQueue = current.reviewQueue.filter((id) => id !== wordId);
+  const updated: Top200Progress = {
+    ...current,
+    masteredIds: updatedMastered,
+    reviewQueue: updatedQueue,
+  };
+  saveTop200Progress(language, updated);
+  return updated;
+}
+
+export function toggleTop200ReviewQueue(
+  language: SupportedLanguage,
+  wordId: string
+): Top200Progress {
+  const current = loadTop200Progress(language);
+  const inQueue = current.reviewQueue.includes(wordId);
+  const updatedQueue = inQueue
+    ? current.reviewQueue.filter((id) => id !== wordId)
+    : [...current.reviewQueue, wordId];
+  
+  // Se entrou na fila de revisão, remove de dominada
+  const updatedMastered = inQueue
+    ? current.masteredIds
+    : current.masteredIds.filter((id) => id !== wordId);
+
+  const updated: Top200Progress = {
+    ...current,
+    reviewQueue: updatedQueue,
+    masteredIds: updatedMastered,
+  };
+  saveTop200Progress(language, updated);
+  return updated;
+}
+
