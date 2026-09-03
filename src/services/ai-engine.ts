@@ -5,8 +5,9 @@ import {
   SentenceAnalysis,
   WordToken,
   Scenario,
+  SupportedLanguage,
 } from "@/types/language";
-import { PRESET_THEMES } from "@/data/vocabulary";
+import { PRESET_THEMES, getPresetThemesForLanguage } from "@/data/vocabulary";
 import { callGeminiRaw } from "./gemini";
 
 // Base de regras de correção instantânea com explicação de 1 linha em português
@@ -989,30 +990,43 @@ Provide your response strictly in JSON:
   return { replyText, suggestedReplies, structuredSuggestions };
 }
 
-// 3. CARTÕES: Geração temática de vocabulário
+// 3. CARTÕES: Geração temática de vocabulário multilíngue
 export async function generateFlashcards(
   themeInput: string,
-  apiKey?: string
+  apiKey?: string,
+  language: SupportedLanguage = "en"
 ): Promise<Flashcard[]> {
+  const langThemes = getPresetThemesForLanguage(language);
   const normalized = themeInput.toLowerCase().trim();
 
-  // Verifica temas pré-definidos
-  for (const key of Object.keys(PRESET_THEMES)) {
+  // Verifica temas pré-definidos para o idioma
+  for (const key of Object.keys(langThemes)) {
     if (normalized.includes(key) || key.includes(normalized)) {
-      return PRESET_THEMES[key]!;
+      return langThemes[key]!;
     }
   }
 
+  const langNames: Record<string, string> = {
+    en: "English",
+    de: "German (Deutsch)",
+    es: "Spanish (Español)",
+    it: "Italian (Italiano)",
+    fr: "French (Français)",
+    ja: "Japanese (日本語 with Romaji)",
+    "el-koine": "Biblical Koine Greek (with transliteration)",
+  };
+  const targetLangName = langNames[language] || "English";
+
   if (apiKey) {
     try {
-      const prompt = `Generate 5 high-quality English vocabulary flashcards for the theme: "${themeInput}".
+      const prompt = `Generate 5 high-quality ${targetLangName} vocabulary flashcards for the theme: "${themeInput}".
 Return ONLY a valid JSON array of objects with this structure:
 [
   {
-    "word": "English word or phrase",
-    "phonetic": "/IPA/",
+    "word": "Word or expression in ${targetLangName}",
+    "phonetic": "Accurate phonetic pronunciation transcribed into Brazilian Portuguese syllables, e.g. [ vil-kó-men ] or [ kon-ni-tchi-ua ]",
     "translation": "Tradução em Português",
-    "exampleSentence": "A natural English sentence using the word",
+    "exampleSentence": "A natural sentence in ${targetLangName} using the word",
     "exampleTranslation": "Tradução da frase em português"
   }
 ]`;
@@ -1022,13 +1036,13 @@ Return ONLY a valid JSON array of objects with this structure:
 
       if (Array.isArray(items) && items.length > 0) {
         return items.map((item, idx) => ({
-          id: `custom-${Date.now()}-${idx}`,
+          id: `custom-${language}-${Date.now()}-${idx}`,
           theme: themeInput,
-          word: item.word || "Word",
-          phonetic: item.phonetic || "/wɜːrd/",
+          word: item.word || "Vocábulo",
+          phonetic: item.phonetic || generatePhoneticGuide(item.word || "", language),
           translation: item.translation || "Palavra",
-          exampleSentence: item.exampleSentence || "This is an example.",
-          exampleTranslation: item.exampleTranslation || "Este é um exemplo.",
+          exampleSentence: item.exampleSentence || item.word,
+          exampleTranslation: item.exampleTranslation || "Exemplo de uso no idioma.",
         }));
       }
     } catch (e) {
@@ -1036,13 +1050,95 @@ Return ONLY a valid JSON array of objects with this structure:
     }
   }
 
-  // Gerador dinâmico de cartões temáticos offline
+  // Gerador dinâmico de cartões temáticos offline contextualizado por idioma
+  if (language === "de") {
+    return [
+      {
+        id: `gen-de-${Date.now()}-1`,
+        theme: themeInput,
+        word: `Das Konzept von ${themeInput}`,
+        phonetic: "[ das con-tsêpt fon ... ]",
+        translation: `O conceito de ${themeInput}`,
+        exampleSentence: `Das Verständnis dieses Themas ist sehr nützlich für ${themeInput}.`,
+        exampleTranslation: `A compreensão deste tema é muito útil para ${themeInput}.`,
+      },
+      {
+        id: `gen-de-${Date.now()}-2`,
+        theme: themeInput,
+        word: "Der Fortschritt",
+        phonetic: "[ dêr fórt-chrit ]",
+        translation: "Progresso / Evolução",
+        exampleSentence: "Wir sehen täglich großen Fortschritt im Deutschen.",
+        exampleTranslation: "Vemos diariamente um grande progresso no alemão.",
+      },
+      {
+        id: `gen-de-${Date.now()}-3`,
+        theme: themeInput,
+        word: "Die tägliche Übung",
+        phonetic: "[ di têk-li-khe ü-bung ]",
+        translation: "Prática diária",
+        exampleSentence: "Tägliche Übung ist der Schlüssel zum Erfolg.",
+        exampleTranslation: "A prática diária é a chave para o sucesso.",
+      },
+      {
+        id: `gen-de-${Date.now()}-4`,
+        theme: themeInput,
+        word: "Ziele erreichen",
+        phonetic: "[ tsí-le er-rái-khen ]",
+        translation: "Alcançar objetivos",
+        exampleSentence: "Mit Smart Language erreichst du deine sprachlichen Ziele.",
+        exampleTranslation: "Com o Smart Language você alcança seus objetivos linguísticos.",
+      },
+    ];
+  }
+
+  if (language === "es") {
+    return [
+      {
+        id: `gen-es-${Date.now()}-1`,
+        theme: themeInput,
+        word: `El concepto de ${themeInput}`,
+        phonetic: "[ el con-sêp-to de ... ]",
+        translation: `O conceito de ${themeInput}`,
+        exampleSentence: `Entender este concepto es clave para dominar ${themeInput}.`,
+        exampleTranslation: `Entender este conceito é fundamental para dominar ${themeInput}.`,
+      },
+      {
+        id: `gen-es-${Date.now()}-2`,
+        theme: themeInput,
+        word: "El progreso",
+        phonetic: "[ el pro-grê-so ]",
+        translation: "Progresso",
+        exampleSentence: "Notamos un progreso constante en tus conversaciones.",
+        exampleTranslation: "Notamos um progresso constante nas suas conversas.",
+      },
+      {
+        id: `gen-es-${Date.now()}-3`,
+        theme: themeInput,
+        word: "La práctica diaria",
+        phonetic: "[ la prác-ti-ca diá-ria ]",
+        translation: "Prática diária",
+        exampleSentence: "La práctica diaria te da total soltura.",
+        exampleTranslation: "A prática diária te dá total naturalidade.",
+      },
+      {
+        id: `gen-es-${Date.now()}-4`,
+        theme: themeInput,
+        word: "Alcanzar metas",
+        phonetic: "[ al-can-sár mê-tas ]",
+        translation: "Alcançar metas",
+        exampleSentence: "Con Smart Language alcanzarás tus metas rápidamente.",
+        exampleTranslation: "Com o Smart Language você alcançará suas metas rapidamente.",
+      },
+    ];
+  }
+
   return [
     {
       id: `gen-${Date.now()}-1`,
       theme: themeInput,
       word: `Key concept of ${themeInput}`,
-      phonetic: "/kiː ˈkɑːn.sept/",
+      phonetic: "[ ki cón-sept ]",
       translation: `Conceito-chave de ${themeInput}`,
       exampleSentence: `Understanding this is essential when discussing ${themeInput}.`,
       exampleTranslation: `Compreender isso é essencial ao discutir sobre ${themeInput}.`,
@@ -1051,7 +1147,7 @@ Return ONLY a valid JSON array of objects with this structure:
       id: `gen-${Date.now()}-2`,
       theme: themeInput,
       word: "Improvement",
-      phonetic: "/ɪmˈpruːv.mənt/",
+      phonetic: "[ im-prúv-ment ]",
       translation: "Melhoria / Progresso",
       exampleSentence: `We are seeing great improvement in our ${themeInput} skills.`,
       exampleTranslation: `Estamos vendo uma grande melhoria em nossas habilidades em ${themeInput}.`,
@@ -1060,7 +1156,7 @@ Return ONLY a valid JSON array of objects with this structure:
       id: `gen-${Date.now()}-3`,
       theme: themeInput,
       word: "Daily practice",
-      phonetic: "/ˈdeɪ.li ˈpræk.tɪs/",
+      phonetic: "[ dêi-li prác-tis ]",
       translation: "Prática diária",
       exampleSentence: `Consistent daily practice is the secret to mastering ${themeInput}.`,
       exampleTranslation: `A prática diária consistente é o segredo para dominar ${themeInput}.`,
@@ -1069,7 +1165,7 @@ Return ONLY a valid JSON array of objects with this structure:
       id: `gen-${Date.now()}-4`,
       theme: themeInput,
       word: "Achieve goals",
-      phonetic: "/əˈtʃiːv ɡoʊlz/",
+      phonetic: "[ a-tchív gouls ]",
       translation: "Alcançar metas / objetivos",
       exampleSentence: `With Smart Language, you will achieve your goals in no time.`,
       exampleTranslation: `Com o Smart Language, você alcançará suas metas rapidamente.`,
@@ -1077,11 +1173,12 @@ Return ONLY a valid JSON array of objects with this structure:
   ];
 }
 
-// 4. DESTRINCHAR: Analisador morfológico e sintático palavra por palavra
+// 4. DESTRINCHAR: Analisador morfológico e sintático multilíngue
 const POS_LEXICON: Record<
   string,
   { pos: string; badge: string; color: string; trans: string }
 > = {
+  // --- INGLÊS ---
   i: { pos: "Pronome Pessoal", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Eu" },
   you: { pos: "Pronome Pessoal", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Você / Vocês" },
   he: { pos: "Pronome Pessoal", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Ele" },
@@ -1101,72 +1198,112 @@ const POS_LEXICON: Record<
   could: { pos: "Verbo Modal", badge: "Modal", color: "bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800", trans: "poderia" },
   would: { pos: "Verbo Modal", badge: "Modal", color: "bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800", trans: "(condicional -ia)" },
   should: { pos: "Verbo Modal", badge: "Modal", color: "bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800", trans: "deveria" },
-  will: { pos: "Verbo Auxiliar", badge: "Auxiliar", color: "bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800", trans: "(marca o futuro)" },
   learning: { pos: "Verbo no Gerúndio", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "aprendendo" },
   english: { pos: "Substantivo Próprio", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "Inglês" },
-  smart: { pos: "Adjetivo", badge: "Adjetivo", color: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800", trans: "Inteligente" },
-  language: { pos: "Substantivo", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "Língua / Idioma" },
   with: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "com" },
   today: { pos: "Advérbio de Tempo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "hoje" },
-  daily: { pos: "Advérbio / Adjetivo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "diariamente / diário" },
+  daily: { pos: "Advérbio / Adjetivo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "diariamente" },
   the: { pos: "Artigo Definido", badge: "Artigo", color: "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800", trans: "o / a / os / as" },
   a: { pos: "Artigo Indefinido", badge: "Artigo", color: "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800", trans: "um / uma" },
-  an: { pos: "Artigo Indefinido", badge: "Artigo", color: "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800", trans: "um / uma (antes de som de vogal)" },
-  in: { pos: "Preposição de Lugar/Tempo", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "em / dentro de" },
-  on: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "sobre / em cima de" },
-  at: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "em / no(a)" },
+  an: { pos: "Artigo Indefinido", badge: "Artigo", color: "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800", trans: "um / uma" },
+  in: { pos: "Preposição de Lugar/Tempo", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "em / dentro" },
   to: { pos: "Preposição / Marcador", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "para / a" },
-  for: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "para / por" },
-  of: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "de / do / da" },
   and: { pos: "Conjunção Aditiva", badge: "Conjunção", color: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800", trans: "e" },
-  but: { pos: "Conjunção Adversativa", badge: "Conjunção", color: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800", trans: "mas / porém" },
-  because: { pos: "Conjunção Causal", badge: "Conjunção", color: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800", trans: "porque" },
   very: { pos: "Advérbio de Intensidade", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "muito" },
   well: { pos: "Advérbio de Modo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "bem" },
-  good: { pos: "Adjetivo", badge: "Adjetivo", color: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800", trans: "bom / boa" },
-  speaks: { pos: "Verbo (3ª pessoa)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "fala" },
-  speak: { pos: "Verbo no Infinitivo/Presente", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "falar / falo" },
-  practices: { pos: "Verbo (3ª pessoa)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "pratica" },
-  practice: { pos: "Verbo / Substantivo", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "praticar / prática" },
-  please: { pos: "Advérbio de Cortesia", badge: "Cortesia", color: "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800", trans: "por favor" },
-  tell: { pos: "Verbo de Ação", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "dizer / contar" },
-  me: { pos: "Pronome Objeto", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "me / para mim" },
-  where: { pos: "Advérbio Interrogativo", badge: "Interrogativo", color: "bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800", trans: "onde" },
-  station: { pos: "Substantivo", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "estação" },
-  coffee: { pos: "Substantivo", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "café" },
-  cup: { pos: "Substantivo", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "xícara" },
-  hot: { pos: "Adjetivo", badge: "Adjetivo", color: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800", trans: "quente" },
-  milk: { pos: "Substantivo", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "leite" },
-  like: { pos: "Verbo / Preposição", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "gostar / como" },
-  always: { pos: "Advérbio de Frequência", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "sempre" },
-  believe: { pos: "Verbo", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "acreditar" },
-  yourself: { pos: "Pronome Reflexivo", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "em você mesmo(a)" },
-  keep: { pos: "Verbo", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "manter / continuar" },
-  going: { pos: "Verbo no Gerúndio", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "indo / em frente" },
-  project: { pos: "Substantivo", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "projeto" },
-  working: { pos: "Verbo no Gerúndio", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "trabalhando" },
-  since: { pos: "Preposição / Conjunção", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "desde" },
-  morning: { pos: "Substantivo", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "manhã" },
-  been: { pos: "Particípio Passado (to be)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "sido / estado" },
+
+  // --- 🇩🇪 ALEMÃO ---
+  ich: { pos: "Pronome Pessoal (1ª pess.)", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Eu" },
+  du: { pos: "Pronome Pessoal (2ª pess.)", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Você (informal)" },
+  er: { pos: "Pronome Pessoal", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Ele" },
+  wir: { pos: "Pronome Pessoal", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Nós" },
+  ihr: { pos: "Pronome Pessoal", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Vocês" },
+  lerne: { pos: "Verbo no Presente (1ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "aprendo" },
+  lernen: { pos: "Verbo no Infinitivo", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "aprender" },
+  deutsch: { pos: "Substantivo Próprio", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "Alemão" },
+  heute: { pos: "Advérbio de Tempo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "hoje" },
+  mit: { pos: "Preposição (rege Dativo)", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "com" },
+  spricht: { pos: "Verbo (3ª pessoa)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "fala" },
+  gut: { pos: "Adjetivo / Advérbio", badge: "Advérbio", color: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800", trans: "bem / bom" },
+  weil: { pos: "Conjunção Subordinativa", badge: "Conjunção", color: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800", trans: "porque (verbo vai ao fim)" },
+  übt: { pos: "Verbo (3ª pessoa)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "pratica" },
+  jeden: { pos: "Adjetivo / Pronome", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "cada / todo" },
+  tag: { pos: "Substantivo Masculino", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "dia" },
+  bitte: { pos: "Expressão de Cortesia", badge: "Cortesia", color: "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800", trans: "por favor" },
+  der: { pos: "Artigo Definido Masculino", badge: "Artigo", color: "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800", trans: "o" },
+  die: { pos: "Artigo Definido Feminino/Plural", badge: "Artigo", color: "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800", trans: "a / os / as" },
+  das: { pos: "Artigo Definido Neutro", badge: "Artigo", color: "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800", trans: "o / a (neutro)" },
+  bahnhof: { pos: "Substantivo Masculino", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "estação de trem" },
+  wo: { pos: "Advérbio Interrogativo", badge: "Interrogativo", color: "bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800", trans: "onde" },
+  ist: { pos: "Verbo (sein - 3ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "é / está" },
+  sind: { pos: "Verbo (sein - plural)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "são / estão" },
+
+  // --- 🇪🇸 ESPANHOL ---
+  estoy: { pos: "Verbo (estar - 1ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "estou" },
+  aprendiendo: { pos: "Verbo no Gerúndio", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "aprendendo" },
+  español: { pos: "Substantivo Próprio", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "Espanhol" },
+  ella: { pos: "Pronome Pessoal", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Ela" },
+  habla: { pos: "Verbo (3ª pessoa)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "fala" },
+  muy: { pos: "Advérbio de Intensidade", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "muito" },
+  bien: { pos: "Advérbio de Modo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "bem" },
+  porque: { pos: "Conjunção Causal", badge: "Conjunção", color: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800", trans: "porque" },
+  practica: { pos: "Verbo (3ª pessoa)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "pratica" },
+  todos: { pos: "Pronome / Adjetivo", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "todos" },
+  los: { pos: "Artigo Definido Plural", badge: "Artigo", color: "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800", trans: "os" },
+  días: { pos: "Substantivo Masculino", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "dias" },
+  dónde: { pos: "Advérbio Interrogativo", badge: "Interrogativo", color: "bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800", trans: "onde" },
+  está: { pos: "Verbo (estar)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "está / fica" },
+  estación: { pos: "Substantivo Feminino", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "estação" },
+  favor: { pos: "Substantivo / Cortesia", badge: "Cortesia", color: "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800", trans: "favor" },
+
+  // --- 🇮🇹 ITALIANO ---
+  sto: { pos: "Verbo (stare - 1ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "estou" },
+  imparando: { pos: "Verbo no Gerúndio", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "aprendendo" },
+  italiano: { pos: "Substantivo Próprio", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "Italiano" },
+  parla: { pos: "Verbo (3ª pessoa)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "fala" },
+  molto: { pos: "Advérbio de Intensidade", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "muito" },
+  bene: { pos: "Advérbio de Modo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "bem" },
+  perché: { pos: "Conjunção Causal", badge: "Conjunção", color: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800", trans: "porque" },
+  ogni: { pos: "Aggettivo Indefinito", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "cada / todo" },
+  giorno: { pos: "Sostantivo Maschile", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "dia" },
+  stazione: { pos: "Sostantivo Femminile", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "estação" },
+
+  // --- 🇫🇷 FRANCÊS ---
+  japprends: { pos: "Verbo (apprendre - 1ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "eu aprendo" },
+  français: { pos: "Substantivo Próprio", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "Francês" },
+  parle: { pos: "Verbo (3ª pessoa)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "fala" },
+  très: { pos: "Advérbio de Intensidade", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "muito" },
+  gare: { pos: "Substantivo Feminino", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "estação ferroviária" },
 };
 
 export async function breakdownSentence(
   sentence: string,
-  apiKey?: string
+  apiKey?: string,
+  language: SupportedLanguage = "en"
 ): Promise<SentenceAnalysis> {
   const clean = sentence.trim();
+  const langNames: Record<string, string> = {
+    en: "English",
+    de: "German (Deutsch)",
+    es: "Spanish (Español)",
+    it: "Italian (Italiano)",
+    fr: "French (Français)",
+    ja: "Japanese (日本語)",
+    "el-koine": "Biblical Koine Greek",
+  };
+  const targetLangName = langNames[language] || "English";
 
-  // Se houver chave Gemini, gerar análise detalhada com IA
+  // Se houver chave Gemini, gerar análise detalhada com IA no idioma correto
   if (apiKey) {
     try {
-      const prompt = `Break down this English sentence word by word: "${clean}".
+      const prompt = `Break down this sentence in ${targetLangName} word by word: "${clean}".
 Return ONLY a valid JSON object with this exact structure:
 {
   "tokens": [
     {
       "word": "word",
-      "partOfSpeech": "Função gramatical em português (ex: Substantivo, Verbo auxiliar)",
-      "posBadge": "Nome curto (ex: Verbo, Pronome, Substantivo, Preposição, Adjetivo, Advérbio)",
+      "partOfSpeech": "Função gramatical em português (ex: Substantivo, Verbo, Pronome, Preposição, Adjetivo, Advérbio, Artigo)",
+      "posBadge": "Nome curto (ex: Verbo, Pronome, Substantivo, Preposição, Adjetivo, Advérbio, Artigo)",
       "literalTranslation": "Tradução literal em português",
       "note": "Breve nota de uso (opcional)"
     }
@@ -1188,6 +1325,7 @@ Return ONLY a valid JSON object with this exact structure:
           else if (badge.toLowerCase().includes("adjetivo")) color = "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800";
           else if (badge.toLowerCase().includes("preposi")) color = "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800";
           else if (badge.toLowerCase().includes("advérb")) color = "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800";
+          else if (badge.toLowerCase().includes("artigo")) color = "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800";
 
           return {
             word: t.word,
@@ -1203,7 +1341,7 @@ Return ONLY a valid JSON object with this exact structure:
           original: clean,
           tokens,
           naturalTranslation: parsed.naturalTranslation || "Tradução da frase",
-          explanation: parsed.explanation || "Estrutura padrão da língua inglesa.",
+          explanation: parsed.explanation || `Estrutura gramatical padrão em ${targetLangName}.`,
         };
       }
     } catch (e) {
@@ -1211,8 +1349,7 @@ Return ONLY a valid JSON object with this exact structure:
     }
   }
 
-  // Motor Léxico Local
-  // Divide a frase em palavras preservando contrações e hífens
+  // Motor Léxico Local Multilíngue
   const words = clean.match(/[\w'-]+|[.,!?;]/g) || [clean];
   const tokens: WordToken[] = words.map((w) => {
     const isPunctuation = /^[.,!?;]$/.test(w);
@@ -1238,72 +1375,82 @@ Return ONLY a valid JSON object with this exact structure:
       };
     }
 
-    // Heurísticas morfológicas
-    if (lower.endsWith("ing")) {
-      return {
-        word: w,
-        partOfSpeech: "Verbo (forma contínua/gerúndio)",
-        posBadge: "Verbo",
-        posColor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-        literalTranslation: `${w.replace(/ing$/, "")}ando/endo`,
-      };
-    }
-    if (lower.endsWith("ed")) {
-      return {
-        word: w,
-        partOfSpeech: "Verbo no Passado / Particípio",
-        posBadge: "Verbo",
-        posColor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-        literalTranslation: `${w.replace(/ed$/, "")}ou / passado`,
-      };
-    }
-    if (lower.endsWith("ly")) {
-      return {
-        word: w,
-        partOfSpeech: "Advérbio de Modo",
-        posBadge: "Advérbio",
-        posColor: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800",
-        literalTranslation: `${w.replace(/ly$/, "")}mente`,
-      };
-    }
-
     return {
       word: w,
-      partOfSpeech: "Substantivo / Vocábulo",
-      posBadge: "Vocábulo",
+      partOfSpeech: "Vocábulo / Termo",
+      posBadge: "Palavra",
       posColor: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800",
       literalTranslation: `[${w}]`,
     };
   });
 
-  // Tradução natural de frases padrão ou tradução concatenada
+  // Tradução natural de frases padrão ou estimativa
   let naturalTranslation = "Tradução compreensiva em português.";
   const lowerSentence = clean.toLowerCase();
 
-  if (lowerSentence.includes("i am learning english with smart language today")) {
+  // Alemão
+  if (lowerSentence.includes("ich lerne heute deutsch mit smart language")) {
+    naturalTranslation = "Estou aprendendo alemão com o Smart Language hoje.";
+  } else if (lowerSentence.includes("sie spricht sehr gut, weil sie jeden tag übt")) {
+    naturalTranslation = "Ela fala muito bem porque pratica todos os dias.";
+  } else if (lowerSentence.includes("könnten sie mir bitte sagen, wo der bahnhof ist")) {
+    naturalTranslation = "Você poderia, por favor, me dizer onde fica a estação de trem?";
+  } else if (lowerSentence.includes("wir arbeiten seit heute morgen")) {
+    naturalTranslation = "Trabalhamos neste novo projeto desde hoje de manhã.";
+  } else if (lowerSentence.includes("heißen kaffee mit milch")) {
+    naturalTranslation = "Eu gostaria de pedir um café quente com leite, por favor.";
+  }
+  // Espanhol
+  else if (lowerSentence.includes("estoy aprendiendo español")) {
+    naturalTranslation = "Estou aprendendo espanhol com o Smart Language hoje.";
+  } else if (lowerSentence.includes("ella habla muy bien porque practica")) {
+    naturalTranslation = "Ela fala muito bem porque pratica todos os dias.";
+  } else if (lowerSentence.includes("dónde está la estación")) {
+    naturalTranslation = "Poderia me dizer onde fica a estação de trem, por favor?";
+  }
+  // Italiano
+  else if (lowerSentence.includes("sto imparando l'italiano")) {
+    naturalTranslation = "Estou aprendendo italiano com o Smart Language hoje.";
+  } else if (lowerSentence.includes("dove si trova la stazione")) {
+    naturalTranslation = "Você poderia me dizer onde fica a estação, por favor?";
+  }
+  // Francês
+  else if (lowerSentence.includes("j'apprends le français")) {
+    naturalTranslation = "Estou aprendendo francês com o Smart Language hoje.";
+  } else if (lowerSentence.includes("où se trouve la gare")) {
+    naturalTranslation = "Você poderia me dizer onde fica a estação, por favor?";
+  }
+  // Inglês
+  else if (lowerSentence.includes("i am learning english with smart language today")) {
     naturalTranslation = "Estou aprendendo inglês com o Smart Language hoje.";
   } else if (lowerSentence.includes("she speaks very well because she practices daily")) {
     naturalTranslation = "Ela fala muito bem porque pratica diariamente.";
   } else if (lowerSentence.includes("could you please tell me where the station is")) {
     naturalTranslation = "Você poderia, por favor, me dizer onde fica a estação?";
-  } else if (lowerSentence.includes("they have been working on this project since morning")) {
-    naturalTranslation = "Eles têm trabalhado neste projeto desde de manhã.";
   } else if (lowerSentence.includes("i would like a cup of hot coffee with milk")) {
     naturalTranslation = "Eu gostaria de uma xícara de café quente com leite.";
-  } else if (lowerSentence.includes("you should always believe in yourself and keep going")) {
-    naturalTranslation = "Você deve sempre acreditar em si mesmo e seguir em frente.";
   } else {
-    // Estimativa natural combinando as palavras
     naturalTranslation = tokens
       .filter((t) => t.posBadge !== "Sinal")
       .map((t) => t.literalTranslation.replace(/^\[|\]$/g, ""))
       .join(" ");
   }
 
+  let explanation = `Análise morfológica de cada vocábulo em ${targetLangName}.`;
+  if (language === "de") {
+    explanation = "Em alemão, a estrutura básica coloca os verbos em posições fixas (posição 2 em orações principais, e no final em orações com conjunções como 'weil').";
+  } else if (language === "es") {
+    explanation = "Em espanhol, a ordem é Sujeito + Verbo + Objeto, com grande flexibilidade e rica conjugação verbal.";
+  } else if (language === "it") {
+    explanation = "Em italiano, a estrutura segue a musicalidade do idioma, com artigos definidos e contrações preposicionais expressivas.";
+  } else if (language === "fr") {
+    explanation = "Em francês, a clareza e elegância estrutural regem a união entre artigos, pronomes e verbos conjugados.";
+  }
+
   return {
     original: clean,
     tokens,
     naturalTranslation,
-    explanation: "Em inglês, a ordem típica é Sujeito + Verbo + Objeto (SVO), com adjetivos posicionados antes dos substantivos.",
+    explanation,
   };
 }

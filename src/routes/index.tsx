@@ -211,6 +211,7 @@ function SmartLanguageApp() {
         onOpenChange={setIsDailySprintOpen}
         audioSpeed={progress.audioSpeed}
         onSprintComplete={handleDailySprintComplete}
+        language={progress.selectedLanguage || "en"}
       />
 
       {/* Modal: Configurações (Voz, Velocidade, IA e Chave API) */}

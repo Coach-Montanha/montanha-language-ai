@@ -1,6 +1,8 @@
-import React, { useState } from "react";
-import { Flashcard, UserProgress } from "@/types/language";
-import { PRESET_THEMES } from "@/data/vocabulary";
+import React, { useState, useEffect } from "react";
+import { Flashcard, UserProgress, SupportedLanguage } from "@/types/language";
+import { getPresetThemesForLanguage } from "@/data/vocabulary";
+import { getLanguageById } from "@/data/languages";
+import { getTutorsForLanguage } from "@/data/tutors";
 import { generateFlashcards } from "@/services/ai-engine";
 import { speakText } from "@/services/speech";
 import { addXP, saveCustomFlashcard } from "@/services/storage";
@@ -29,12 +31,30 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   progress,
   onUpdateProgress,
 }) => {
+  const activeLang: SupportedLanguage = progress.selectedLanguage || "en";
+  const langDef = getLanguageById(activeLang);
+  const activeTutors = getTutorsForLanguage(activeLang);
+  const activeTutor = activeTutors[0] || { name: "Tutor", gender: "male" };
+
   const [themeInput, setThemeInput] = useState("");
   const [currentTheme, setCurrentTheme] = useState("Viagem");
-  const [cards, setCards] = useState<Flashcard[]>(PRESET_THEMES["viagem"] || []);
+  const [cards, setCards] = useState<Flashcard[]>(() => {
+    const langThemes = getPresetThemesForLanguage(activeLang);
+    return langThemes["viagem"] || Object.values(langThemes)[0] || [];
+  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Sincroniza cartões quando o usuário troca o idioma ativo
+  useEffect(() => {
+    const langThemes = getPresetThemesForLanguage(activeLang);
+    const newCards = langThemes["viagem"] || Object.values(langThemes)[0] || [];
+    setCards(newCards);
+    setCurrentTheme("Viagem");
+    setCurrentIndex(0);
+    setIsFlipped(false);
+  }, [activeLang]);
 
   const quickThemes = [
     { label: "✈️ Viagem", key: "viagem" },
@@ -51,14 +71,18 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
     setIsLoading(true);
     setIsFlipped(false);
     try {
-      const generated = await generateFlashcards(query, progress.geminiApiKey);
+      const generated = await generateFlashcards(
+        query,
+        progress.geminiApiKey,
+        activeLang
+      );
       if (generated.length > 0) {
         setCards(generated);
         setCurrentTheme(query);
         setCurrentIndex(0);
-        toast.success(`Cartões gerados para o tema: ${query}!`);
+        toast.success(`Cartões de ${langDef.name} gerados para o tema: ${query}!`);
 
-        // Salva os cartões gerados
+        // Salva os cartões gerados localmente
         generated.forEach((card) => saveCustomFlashcard(card));
       } else {
         toast.error("Nenhum cartão gerado para este tema.");
@@ -75,7 +99,11 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
 
   const handlePlayWordAudio = (e: React.MouseEvent, word: string) => {
     e.stopPropagation();
-    speakText(word, { rate: progress.audioSpeed });
+    speakText(word, {
+      rate: progress.audioSpeed,
+      lang: langDef.speechLangCode,
+      gender: activeTutor.gender,
+    });
   };
 
   const handleNext = () => {
@@ -113,7 +141,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-            <Layers className="h-4 w-4 text-primary" /> Cartões de Vocabulário
+            <Layers className="h-4 w-4 text-primary" /> Cartões de {langDef.flag} {langDef.name}
           </h2>
           <span className="text-[11px] font-semibold text-muted-foreground">
             {cards.length} cartões no tema
@@ -132,7 +160,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
             <Input
               value={themeInput}
               onChange={(e) => setThemeInput(e.target.value)}
-              placeholder="Digite qualquer tema (ex: Futebol, Cinema, Medicina)..."
+              placeholder={`Digite tema em ${langDef.name} (ex: Aeroporto, Música)...`}
               className="text-xs h-9 pl-9 rounded-xl bg-background"
               disabled={isLoading}
             />
@@ -193,7 +221,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                 variant="secondary"
                 onClick={(e) => handlePlayWordAudio(e, currentCard.word)}
                 className="h-8 w-8 rounded-full shadow-xs text-primary"
-                title="Ouvir palavra"
+                title={`Ouvir palavra em ${langDef.name}`}
               >
                 <Volume2 className="h-4 w-4" />
               </Button>
@@ -205,7 +233,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                 <h3 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
                   {currentCard.word}
                 </h3>
-                <p className="text-sm font-mono text-primary font-semibold">
+                <p className="text-sm font-mono text-emerald-600 dark:text-emerald-400 font-bold">
                   {currentCard.phonetic}
                 </p>
                 <p className="text-xs text-muted-foreground pt-4">
@@ -244,7 +272,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
             {/* Rodapé do cartão */}
             <div className="text-center pt-2 border-t border-border/40">
               <span className="text-[11px] font-medium text-muted-foreground">
-                {isFlipped ? "Verso (Português & Exemplo)" : "Frente (Inglês & Fonética)"}
+                {isFlipped ? "Verso (Português & Exemplo)" : `Frente (${langDef.name} & Fonética)`}
               </span>
             </div>
           </div>

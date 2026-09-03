@@ -1,6 +1,8 @@
-import React, { useState } from "react";
-import { SentenceAnalysis, UserProgress, WordToken } from "@/types/language";
-import { SAMPLE_BREAKDOWN_PHRASES } from "@/data/vocabulary";
+import React, { useState, useEffect } from "react";
+import { SentenceAnalysis, UserProgress, WordToken, SupportedLanguage } from "@/types/language";
+import { getBreakdownPhrasesForLanguage } from "@/data/vocabulary";
+import { getLanguageById } from "@/data/languages";
+import { getTutorsForLanguage } from "@/data/tutors";
 import { breakdownSentence } from "@/services/ai-engine";
 import { speakText } from "@/services/speech";
 import { addXP } from "@/services/storage";
@@ -11,8 +13,6 @@ import {
   Split,
   Sparkles,
   Volume2,
-  Copy,
-  BookOpen,
   CheckCircle2,
   Lightbulb,
 } from "lucide-react";
@@ -27,10 +27,24 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
   progress,
   onUpdateProgress,
 }) => {
-  const [inputSentence, setInputSentence] = useState(SAMPLE_BREAKDOWN_PHRASES[0]!);
+  const activeLang: SupportedLanguage = progress.selectedLanguage || "en";
+  const langDef = getLanguageById(activeLang);
+  const activeTutors = getTutorsForLanguage(activeLang);
+  const activeTutor = activeTutors[0] || { name: "Tutor", gender: "male" };
+
+  const samplePhrases = getBreakdownPhrasesForLanguage(activeLang);
+  const [inputSentence, setInputSentence] = useState(samplePhrases[0] || "");
   const [analysis, setAnalysis] = useState<SentenceAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeToken, setActiveToken] = useState<WordToken | null>(null);
+
+  // Sincroniza exemplos e frase inicial quando o idioma é alterado
+  useEffect(() => {
+    const samples = getBreakdownPhrasesForLanguage(activeLang);
+    setInputSentence(samples[0] || "");
+    setAnalysis(null);
+    setActiveToken(null);
+  }, [activeLang]);
 
   const handleAnalyze = async (textToUse?: string) => {
     const query = (textToUse || inputSentence).trim();
@@ -38,7 +52,7 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
 
     setIsLoading(true);
     try {
-      const result = await breakdownSentence(query, progress.geminiApiKey);
+      const result = await breakdownSentence(query, progress.geminiApiKey, activeLang);
       setAnalysis(result);
       setActiveToken(null);
 
@@ -49,7 +63,7 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
         phrasesAnalyzedCount: progress.phrasesAnalyzedCount + 1,
       });
 
-      toast.success("Frase destrinchada com sucesso!");
+      toast.success(`Frase em ${langDef.name} destrinchada com sucesso!`);
     } catch (e) {
       console.error(e);
       toast.error("Erro ao analisar a frase.");
@@ -59,7 +73,11 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
   };
 
   const handlePlayAudio = (text: string, rate: number = progress.audioSpeed) => {
-    speakText(text, { rate });
+    speakText(text, {
+      rate,
+      lang: langDef.speechLangCode,
+      gender: activeTutor.gender,
+    });
   };
 
   const handleSelectSample = (sample: string) => {
@@ -72,10 +90,10 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
       {/* Cabeçalho */}
       <div className="space-y-1">
         <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-          <Split className="h-4 w-4 text-primary" /> Destrinchar Frase (Palavra por Palavra)
+          <Split className="h-4 w-4 text-primary" /> Destrinchar Frase • {langDef.flag} {langDef.name}
         </h2>
         <p className="text-[11px] text-muted-foreground">
-          Cole qualquer frase em inglês para ver a classe gramatical e tradução de cada palavra.
+          Cole qualquer frase em {langDef.name} para analisar a classe gramatical e a tradução de cada palavra.
         </p>
       </div>
 
@@ -84,7 +102,7 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
         <Textarea
           value={inputSentence}
           onChange={(e) => setInputSentence(e.target.value)}
-          placeholder="Cole uma frase em inglês aqui..."
+          placeholder={`Cole ou digite uma frase em ${langDef.name} aqui...`}
           rows={2}
           className="text-xs resize-none bg-background rounded-xl p-2.5"
         />
@@ -92,7 +110,7 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
         <div className="flex items-center justify-between gap-2">
           {/* Frases rápidas para testar */}
           <span className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
-            <Sparkles className="h-3 w-3 text-amber-500" /> Exemplos rápidos
+            <Sparkles className="h-3 w-3 text-amber-500" /> Exemplos rápidos em {langDef.name}
           </span>
 
           <Button
@@ -106,13 +124,13 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
           </Button>
         </div>
 
-        {/* Chips de frases de exemplo */}
+        {/* Chips de frases de exemplo do idioma */}
         <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
-          {SAMPLE_BREAKDOWN_PHRASES.slice(0, 3).map((sample, idx) => (
+          {samplePhrases.slice(0, 4).map((sample, idx) => (
             <button
               key={idx}
               onClick={() => handleSelectSample(sample)}
-              className="shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-medium border border-border bg-background hover:bg-muted text-muted-foreground line-clamp-1 max-w-[240px] text-left"
+              className="shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-medium border border-border bg-background hover:bg-muted text-muted-foreground line-clamp-1 max-w-[240px] text-left transition-colors"
             >
               {sample}
             </button>
@@ -166,7 +184,7 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
                       : "bg-card hover:border-primary/60 hover:shadow-xs min-w-[65px]"
                   }`}
                 >
-                  {/* Palavra em inglês */}
+                  {/* Palavra no idioma de estudo */}
                   <span className="text-xs font-bold text-foreground group-hover:text-primary">
                     {token.word}
                   </span>
@@ -232,7 +250,7 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
           <div className="rounded-2xl border border-border bg-card p-3 space-y-1 text-xs">
             <div className="flex items-center gap-1.5 font-bold text-muted-foreground text-[11px]">
               <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
-              <span>Dica de Construção da Frase</span>
+              <span>Dica de Construção da Frase ({langDef.name})</span>
             </div>
             <p className="text-[11px] text-muted-foreground leading-relaxed">
               {analysis.explanation}
