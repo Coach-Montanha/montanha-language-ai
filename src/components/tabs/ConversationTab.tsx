@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChatMessage, UserProgress, TutorPersona } from "@/types/language";
+import { ChatMessage, UserProgress, TutorPersona, ContextualSuggestion } from "@/types/language";
 import {
   tutorChat,
   generatePhoneticGuide,
   getPortugueseTranslation,
+  getDynamicSuggestions,
 } from "@/services/ai-engine";
 import {
   speakText,
@@ -36,6 +37,7 @@ import {
   CheckSquare,
   Square,
   X,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -261,10 +263,13 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     setSpeakingMessageId(null);
 
     setInput("");
+    const userMsgId = `user-${Date.now()}`;
     const userMsg: ChatMessage = {
-      id: `user-${Date.now()}`,
+      id: userMsgId,
       sender: "user",
       text: query,
+      phonetic: generatePhoneticGuide(query, activeTutor.language),
+      translationPt: getPortugueseTranslation(query, activeTutor.language),
       timestamp: Date.now(),
     };
 
@@ -275,6 +280,16 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
     try {
       const response = await tutorChat(query, messages, progress.geminiApiKey, activeTutor);
+
+      if (response.userPhonetic) {
+        userMsg.phonetic = response.userPhonetic;
+      }
+      if (response.userTranslationPt) {
+        userMsg.translationPt = response.userTranslationPt;
+      }
+      if (response.suggestedReplies && response.suggestedReplies.length > 0) {
+        setCurrentSuggestions(response.suggestedReplies);
+      }
 
       const tutorMsgId = `tutor-${Date.now()}`;
       const tutorMsg: ChatMessage = {
@@ -291,7 +306,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         timestamp: Date.now(),
       };
 
-      const updatedHistory = [...newHistory, tutorMsg];
+      const updatedHistory = [...newHistory.slice(0, -1), userMsg, tutorMsg];
       setMessages(updatedHistory);
       saveChatHistory(updatedHistory);
 
@@ -442,173 +457,42 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     }
   };
 
-  // Sugestões práticas de fala adaptadas ao idioma do tutor
-  const suggestions = (() => {
-    switch (activeTutor.language) {
-      case "es":
-        return [
-          {
-            label: "Apresentar-se",
-            english: `¡Hola ${activeTutor.name}, mucho gusto en conocerte!`,
-            phonetic: `Ó-la ${activeTutor.name}, mú-tcho gús-to en co-no-sér-te!`,
-            portuguese: `Olá ${activeTutor.name}, muito prazer em te conhecer!`,
-          },
-          {
-            label: "Falar do dia",
-            english: "Hoy tuve un día muy productivo y quiero practicar.",
-            phonetic: "Ói tú-ve un dí-a múi pro-duc-tí-vo i kié-ro prac-ti-cár.",
-            portuguese: "Hoje tive um dia muito produtivo e quero praticar.",
-          },
-          {
-            label: "Aprender mais",
-            english: "Quiero mejorar mi fluidez y pronunciación en español.",
-            phonetic: "Kié-ro me-ho-rár mi flui-déz i pro-nun-sia-sión en es-pa-nhól.",
-            portuguese: "Quero melhorar minha fluência e pronúncia em espanhol.",
-          },
-        ];
-      case "ja":
-        return [
-          {
-            label: "Apresentar-se",
-            english: `Konnichiwa ${activeTutor.name}-san, hajimemashite!`,
-            phonetic: `Kôn-ni-tchi-uá ${activeTutor.name}-san, ra-ji-me-má-shi-te!`,
-            portuguese: `Olá ${activeTutor.name}, muito prazer em conhecê-lo(a)!`,
-          },
-          {
-            label: "Falar do dia",
-            english: "Kyou wa totemo ii tenki deshita.",
-            phonetic: "Kiô uá to-te-mo íi tên-ki dé-shi-ta.",
-            portuguese: "Hoje fez um tempo muito bom.",
-          },
-          {
-            label: "Aprender",
-            english: "Nihongo o joudzu ni hanashitai desu.",
-            phonetic: "Ni-hôn-go o djô-dzu ni ra-na-shi-tái dés.",
-            portuguese: "Quero falar japonês com naturalidade.",
-          },
-        ];
-      case "el-koine":
-        return [
-          {
-            label: "Graça e paz",
-            english: `Cháirete ${activeTutor.name}! Cháris hymîn kaì eirênê.`,
-            phonetic: `Kái-re-te ${activeTutor.name}! Ká-ris ri-mîn ké êi-rê-nê.`,
-            portuguese: `Alegrai-vos ${activeTutor.name}! Graça e paz a vós.`,
-          },
-          {
-            label: "João 1:1",
-            english: "Ἐν ἀρχῇ ἦν ὁ λόγος (En archêi ên ho lógos).",
-            phonetic: "En ar-kêi ên ro ló-gos.",
-            portuguese: "No princípio era o Verbo (João 1:1).",
-          },
-          {
-            label: "Amor Ágape",
-            english: "Tí sêmaínei hê agápê tou Theou?",
-            phonetic: "Tí sê-mé-ni rê a-gá-pê tu Te-ú?",
-            portuguese: "O que significa o amor sacrificial de Deus?",
-          },
-        ];
-      case "it":
-        return [
-          {
-            label: "Apresentar-se",
-            english: `Ciao ${activeTutor.name}, piacere di conoscerti!`,
-            phonetic: `Tcháo ${activeTutor.name}, pia-tchê-re di co-nó-sher-ti!`,
-            portuguese: `Olá ${activeTutor.name}, prazer em te conhecer!`,
-          },
-          {
-            label: "Falar do dia",
-            english: "Oggi è stata una giornata tranquilla e produttiva.",
-            phonetic: "Ô-dji è sta-ta ú-na djor-na-ta tran-cuíl-la e pro-dut-tí-va.",
-            portuguese: "Hoje foi um dia tranquilo e produtivo.",
-          },
-          {
-            label: "Café italiano",
-            english: "Vorrei un caffè espresso per favore.",
-            phonetic: "Vor-rêi un caf-fè es-prés-so per fa-vó-re.",
-            portuguese: "Gostaria de um café expresso, por favor.",
-          },
-        ];
-      case "fr":
-        return [
-          {
-            label: "Apresentar-se",
-            english: `Bonjour ${activeTutor.name}, enchanté de faire votre connaissance !`,
-            phonetic: `Bôn-júr ${activeTutor.name}, ân-chan-tê de vú rân-côn-trê !`,
-            portuguese: `Bom dia ${activeTutor.name}, encantado em conhecê-lo(a)!`,
-          },
-          {
-            label: "Falar do dia",
-            english: "J'ai passé une excellente journée aujourd'hui.",
-            phonetic: "Jê pas-sê ün ek-se-lânt jur-nê o-júr-duí.",
-            portuguese: "Passei um dia excelente hoje.",
-          },
-          {
-            label: "Pedir croissant",
-            english: "Je voudrais un croissant et un café s'il vous plaît.",
-            phonetic: "Je vu-drê un crua-sân é un ca-fê sil vu plê.",
-            portuguese: "Eu gostaria de um croissant e um café, por favor.",
-          },
-        ];
-      case "de":
-        return [
-          {
-            label: "Apresentar-se",
-            english: `Hallo ${activeTutor.name}, freut mich dich kennenzulernen!`,
-            phonetic: `Rá-lo ${activeTutor.name}, fróit mikh dikh kên-nen-tsu-lêr-nen!`,
-            portuguese: `Olá ${activeTutor.name}, prazer em te conhecer!`,
-          },
-          {
-            label: "Falar do dia",
-            english: "Mein Tag war gut, aber ziemlich beschäftigt.",
-            phonetic: "Máin Ták var gut, á-ber tsím-likh be-shêf-tikt.",
-            portuguese: "Meu dia foi bom, mas bastante corrido.",
-          },
-          {
-            label: "Aprender alemão",
-            english: "Ich möchte mein Deutsch jeden Tag verbessern.",
-            phonetic: "Ikh mêkh-te máin Dóitsh jê-den Ták fer-bé-sern.",
-            portuguese: "Quero melhorar meu alemão todos os dias.",
-          },
-          {
-            label: "Pedir café",
-            english: "Ich möchte bitte einen Kaffee mit Milch bestellen.",
-            phonetic: "Ikh mêkh-te bí-te ái-nen Ka-fê mit Mílkh be-chtê-len.",
-            portuguese: "Eu gostaria de pedir um café com leite, por favor.",
-          },
-        ];
-      case "en":
-      default:
-        return [
-          {
-            label: "Apresentar-se",
-            english: `Hello ${activeTutor.name}, nice to meet you!`,
-            phonetic: `Ré-lóu ${activeTutor.name}, náis tu mít iú!`,
-            portuguese: `Olá ${activeTutor.name}, prazer em conhecer você!`,
-          },
-          {
-            label: "Planos de línguas",
-            english: "I want to improve my speaking and pronunciation skills.",
-            phonetic: "Ái uónt tu im-prúv mái spí-kin énd pro-nân-si-êi-shên skíls.",
-            portuguese: "Quero melhorar minha fala e habilidades de pronúncia.",
-          },
-          {
-            label: "Falar do dia",
-            english: "My day was pretty busy, but I'm ready to learn.",
-            phonetic: "Mái dêi uóz prí-ti bí-zi, bât áim ré-di tu lûrn.",
-            portuguese: "Meu dia foi bem corrido, mas estou pronto para aprender.",
-          },
-          {
-            label: "Testar erro: Faltou 'a'",
-            english: "I have dog and car.",
-            phonetic: "Ái rév dóg énd cár.",
-            portuguese: "Eu tenho cachorro e carro. (Faltou 'a')",
-          },
-        ];
-    }
-  })();
-
+  // Sugestões contextuais de resposta (dinâmicas, variadas e interativas: de 5 a 8 opções)
+  const [currentSuggestions, setCurrentSuggestions] = useState<ContextualSuggestion[]>(() =>
+    getDynamicSuggestions(activeTutor.language, "", activeTutor)
+  );
   const [expandedSuggestionIndex, setExpandedSuggestionIndex] = useState<number | null>(null);
+
+  // Atualizar sugestões sempre que o tutor ou o idioma de estudo mudar
+  useEffect(() => {
+    setCurrentSuggestions(getDynamicSuggestions(activeTutor.language, "", activeTutor));
+    setExpandedSuggestionIndex(null);
+  }, [activeTutor.id, activeTutor.language]);
+
+  // Função para renovar / trazer sugestões frescas a qualquer momento
+  const handleRefreshSuggestions = () => {
+    const lastTutorMsg = [...messages].reverse().find((m) => m.sender === "tutor");
+    const fresh = getDynamicSuggestions(
+      activeTutor.language,
+      lastTutorMsg?.text || "",
+      activeTutor
+    );
+    setCurrentSuggestions(fresh);
+    setExpandedSuggestionIndex(null);
+    toast.info("Sugestões de resposta renovadas!");
+  };
+
+  // Reproduzir áudio de prévia de uma sugestão antes de enviar
+  const handleSpeakPreview = (text: string) => {
+    stopSpeaking();
+    setSpeakingMessageId(null);
+    speakText(text, {
+      rate: progress.audioSpeed || 0.85,
+      gender: activeTutor.gender,
+      pitch: activeTutor.speechPitch,
+      lang: activeLanguage.speechLangCode,
+    });
+  };
 
   const speedDisplay =
     (progress.audioSpeed || 0.85) <= 0.75
@@ -786,8 +670,8 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
           const isSpeakingThis = speakingMessageId === msg.id;
           const isMsgSelected = selectedIds.includes(msg.id);
 
-          const phoneticText = msg.phonetic || (!isUser ? generatePhoneticGuide(msg.text) : undefined);
-          const translationText = msg.translationPt || (!isUser ? getPortugueseTranslation(msg.text) : undefined);
+          const phoneticText = msg.phonetic || generatePhoneticGuide(msg.text, activeTutor.language);
+          const translationText = msg.translationPt || getPortugueseTranslation(msg.text, activeTutor.language);
 
           return (
             <div
@@ -840,10 +724,9 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                   {/* Texto Principal da Mensagem com Tamanho de Fonte Controlável */}
                   <p className={`${fontConfig.textClass} font-medium pr-3`}>{msg.text}</p>
 
-                  {/* Elementos Exclusivos das Mensagens do Tutor: Fonética & Tradução */}
+                  {/* 1. Elementos da Mensagem do Tutor: Fonética & Tradução */}
                   {!isUser && (
                     <div className="mt-2.5 pt-2 border-t border-border/50 space-y-1.5 text-left">
-                      {/* 1. Forma Fonética de Ler */}
                       {phoneticText && (
                         <div className="flex items-start gap-1.5 bg-primary/5 rounded-lg px-2 py-1 border border-primary/15">
                           <span className="text-xs select-none">🗣️</span>
@@ -858,7 +741,6 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                         </div>
                       )}
 
-                      {/* 2. Tradução para o Português */}
                       {translationText && (
                         <div className="flex items-start gap-1.5 bg-muted/40 rounded-lg px-2 py-1 border border-border/40">
                           <span className="text-xs select-none">🇧🇷</span>
@@ -873,8 +755,9 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                         </div>
                       )}
 
-                      {/* Botão de Ouvir Voz */}
+                      {/* Botão de Ouvir Tutor */}
                       <button
+                        type="button"
                         onClick={() => handleSpeakMessage(msg.id, msg.text)}
                         className={`mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold transition-colors ${
                           isSpeakingThis
@@ -886,6 +769,56 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                         <Volume2 className="h-3.5 w-3.5" />
                         <span>
                           {isSpeakingThis ? "Falando..." : `Ouvir pronúncia (${speedDisplay})`}
+                        </span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 2. Elementos da Mensagem do Usuário: Ler Fonética, Ler Tradução e Ouvir Minha Resposta */}
+                  {isUser && (phoneticText || translationText) && (
+                    <div className="mt-2.5 pt-2 border-t border-primary-foreground/20 space-y-1.5 text-left">
+                      {phoneticText && (
+                        <div className="flex items-start gap-1.5 bg-black/20 dark:bg-black/30 rounded-lg px-2 py-1 border border-primary-foreground/15">
+                          <span className="text-xs select-none">🗣️</span>
+                          <div className="flex-1">
+                            <span className="text-[9px] font-bold text-primary-foreground/90 block leading-none mb-0.5">
+                              Como Falar (Sua Pronúncia):
+                            </span>
+                            <p className={`font-mono text-primary-foreground font-semibold tracking-wide leading-relaxed ${fontConfig.phoneticClass}`}>
+                              [{phoneticText}]
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {translationText && (
+                        <div className="flex items-start gap-1.5 bg-black/15 dark:bg-black/25 rounded-lg px-2 py-1 border border-primary-foreground/10">
+                          <span className="text-xs select-none">🇧🇷</span>
+                          <div className="flex-1">
+                            <span className="text-[9px] font-bold text-primary-foreground/80 block leading-none mb-0.5">
+                              Significado em Português:
+                            </span>
+                            <p className={`text-primary-foreground font-medium leading-relaxed ${fontConfig.translationClass}`}>
+                              {translationText}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Botão de Ouvir Minha Resposta com Sotaque Nativo */}
+                      <button
+                        type="button"
+                        onClick={() => handleSpeakMessage(msg.id, msg.text)}
+                        className={`mt-1 flex items-center gap-1.5 text-[11px] font-semibold transition-all px-2 py-1 rounded-md ${
+                          isSpeakingThis
+                            ? "bg-white/30 text-white font-bold animate-pulse"
+                            : "bg-white/15 hover:bg-white/25 text-primary-foreground"
+                        }`}
+                        title={isSpeakingThis ? "Pausar fala" : `Ouvir pronúncia da minha resposta (${speedDisplay})`}
+                      >
+                        <Volume2 className="h-3.5 w-3.5" />
+                        <span>
+                          {isSpeakingThis ? "Ouvindo sua resposta..." : `Ouvir minha resposta (${speedDisplay})`}
                         </span>
                       </button>
                     </div>
@@ -931,51 +864,107 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Sugestões de Respostas com Fonética e Tradução */}
+      {/* Sugestões de Respostas Ricas & Contextuais (com Fonética, Tradução e Áudio de Prévia) */}
       <div className="p-2 border-t border-border/50 bg-background/95 space-y-1.5">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground font-bold flex items-center gap-1">
-            <Sparkles className="h-3 w-3 text-amber-500" /> Sugestões de Fala (com Fonética & Tradução):
+          <span className="text-[11px] text-foreground font-bold flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+            Sugestões de Resposta ({currentSuggestions.length} opções):
           </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleRefreshSuggestions}
+            className="h-6 text-[10px] px-2 gap-1 text-muted-foreground hover:text-foreground"
+            title="Trazer novas sugestões de fala"
+          >
+            <RotateCcw className="h-3 w-3" />
+            <span>Novas Sugestões</span>
+          </Button>
         </div>
 
-        <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-          {suggestions.map((sug, idx) => {
+        <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+          {currentSuggestions.map((sug, idx) => {
             const isExpanded = expandedSuggestionIndex === idx;
 
             return (
-              <div key={idx} className="flex flex-col gap-1">
-                <div className="flex items-center gap-1">
+              <div
+                key={`${sug.text}-${idx}`}
+                className={`flex flex-col rounded-xl border transition-all ${
+                  isExpanded
+                    ? "w-full border-primary/40 bg-primary/5 p-2 shadow-xs"
+                    : "border-border/70 bg-card hover:border-primary/40"
+                }`}
+              >
+                <div className="flex items-center gap-1 p-1">
+                  {/* Botão de Enviar Direto */}
                   <button
                     type="button"
-                    onClick={() => handleSend(sug.english)}
-                    className="text-[10px] bg-muted hover:bg-primary hover:text-primary-foreground text-foreground px-2 py-1 rounded-lg border border-border/60 transition-colors text-left"
-                    title={`Enviar frase: "${sug.english}"`}
+                    onClick={() => handleSend(sug.text)}
+                    className="text-[11px] font-medium text-foreground hover:text-primary transition-colors text-left px-1.5 py-0.5 rounded-lg hover:bg-primary/10 flex items-center gap-1.5"
+                    title={`Enviar resposta: "${sug.text}"`}
                   >
-                    💬 {sug.label}
+                    <span className="font-semibold text-xs">{sug.label}</span>
+                    <span className="text-[10px] text-muted-foreground hidden sm:inline truncate max-w-[140px]">
+                      {sug.text}
+                    </span>
                   </button>
 
+                  {/* Botão de Ouvir Prévia em Áudio */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSpeakPreview(sug.text);
+                    }}
+                    className="h-6 w-6 p-1 text-muted-foreground hover:text-emerald-600 rounded-md hover:bg-emerald-500/10 transition-colors shrink-0"
+                    title="Ouvir pronúncia desta frase antes de enviar"
+                  >
+                    <Volume2 className="h-3.5 w-3.5" />
+                  </button>
+
+                  {/* Botão de Ver Fonética e Tradução */}
                   <button
                     type="button"
                     onClick={() => setExpandedSuggestionIndex(isExpanded ? null : idx)}
-                    className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors ${
+                    className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors shrink-0 font-medium ${
                       isExpanded
-                        ? "bg-primary/20 text-primary border-primary/40 font-bold"
-                        : "bg-muted/60 text-muted-foreground border-border/40 hover:text-foreground"
+                        ? "bg-primary text-primary-foreground border-primary font-bold"
+                        : "bg-muted text-muted-foreground border-border/50 hover:text-foreground"
                     }`}
-                    title="Ver pronúncia fonética escrita e tradução"
+                    title="Ver pronúncia fonética e tradução em português"
                   >
                     {isExpanded ? "Ocultar" : "Fonética"}
                   </button>
                 </div>
 
+                {/* Bloco Expandido de Fonética e Tradução */}
                 {isExpanded && (
-                  <div className="w-full text-left bg-card border border-primary/20 rounded-lg p-2 text-[10px] space-y-0.5 animate-in fade-in">
-                    <p className="font-semibold text-foreground">{sug.english}</p>
-                    <p className="text-primary font-mono text-[9px] bg-primary/5 px-1 py-0.2 rounded inline-block">
-                      🗣️ [{sug.phonetic}]
-                    </p>
-                    <p className="text-muted-foreground text-[9px]">🇧🇷 {sug.portuguese}</p>
+                  <div className="mt-1 pt-1.5 border-t border-border/40 text-left text-[11px] space-y-1 animate-in fade-in">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold text-foreground">{sug.text}</p>
+                      <Button
+                        size="sm"
+                        onClick={() => handleSend(sug.text)}
+                        className="h-6 text-[10px] px-2 gap-1 rounded-lg shrink-0"
+                      >
+                        <Send className="h-3 w-3" />
+                        <span>Enviar</span>
+                      </Button>
+                    </div>
+                    <div className="flex items-start gap-1 bg-primary/10 rounded-md px-1.5 py-0.5 border border-primary/20">
+                      <span className="text-[10px] select-none">🗣️</span>
+                      <p className="text-primary font-mono text-[10px] font-semibold">
+                        [{sug.phonetic}]
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-1 bg-muted/60 rounded-md px-1.5 py-0.5 border border-border/40">
+                      <span className="text-[10px] select-none">🇧🇷</span>
+                      <p className="text-muted-foreground text-[10px]">
+                        {sug.translationPt}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>

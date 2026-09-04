@@ -6,6 +6,8 @@ import {
   WordToken,
   Scenario,
   SupportedLanguage,
+  ContextualSuggestion,
+  TutorChatResponse,
 } from "@/types/language";
 import { PRESET_THEMES, getPresetThemesForLanguage } from "@/data/vocabulary";
 import { callGeminiRaw } from "./gemini";
@@ -171,17 +173,393 @@ export function checkGrammarLocal(input: string): GrammarCorrection {
 import { TutorPersona } from "@/types/language";
 import { DEFAULT_TUTOR } from "@/data/tutors";
 
+export function getDynamicSuggestions(
+  language: SupportedLanguage,
+  userInput: string = "",
+  tutor?: TutorPersona
+): ContextualSuggestion[] {
+  const tutorName = tutor?.name || "Tutor";
+  const lower = userInput.toLowerCase();
+
+  switch (language) {
+    case "de": {
+      if (lower.includes("kaffee") || lower.includes("trinken") || lower.includes("essen")) {
+        return [
+          {
+            category: "agree",
+            label: "☕ Café de manhã",
+            text: "Ich trinke meinen Kaffee am liebsten morgens nach dem Aufstehen.",
+            phonetic: "Ikh trín-ke mái-nen Ka-fê am líps-ten môr-guens nakh dêm Áuf-chtê-en.",
+            translationPt: "Eu tomo meu café preferencialmente de manhã após levantar.",
+          },
+          {
+            category: "alternative",
+            label: "🍵 Prefiro chá",
+            text: "Eigentlich trinke ich lieber grünen Tee als Kaffee.",
+            phonetic: "Ái-guent-likh trín-ke ikh lí-ber grú-nen Tê als Ka-fê.",
+            translationPt: "Na verdade, prefiro beber chá verde a café.",
+          },
+          {
+            category: "ask_back",
+            label: "🔄 E você, tutor?",
+            text: `Und wie trinkst du deinen Kaffee am liebsten, ${tutorName}?`,
+            phonetic: `Unt vi trínkst du dái-nen Ka-fê am líps-ten, ${tutorName}?`,
+            translationPt: `E como você prefere tomar seu café, ${tutorName}?`,
+          },
+          {
+            category: "detail",
+            label: "🥨 Com comida típica",
+            text: "Eine frische Brezel dazu schmeckt einfach fantastisch!",
+            phonetic: "Ái-ne frí-she Bré-tsel da-tsu shmêkt áin-fakh fan-tás-tish!",
+            translationPt: "Um pretzel fresco acompanhando fica simplesmente fantástico!",
+          },
+          {
+            category: "quick",
+            label: "⚡ Curto & Natural",
+            text: "Schwarz ohne Zucker, bitte!",
+            phonetic: "Shvarts ô-ne Tsú-ker, bí-te!",
+            translationPt: "Preto sem açúcar, por favor!",
+          },
+          {
+            category: "general",
+            label: "💬 Dica de pedido",
+            text: "Wie bestellt man das am natürlichsten im Café?",
+            phonetic: "Vi be-chtêlt man das am na-túr-likhs-ten im Ka-fê?",
+            translationPt: "Como se pede isso da forma mais natural na cafeteria?",
+          },
+        ];
+      }
+      return [
+        {
+          category: "agree",
+          label: "👍 Concordar",
+          text: "Ja, genau! Das sehe ich ganz genauso.",
+          phonetic: "Iá, gue-náu! Das zê-e ikh gants gue-náu-zo.",
+          translationPt: "Sim, exatamente! Eu vejo isso da mesma forma.",
+        },
+        {
+          category: "alternative",
+          label: "🤔 Outra perspectiva",
+          text: "Eigentlich sehe ich das aus einem etwas anderen Blickwinkel.",
+          phonetic: "Ái-guent-likh zê-e ikh das áus ái-nem ét-vas án-de-ren Blík-vin-kel.",
+          translationPt: "Na verdade, vejo isso sob um outro ponto de vista.",
+        },
+        {
+          category: "ask_back",
+          label: "🔄 Perguntar de volta",
+          text: `Und was denkst du persönlich darüber, ${tutorName}?`,
+          phonetic: `Unt vas dênkst du per-zên-likh da-rú-ber, ${tutorName}?`,
+          translationPt: `E o que você pensa pessoalmente sobre isso, ${tutorName}?`,
+        },
+        {
+          category: "detail",
+          label: "💬 Rotina de estudo",
+          text: "In meinem Alltag versuche ich jeden Tag zehn Minuten Deutsch zu üben.",
+          phonetic: "In mái-nem Áll-tak fer-zú-khe ikh iê-den Tak tsên Mi-nú-ten Dóitsh tsu ú-ben.",
+          translationPt: "Na minha rotina, tento praticar dez minutos de alemão todos os dias.",
+        },
+        {
+          category: "quick",
+          label: "⚡ Rápida & Natural",
+          text: "Das klingt wirklich sehr interessant!",
+          phonetic: "Das clingt vírk-likh zêr in-te-re-sánt!",
+          translationPt: "Isso soa realmente muito interessante!",
+        },
+        {
+          category: "general",
+          label: "❓ Exemplo prático",
+          text: "Kannst du mir dafür ein praktisches Beispiel geben?",
+          phonetic: "Kánst du mir da-fúr áin prák-ti-shes Bái-shpil guê-ben?",
+          translationPt: "Pode me dar um exemplo prático disso?",
+        },
+      ];
+    }
+    case "es": {
+      return [
+        {
+          category: "agree",
+          label: "👍 Concordar",
+          text: "¡Sí, totalmente! Estoy completamente de acuerdo contigo.",
+          phonetic: "Sí, to-tal-mén-te! Es-tói com-ple-ta-mén-te de a-cuêr-do con-tí-go.",
+          translationPt: "Sim, totalmente! Estou completamente de acordo com você.",
+        },
+        {
+          category: "alternative",
+          label: "🤔 Outra opinião",
+          text: "En realidad, yo tengo una preferencia un poco diferente.",
+          phonetic: "En re-a-li-dád, yo tên-go ú-na pre-fe-rên-sia un pô-co di-fe-rên-te.",
+          translationPt: "Na verdade, tenho uma preferência um pouco diferente.",
+        },
+        {
+          category: "ask_back",
+          label: "🔄 Perguntar de volta",
+          text: `¿Y en tu ciudad cómo se suele hacer esto, ${tutorName}?`,
+          phonetic: `I en tu siu-dád cô-mo se suê-le a-sér és-to, ${tutorName}?`,
+          translationPt: `E na sua cidade como se costuma fazer isso, ${tutorName}?`,
+        },
+        {
+          category: "detail",
+          label: "💬 Falar da rotina",
+          text: "Para mí lo más importante es ganar confianza y soltura al hablar.",
+          phonetic: "Pá-ra mi lo mas im-por-tán-te es ga-nár con-fián-sa i sol-tú-ra al a-blár.",
+          translationPt: "Para mim o mais importante é ganhar confiança e desenvoltura ao falar.",
+        },
+        {
+          category: "quick",
+          label: "⚡ Resposta casual",
+          text: "¡Qué buena idea! Me parece genial.",
+          phonetic: "Qué buê-na i-dê-a! Me pa-rê-se ge-niál.",
+          translationPt: "Que boa ideia! Acho genial.",
+        },
+        {
+          category: "general",
+          label: "❓ Expressão nativa",
+          text: "¿Cómo diría esto un hispanohablante nativo?",
+          phonetic: "Cô-mo di-rí-a és-to un is-pa-no-a-blán-te na-tí-vo?",
+          translationPt: "Como um nativo falante de espanhol diria isso?",
+        },
+      ];
+    }
+    case "it": {
+      return [
+        {
+          category: "agree",
+          label: "👍 Concordar",
+          text: "Sì, assolutamente! La penso esattamente come te.",
+          phonetic: "Sí, as-so-lu-ta-mên-te! La pên-so e-zat-ta-mên-te cô-me te.",
+          translationPt: "Sim, com certeza! Penso exatamente como você.",
+        },
+        {
+          category: "alternative",
+          label: "🤔 Alternativa",
+          text: "In realtà, per me è un po' diverso.",
+          phonetic: "In re-al-tà, per me è un po di-vêr-so.",
+          translationPt: "Na verdade, para mim é um pouco diferente.",
+        },
+        {
+          category: "ask_back",
+          label: "🔄 Perguntar de volta",
+          text: `E tu cosa mi consigli di fare, ${tutorName}?`,
+          phonetic: `E tu cô-za mi con-sí-lhi di fá-re, ${tutorName}?`,
+          translationPt: `E você, o que me recomenda fazer, ${tutorName}?`,
+        },
+        {
+          category: "detail",
+          label: "💬 Rotina e planos",
+          text: "Voglio fare pratica ogni giorno per parlare con disinvoltura.",
+          phonetic: "Vô-lho fá-re prá-ti-ca ô-nhi djôr-no per par-lá-re con di-zin-vôl-tu-ra.",
+          translationPt: "Quero praticar todos os dias para falar com naturalidade.",
+        },
+        {
+          category: "quick",
+          label: "⚡ Rápida & Calorosa",
+          text: "Che meraviglia! Mi fa molto piacere.",
+          phonetic: "Que me-ra-ví-lha! Mi fa môl-to pia-tchê-re.",
+          translationPt: "Que maravilha! Fico muito contente.",
+        },
+        {
+          category: "general",
+          label: "❓ Modo de dizer",
+          text: "C'è un modo di dire tipico per esprimere questo?",
+          phonetic: "Tché un mô-do di dí-re tí-pi-co per es-prí-me-re quês-to?",
+          translationPt: "Tem uma expressão típica para expressar isso?",
+        },
+      ];
+    }
+    case "fr": {
+      return [
+        {
+          category: "agree",
+          label: "👍 Concordar",
+          text: "Oui, tout à fait ! Je partage tout à fait ton avis.",
+          phonetic: "Uí, tu-ta-fê ! Jê par-táj tu-ta-fê tõn na-ví.",
+          translationPt: "Sim, com certeza! Concordo plenamente com sua opinião.",
+        },
+        {
+          category: "alternative",
+          label: "🤔 Outro ponto de vista",
+          text: "De mon côté, j'ai une approche un peu différente.",
+          phonetic: "Dê mõ co-tê, jê ün a-prôch ẽn pôi di-fê-rãnt.",
+          translationPt: "Do meu lado, tenho uma abordagem um pouco diferente.",
+        },
+        {
+          category: "ask_back",
+          label: "🔄 Perguntar de volta",
+          text: `Et toi ${tutorName}, qu'en penses-tu personnellement ?`,
+          phonetic: `E tuá ${tutorName}, cãn pãns-tu per-so-nêl-mã ?`,
+          translationPt: `E você ${tutorName}, o que pensa pessoalmente sobre isso?`,
+        },
+        {
+          category: "detail",
+          label: "💬 Minha experiência",
+          text: "J'essaie de pratiquer la prononciation à voix haute chaque jour.",
+          phonetic: "Jê-sêi dê pra-ti-quê la pro-nõn-sia-siõ a vuá rôt chak júr.",
+          translationPt: "Tento praticar a pronúncia em voz alta todos os dias.",
+        },
+        {
+          category: "quick",
+          label: "⚡ Resposta curta",
+          text: "C'est tout à fait ça, merci beaucoup !",
+          phonetic: "Sê tu-ta-fê sa, mer-sí bo-cú !",
+          translationPt: "É exatamente isso, muito obrigado!",
+        },
+        {
+          category: "general",
+          label: "❓ Dica de nativo",
+          text: "Comment un Français exprimerait cela naturellement ?",
+          phonetic: "Co-mã ẽn frãn-sê eks-pri-mê-rê sê-la na-tu-rêl-mã ?",
+          translationPt: "Como um francês expressaria isso naturalmente?",
+        },
+      ];
+    }
+    case "ja": {
+      return [
+        {
+          category: "agree",
+          label: "👍 Concordar",
+          text: "Hai, watashi mo mattaku onaji iken desu. (はい、私も全く同じ意見です)",
+          phonetic: "Rái, ua-tá-chi mo mat-ta-cu o-na-dji i-quên des.",
+          translationPt: "Sim, eu também tenho exatamente a mesma opinião.",
+        },
+        {
+          category: "alternative",
+          label: "🤔 Outra preferência",
+          text: "Watashi wa dochirakato ieba, betsu no hou ga suki desu. (私はどちらかと言えば、別の方が好きです)",
+          phonetic: "Ua-tá-chi ua do-tchi-ra-ca-to i-ê-ba, bê-tsu no rróu ga su-qui des.",
+          translationPt: "Se fosse para escolher, eu prefiro a outra opção.",
+        },
+        {
+          category: "ask_back",
+          label: "🔄 Perguntar ao sensei",
+          text: `${tutorName}-san wa dou omoimasu ka? (どう思いますか？)`,
+          phonetic: `${tutorName}-san ua dô o-mo-i-mas ca?`,
+          translationPt: `E você, ${tutorName}, o que pensa sobre isso?`,
+        },
+        {
+          category: "detail",
+          label: "💬 Falar da rotina",
+          text: "Mainichi tanoshiku renshuu shite imasu. (毎日楽しく練習しています)",
+          phonetic: "Mái-ni-tchi ta-no-chí-cu ren-chú-u chi-te i-mas.",
+          translationPt: "Estou praticando com muita alegria todos os dias.",
+        },
+        {
+          category: "quick",
+          label: "⚡ Resposta rápida",
+          text: "Naruhodo, yoku wakarimashita! (なるほど、よく分かりました！)",
+          phonetic: "Na-ru-rro-do, io-cu ua-ca-rí-ma-chi-ta!",
+          translationPt: "Entendi perfeitamente, faz todo sentido!",
+        },
+        {
+          category: "general",
+          label: "❓ Pedir exemplo",
+          text: "Reibun o hitotsu oshiete kudasai. (例文を一つ教えてください)",
+          phonetic: "Rêi-bun o rri-tô-tsu o-chi-ê-te cu-da-sái.",
+          translationPt: "Poderia me ensinar uma frase de exemplo?",
+        },
+      ];
+    }
+    case "el-koine": {
+      return [
+        {
+          category: "agree",
+          label: "👍 Concordar",
+          text: "Ναί, ἀληθῶς οὕτως ἔχει. (Nai, alēthōs houtōs echei)",
+          phonetic: "Né, a-le-thôs rru-tôs é-rrêi.",
+          translationPt: "Sim, verdadeiramente é assim.",
+        },
+        {
+          category: "alternative",
+          label: "🤔 Outro aspecto",
+          text: "Ἕτερον δὲ τρόπον νοῶ τοῦτο. (Heteron de tropon noō touto)",
+          phonetic: "Rré-te-ron de tró-pon no-ô tú-to.",
+          translationPt: "Compreendo isto de uma outra maneira.",
+        },
+        {
+          category: "ask_back",
+          label: "🔄 Perguntar de volta",
+          text: "Τί δὲ σὺ λέγεις περὶ τούτου; (Ti de sy legeis peri toutou?)",
+          phonetic: "Tí de si lé-guis pe-rí tú-tu?",
+          translationPt: "E tu, o que dizes a respeito disto?",
+        },
+        {
+          category: "detail",
+          label: "💬 Meditação bíblica",
+          text: "Ἐν τῷ λόγῳ μελετῶ καθ’ ἡμέραν. (En tōi logōi meletō kath' hēmeran)",
+          phonetic: "En tôi ló-gôi me-le-tô cath' rre-mé-ran.",
+          translationPt: "Medito na palavra todos os dias.",
+        },
+        {
+          category: "quick",
+          label: "⚡ Bênção e louvor",
+          text: "Χάρις καὶ εἰρήνη πληθυνθείη! (Charis kai eirēnē plēthyntheiē!)",
+          phonetic: "Ká-ris ke ei-rê-ne ple-thin-thêi-e!",
+          translationPt: "Graça e paz vos sejam multiplicadas!",
+        },
+        {
+          category: "general",
+          label: "❓ Significado do termo",
+          text: "Τί σημαίνει ὁ λόγος οὗτος; (Ti sēmainei ho logos houtos?)",
+          phonetic: "Tí se-mê-ni rro ló-gos rru-tos?",
+          translationPt: "O que significa esta palavra no texto original?",
+        },
+      ];
+    }
+    case "en":
+    default: {
+      return [
+        {
+          category: "agree",
+          label: "👍 Concordar",
+          text: "Yes, exactly! I totally agree with what you said.",
+          phonetic: "Iés, eg-zék-tli! Ái tô-ta-li a-grí uídh uót iú séd.",
+          translationPt: "Sim, com certeza! Concordo totalmente com o que você disse.",
+        },
+        {
+          category: "alternative",
+          label: "🤔 Outro ponto de vista",
+          text: "To be honest, I usually look at it from another angle.",
+          phonetic: "Tu bi ó-nest, ái iú-ju-a-li lúk ét it frôm a-nâ-dher én-gel.",
+          translationPt: "Para ser sincero, costumo ver isso de outro ângulo.",
+        },
+        {
+          category: "ask_back",
+          label: "🔄 Perguntar de volta",
+          text: `And what about you, ${tutorName}? What's your take on this?`,
+          phonetic: `Énd uót a-báut iú, ${tutorName}? Uóts iór têik on dhís?`,
+          translationPt: `E quanto a você, ${tutorName}? Qual é a sua visão sobre isso?`,
+        },
+        {
+          category: "detail",
+          label: "💬 Falar da rotina",
+          text: "In my daily routine, I try to practice speaking out loud.",
+          phonetic: "In mái dêi-li ru-tín, ái trái tu prék-tis spí-king áut láud.",
+          translationPt: "Na minha rotina diária, tento praticar a fala em voz alta.",
+        },
+        {
+          category: "quick",
+          label: "⚡ Resposta rápida",
+          text: "That sounds awesome, thanks for sharing!",
+          phonetic: "Dhét sáundz ó-sâm, thénks fôr chê-ring!",
+          translationPt: "Isso parece incrível, obrigado por compartilhar!",
+        },
+        {
+          category: "general",
+          label: "❓ Dica de nativo",
+          text: "Could you teach me a natural idiom for that?",
+          phonetic: "Cúd iú títch mi ê né-tchu-ral í-di-âm fôr dhét?",
+          translationPt: "Você poderia me ensinar uma expressão idiomática natural para isso?",
+        },
+      ];
+    }
+  }
+}
+
 export async function tutorChat(
   userInput: string,
   history: ChatMessage[],
   apiKey?: string,
   tutorPersona?: TutorPersona
-): Promise<{
-  replyText: string;
-  phonetic?: string | undefined;
-  translationPt?: string | undefined;
-  correction?: GrammarCorrection | undefined;
-}> {
+): Promise<TutorChatResponse> {
   const activeTutor = tutorPersona || DEFAULT_TUTOR;
   const langNames: Record<string, string> = {
     en: "English",
@@ -197,29 +575,50 @@ export async function tutorChat(
   // Se houver chave Gemini configurada, usar IA com a personalidade completa do tutor escolhido
   if (apiKey) {
     try {
-      const systemPrompt = `You are "${activeTutor.name}", a native/expert tutor teaching ${targetLangName} from ${activeTutor.city}, ${activeTutor.country} (${activeTutor.gender === "female" ? "female" : "male"}).
+      const systemPrompt = `You are "${activeTutor.name}", a charismatic, warm, friendly, and highly engaging native tutor teaching ${targetLangName} from ${activeTutor.city}, ${activeTutor.country} (${activeTutor.gender === "female" ? "female" : "male"}).
 Target Language being taught and practiced: ${targetLangName}.
-Your background & personality:
+
+Your Persona & Conversational Style:
 - Style: ${activeTutor.styleTitle} - ${activeTutor.styleDesc}
 - Bio: ${activeTutor.bioPt}
-- Demeanor: You are always exceedingly polite, gentle, encouraging, and kind. You make the student feel completely safe, valued, and motivated.
-- The conversation MUST be in ${targetLangName}. For Japanese, include Romaji alongside Japanese text. For Koine Greek, write in Greek script with transliteration.
-
-CRITICAL RULES (INVIOLABLE):
-- You ALWAYS catch and correct EVERY mistake in ${targetLangName}, even tiny ones! (missing articles, gender agreement, conjugation, particles, spelling slips).
-- Never let small mistakes slip! Point them out with great kindness, patience, and politeness.
-- Whenever there is any mistake, provide a crystal-clear explanation in Brazilian Portuguese in EXACTLY ONE line.
-- Always provide friendly phonetic pronunciation in Portuguese syllables (phonetic).
-- Always provide a natural Brazilian Portuguese translation of replyText (translationPt).
+- Goal: Make the dialogue feel GENUINELY ALIVE, NATURAL, ENGAGING, and CONVERSATIONAL — like two friends enjoying coffee, NOT a robotic exam or rigid grammar textbook.
+- Interaction Guidelines:
+  1. ALWAYS react authentically to what the user said first (empathy, enthusiasm, humor, warmth, or a relatable detail from ${activeTutor.city}).
+  2. Speak in natural, modern, communicative ${targetLangName}. (For Japanese: include Kanji/Kana and Romaji. For Koine Greek: include Greek script with transliteration).
+  3. Keep the conversation moving forward by asking an open, natural, engaging question that invites the student to reply!
+  4. KIND & GENTLE CORRECTION: If the student made any mistake (grammar, spelling, missing article, agreement), gently provide the corrected sentence and a clear 1-line explanation in Brazilian Portuguese in the "explanationPt" field. Keep your conversational response "replyText" focused on the flow of thoughts, never embarrassing the student.
+  5. USER READING & AUDIO ASSISTANCE:
+     - "userPhonetic": Friendly phonetic transcription of what the student said (or the corrected version) in Brazilian Portuguese syllables (e.g. "[ rá-lo, ví guêt es... ]").
+     - "userTranslationPt": Natural Brazilian Portuguese translation of what the student said.
+  6. EXPANDED DYNAMIC SUGGESTIONS (PROVIDE 5 TO 6 VARIED OPTIONS):
+     - Provide 5 to 6 varied, natural suggested replies in "suggestedReplies" that the student could use next to answer your question or continue the conversation!
+     - Include diverse angles:
+       * "agree": enthusiastic agreement / affirmation
+       * "alternative": polite alternative preference or contrasting view
+       * "ask_back": asking you (the tutor) a question in return
+       * "detail": sharing a personal detail or habit
+       * "quick": a concise, natural everyday reaction
+       * "general": expressing curiosity or asking for your recommendation
 
 Respond in strictly valid JSON format:
 {
   "hasError": boolean,
   "corrected": "corrected sentence in ${targetLangName} or empty string",
-  "explanationPt": "Explicação amigável e direta em português em exatamente UMA linha (ou vazio se perfeito)",
-  "replyText": "${activeTutor.name}'s conversational response in ${targetLangName}, keeping the dialogue flowing",
-  "phonetic": "Friendly phonetic pronunciation transcription in Portuguese syllables, for example: [ Réi! Áim Lú-cas... ]",
-  "translationPt": "Tradução natural da resposta para o português brasileiro"
+  "explanationPt": "Explicação amigável e direta em português em exatamente 1 linha (ou vazio se perfeito)",
+  "replyText": "${activeTutor.name}'s lively conversational response in ${targetLangName}",
+  "phonetic": "Friendly phonetic pronunciation transcription in Portuguese syllables",
+  "translationPt": "Tradução natural da resposta do tutor para o português brasileiro",
+  "userPhonetic": "Friendly phonetic transcription in Portuguese syllables for the user's sentence",
+  "userTranslationPt": "Tradução da frase do usuário para o português brasileiro",
+  "suggestedReplies": [
+    {
+      "category": "agree",
+      "label": "👍 Concordar",
+      "text": "Full sentence in ${targetLangName}",
+      "phonetic": "[ Fonética amigável em sílabas ]",
+      "translationPt": "Tradução em português"
+    }
+  ]
 }`;
 
       const historyFormatted = history
@@ -227,7 +626,7 @@ Respond in strictly valid JSON format:
         .map((m) => `${m.sender === "user" ? "User" : activeTutor.name}: ${m.text}`)
         .join("\n");
 
-      const prompt = `Recent Conversation:\n${historyFormatted}\n\nUser said: "${userInput}"\n\nGenerate ${activeTutor.name}'s response:`;
+      const prompt = `Recent Conversation:\n${historyFormatted}\n\nUser said: "${userInput}"\n\nGenerate ${activeTutor.name}'s interactive response with 5-6 suggested replies:`;
       const responseRaw = await callGeminiRaw(apiKey, prompt, systemPrompt);
 
       const cleaned = responseRaw.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -244,15 +643,34 @@ Respond in strictly valid JSON format:
 
       const replyText =
         parsed.replyText ||
-        `That's great! Tell me more about that, my friend.`;
-      const phonetic = parsed.phonetic || generatePhoneticGuide(replyText);
+        `That's wonderful! Tell me more about that, my friend.`;
+      const phonetic = parsed.phonetic || generatePhoneticGuide(replyText, activeTutor.language);
       const translationPt = parsed.translationPt || "Isso é ótimo! Me conte mais sobre isso, meu amigo.";
+
+      const userPhonetic =
+        parsed.userPhonetic || generatePhoneticGuide(userInput, activeTutor.language);
+      const userTranslationPt =
+        parsed.userTranslationPt || getPortugueseTranslation(userInput, activeTutor.language);
+
+      const rawSuggestions = Array.isArray(parsed.suggestedReplies) ? parsed.suggestedReplies : [];
+      const suggestedReplies: ContextualSuggestion[] = rawSuggestions.length >= 3
+        ? rawSuggestions.map((s: any) => ({
+            category: s.category || "general",
+            label: s.label || "💬 Sugestão",
+            text: s.text || "",
+            phonetic: s.phonetic || generatePhoneticGuide(s.text || "", activeTutor.language),
+            translationPt: s.translationPt || getPortugueseTranslation(s.text || "", activeTutor.language),
+          }))
+        : getDynamicSuggestions(activeTutor.language, userInput, activeTutor);
 
       return {
         replyText,
         phonetic,
         translationPt,
         correction,
+        userPhonetic,
+        userTranslationPt,
+        suggestedReplies,
       };
     } catch (e) {
       console.warn("Falha no Gemini, utilizando motor inteligente local:", e);
@@ -560,12 +978,18 @@ Respond in strictly valid JSON format:
   }
 
   const phonetic = generatePhoneticGuide(replyText, activeTutor.language);
+  const userPhonetic = generatePhoneticGuide(userInput, activeTutor.language);
+  const userTranslationPt = getPortugueseTranslation(userInput, activeTutor.language);
+  const suggestedReplies = getDynamicSuggestions(activeTutor.language, userInput, activeTutor);
 
   return {
     replyText,
     phonetic,
     translationPt,
     correction: localCorrection.hasError ? localCorrection : undefined,
+    userPhonetic,
+    userTranslationPt,
+    suggestedReplies,
   };
 }
 

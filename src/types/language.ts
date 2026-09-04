@@ -17,6 +17,24 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+export interface ContextualSuggestion {
+  category?: "agree" | "alternative" | "ask_back" | "detail" | "quick" | "general";
+  label: string;
+  text: string;
+  phonetic: string;
+  translationPt: string;
+}
+
+export interface TutorChatResponse {
+  replyText: string;
+  phonetic?: string | undefined;
+  translationPt?: string | undefined;
+  correction?: GrammarCorrection | undefined;
+  userPhonetic?: string | undefined;
+  userTranslationPt?: string | undefined;
+  suggestedReplies?: ContextualSuggestion[] | undefined;
+}
+
 export interface ScriptSuggestion {
   english: string;
   phonetic: string;
