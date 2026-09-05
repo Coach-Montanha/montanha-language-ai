@@ -1,5 +1,5 @@
 import React from "react";
-import { Flame, Zap, Timer, Settings, Sparkles, LogOut, User, Type, Globe, ChevronDown } from "lucide-react";
+import { Flame, Zap, Settings, Sparkles, LogOut, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserProgress } from "@/types/language";
@@ -8,7 +8,7 @@ import { getLanguageById } from "@/data/languages";
 interface HeaderProps {
   progress: UserProgress;
   userName?: string;
-  onOpenDailySprint: () => void;
+  onOpenDailySprint?: () => void;
   onOpenSettings: () => void;
   onLogout?: () => void;
   onCycleFontSize?: () => void;
@@ -80,45 +80,6 @@ export const Header: React.FC<HeaderProps> = ({
             <Zap className="h-3.5 w-3.5 fill-violet-500 text-violet-500" />
             <span>{progress.xp} XP</span>
           </Badge>
-
-          {/* Treino Diário de 5 min */}
-          <Button
-            size="sm"
-            variant={progress.dailySprintDone ? "secondary" : "default"}
-            onClick={onOpenDailySprint}
-            className={`h-8 gap-1 px-2.5 text-xs font-medium ${
-              progress.dailySprintDone
-                ? "border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
-                : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-            }`}
-            title="Treino rápido diário de 5 minutos"
-          >
-            <Timer className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">
-              {progress.dailySprintDone ? "Feito!" : "5 min"}
-            </span>
-          </Button>
-
-          {/* Botão de Tamanho da Fonte Global (Acessibilidade Visual) */}
-          {onCycleFontSize && (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
-              onClick={onCycleFontSize}
-              title={`Tamanho da fonte global: ${
-                progress.fontSize === "sm"
-                  ? "Pequena"
-                  : progress.fontSize === "lg"
-                  ? "Grande"
-                  : progress.fontSize === "xl"
-                  ? "Extra Grande"
-                  : "Padrão"
-              } (Clique para ajustar fonte de todo o app)`}
-            >
-              <Type className="h-4 w-4" />
-            </Button>
-          )}
 
           {/* Botão de Configurações */}
           <Button

@@ -175,17 +175,12 @@ export function toggleTop200ReviewQueue(
   const inQueue = current.reviewQueue.includes(wordId);
   const updatedQueue = inQueue
     ? current.reviewQueue.filter((id) => id !== wordId)
-    : [...current.reviewQueue, wordId];
-  
-  // Se entrou na fila de revisão, remove de dominada
-  const updatedMastered = inQueue
-    ? current.masteredIds
-    : current.masteredIds.filter((id) => id !== wordId);
+    : Array.from(new Set([...current.reviewQueue, wordId]));
 
+  // A repetição para fixação de pronúncia mantém a palavra dominada sem desmarcá-la
   const updated: Top200Progress = {
     ...current,
     reviewQueue: updatedQueue,
-    masteredIds: updatedMastered,
   };
   saveTop200Progress(language, updated);
   return updated;

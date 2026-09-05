@@ -112,17 +112,18 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   };
 
   // ================= NAVEGAÇÃO E REPETIÇÃO DO TOP 200 =================
-  const advanceTopSequence = (nextTargetIndex?: number) => {
+  const advanceTopSequence = (baseProgress?: Top200Progress, nextTargetIndex?: number) => {
     setIsFlipped(false);
+    const activeProg = baseProgress || topProgress;
 
     // Mecanismo de Repetição Espaçada Intercalada:
     // A cada 4 passos na trilha, se houver palavras na fila de revisão, puxa uma da fila!
     const nextCounter = interleavedCounter + 1;
     setInterleavedCounter(nextCounter);
 
-    if (nextCounter >= 4 && topProgress.reviewQueue.length > 0 && !isReviewCard) {
+    if (nextCounter >= 4 && activeProg.reviewQueue.length > 0 && !isReviewCard) {
       // Pega uma palavra da fila de repetição para fixação
-      const reviewWordId = topProgress.reviewQueue[0];
+      const reviewWordId = activeProg.reviewQueue[0];
       const reviewCardIdx = top200List.findIndex((w) => w.id === reviewWordId);
       if (reviewCardIdx !== -1 && reviewCardIdx !== topIndex) {
         setIsReviewCard(true);
@@ -145,7 +146,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
 
     setTopIndex(nextIdx);
     const updatedProg: Top200Progress = {
-      ...topProgress,
+      ...activeProg,
       currentIndex: nextIdx,
     };
     setTopProgress(updatedProg);
@@ -157,6 +158,12 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
     setIsReviewCard(false);
     const prevIdx = topIndex > 0 ? topIndex - 1 : top200List.length - 1;
     setTopIndex(prevIdx);
+    const updatedProg: Top200Progress = {
+      ...topProgress,
+      currentIndex: prevIdx,
+    };
+    setTopProgress(updatedProg);
+    saveTop200Progress(activeLang, updatedProg);
   };
 
   const handleToggleReviewQueue = () => {
@@ -174,20 +181,25 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
 
   const handleMarkTopMastered = () => {
     if (!currentTopWord) return;
+    const isAlready = topProgress.masteredIds.includes(currentTopWord.id);
     const updated = markTop200WordMastered(activeLang, currentTopWord.id);
     setTopProgress(updated);
 
-    const updatedUser = addXP(15);
-    onUpdateProgress({
-      ...updatedUser,
-      cardsMasteredCount: progress.cardsMasteredCount + 1,
-    });
+    if (!isAlready) {
+      const updatedUser = addXP(15);
+      onUpdateProgress({
+        ...updatedUser,
+        cardsMasteredCount: progress.cardsMasteredCount + 1,
+      });
 
-    toast.success(`Palavra #${currentTopWord.rank} "${currentTopWord.word}" dominada! +15 XP`, {
-      description: "Excelente! Você está cada vez mais próximo da fluência.",
-    });
+      toast.success(`Palavra #${currentTopWord.rank} "${currentTopWord.word}" dominada! +15 XP`, {
+        description: "Excelente! Contador de dominadas atualizado.",
+      });
+    } else {
+      toast.info(`Palavra #${currentTopWord.rank} "${currentTopWord.word}" já estava dominada.`);
+    }
 
-    advanceTopSequence();
+    advanceTopSequence(updated);
   };
 
   // ================= TEMA & IA (MODO LEGADO / EXPANSÃO) =================
@@ -485,11 +497,15 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
             <Button
               size="sm"
               onClick={handleMarkTopMastered}
-              className="flex-1 text-xs h-10 rounded-2xl gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs"
-              title="Marcar como aprendida e ganhar +15 XP"
+              className={`flex-1 text-xs h-10 rounded-2xl gap-1.5 font-bold shadow-xs transition-colors ${
+                isMastered
+                  ? "bg-emerald-700 hover:bg-emerald-800 text-white"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
+              }`}
+              title={isMastered ? "Palavra já dominada! Clique para avançar" : "Marcar como dominada e ganhar +15 XP"}
             >
               <Check className="h-4 w-4" />
-              <span>Já Dominei</span>
+              <span>{isMastered ? "✓ Dominada" : "Já Dominei"}</span>
             </Button>
 
             <Button

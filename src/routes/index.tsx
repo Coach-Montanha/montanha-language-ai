@@ -84,27 +84,6 @@ function SmartLanguageApp() {
     }
   }, [progress.fontSize]);
 
-  const handleCycleGlobalFontSize = () => {
-    const order: ("sm" | "md" | "lg" | "xl")[] = ["sm", "md", "lg", "xl"];
-    const current = progress.fontSize || "md";
-    const nextIndex = (order.indexOf(current) + 1) % order.length;
-    const nextSize = order[nextIndex]!;
-
-    const updated: UserProgress = {
-      ...progress,
-      fontSize: nextSize,
-    };
-    handleUpdateProgress(updated);
-
-    const labels: Record<string, string> = {
-      sm: "Pequena (14px)",
-      md: "Padrão (16px)",
-      lg: "Grande (19px - Mais legível)",
-      xl: "Extra Grande (22px - Alta acessibilidade)",
-    };
-    toast.success(`Tamanho da fonte do app: ${labels[nextSize] || nextSize}`);
-  };
-
   const handleLoginSuccess = (newSession: UserSession) => {
     setSession(newSession);
     setProgress(newSession.progress);
@@ -156,14 +135,12 @@ function SmartLanguageApp() {
       {/* Barra de Notificações Toast */}
       <Toaster position="top-center" richColors />
 
-      {/* Cabeçalho com Nome do Usuário, Streak, XP, Desafio 5 min, Acessibilidade de Fonte e Logout */}
+      {/* Cabeçalho com Nome do Usuário, Streak, XP, Configurações e Logout */}
       <Header
         progress={progress}
         userName={session.displayName}
-        onOpenDailySprint={() => setIsDailySprintOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onLogout={handleLogout}
-        onCycleFontSize={handleCycleGlobalFontSize}
         onOpenLanguageSelector={() => setIsLanguageModalOpen(true)}
       />
 
@@ -202,8 +179,13 @@ function SmartLanguageApp() {
         )}
       </main>
 
-      {/* Navegação Inferior de 5 Abas (feita para celular) */}
-      <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
+      {/* Navegação Inferior de Abas + Treino 5 min (feita para celular) */}
+      <BottomNav
+        activeTab={activeTab}
+        onChangeTab={setActiveTab}
+        onOpenDailySprint={() => setIsDailySprintOpen(true)}
+        dailySprintDone={progress.dailySprintDone}
+      />
 
       {/* Modal: Treino Diário de 5 Minutos (Leitura, Audição e Fala) */}
       <DailySprintModal

@@ -33,7 +33,6 @@ import {
   Radio,
   ChevronDown,
   Gauge,
-  Type,
   CheckSquare,
   Square,
   X,
@@ -46,39 +45,39 @@ interface ConversationTabProps {
   onUpdateProgress: (updated: UserProgress) => void;
 }
 
-// Configurações dos tamanhos de fonte para acessibilidade visual
+// Configurações dos tamanhos de fonte sincronizadas com a acessibilidade global
 const FONT_LEVELS = {
   sm: {
     label: "P",
     name: "Pequena",
-    textClass: "text-xs",
-    phoneticClass: "text-[11px]",
-    translationClass: "text-[11px]",
-    px: "13px",
+    textClass: "text-sm sm:text-base",
+    phoneticClass: "text-xs sm:text-sm",
+    translationClass: "text-xs sm:text-sm",
+    px: "14px",
   },
   md: {
     label: "M",
     name: "Padrão",
-    textClass: "text-sm",
-    phoneticClass: "text-xs",
-    translationClass: "text-xs",
-    px: "15px",
+    textClass: "text-base sm:text-lg",
+    phoneticClass: "text-sm sm:text-base",
+    translationClass: "text-sm sm:text-base",
+    px: "16px",
   },
   lg: {
     label: "G",
     name: "Grande",
-    textClass: "text-base",
-    phoneticClass: "text-sm",
-    translationClass: "text-sm",
-    px: "17px",
+    textClass: "text-lg sm:text-xl",
+    phoneticClass: "text-base sm:text-lg",
+    translationClass: "text-base sm:text-lg",
+    px: "19px",
   },
   xl: {
     label: "GG",
     name: "Extra Grande",
-    textClass: "text-lg",
-    phoneticClass: "text-base",
-    translationClass: "text-base",
-    px: "19px",
+    textClass: "text-xl sm:text-2xl",
+    phoneticClass: "text-lg sm:text-xl",
+    translationClass: "text-lg sm:text-xl",
+    px: "22px",
   },
 };
 
@@ -135,21 +134,6 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading, isRecording]);
-
-  // Alternância do tamanho da fonte (P -> M -> G -> GG -> P)
-  const handleCycleFontSize = () => {
-    const order: FontKey[] = ["sm", "md", "lg", "xl"];
-    const currentIndex = order.indexOf(currentFontSize);
-    const nextIndex = (currentIndex + 1) % order.length;
-    const nextKey = order[nextIndex]!;
-
-    const updated: UserProgress = {
-      ...progress,
-      fontSize: nextKey,
-    };
-    onUpdateProgress(updated);
-    toast.success(`Fonte: ${FONT_LEVELS[nextKey].name} (${FONT_LEVELS[nextKey].px})`);
-  };
 
   // Salva preferência de auto-fala
   const handleToggleAutoSpeak = () => {
@@ -539,19 +523,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
         {/* Controles de Leitura, Áudio e Limpeza */}
         <div className="flex items-center gap-1 shrink-0">
-          {/* 1. CONTROLE DE TAMANHO DA FONTE (P, M, G, GG) */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCycleFontSize}
-            className="h-7 px-1.5 text-[10px] gap-1 rounded-lg border font-bold"
-            title={`Tamanho da fonte: ${fontConfig.name} (${fontConfig.px}). Clique para alterar tamanho da leitura.`}
-          >
-            <Type className="h-3 w-3 text-primary" />
-            <span>{fontConfig.label}</span>
-          </Button>
-
-          {/* 2. CONTROLE DIRETO DE VELOCIDADE (0.7x, 0.85x, 1.0x, 1.2x) */}
+          {/* 1. CONTROLE DIRETO DE VELOCIDADE (0.7x, 0.85x, 1.0x, 1.2x) */}
           <Button
             variant="outline"
             size="sm"
