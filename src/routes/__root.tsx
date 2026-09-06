@@ -102,6 +102,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
     ],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..800&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,
@@ -137,6 +143,11 @@ function RootShell({ children }: { children: ReactNode }) {
                 try {
                   var size = localStorage.getItem('smart_language_fontsize') || 'md';
                   document.documentElement.setAttribute('data-font-size', size);
+                  var design = localStorage.getItem('smart_language_design') || 'classic';
+                  document.documentElement.setAttribute('data-design', design);
+                  if (design === 'midnight') {
+                    document.documentElement.classList.add('dark');
+                  }
                 } catch(e) {}
               })();
             `,

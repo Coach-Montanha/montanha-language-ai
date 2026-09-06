@@ -13,6 +13,7 @@ const DEFAULT_PROGRESS: UserProgress = {
   messagesSentCount: 0,
   dailySprintDone: false,
   audioSpeed: 1.0,
+  design: "classic",
 };
 
 export function loadUserProgress(): UserProgress {

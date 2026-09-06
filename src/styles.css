@@ -176,3 +176,155 @@
   }
 }
 
+/* ==========================================================================
+   NOVO DESIGN: MIDNIGHT GLOW (FINTECH VOID ATMOSPHERE)
+   Linguagem visual noturna com canvas #050a14, brilho radial violeta/azul,
+   cartões de vidro escuro translúcido e gradiente de CTA violeta para magenta.
+   ========================================================================== */
+
+html[data-design="midnight"] {
+  /* Core Palette Tokens da especificação */
+  --color-dark: #050a14;
+  --color-lite-white: #eaeaea;
+  --color-grey: #9ea6b6;
+  --color-stroke: #171e2c;
+  --color-accent-blue: #3898ec;
+  --color-accent-purple: #6958e2;
+  --color-accent-magenta: #7317d5;
+  --color-purple-glow: #53497e;
+  --color-bright-gray-4: rgba(234, 234, 234, 0.04);
+  --color-dropdown-bg: #0d1424;
+
+  /* Gradients */
+  --gradient-cta: linear-gradient(90deg, #6958e2 20%, #7317d5);
+  --gradient-stat-text: linear-gradient(90deg, rgb(105, 88, 226) 20%, rgb(255, 255, 255));
+  --gradient-page-glow:
+    radial-gradient(ellipse 60% 50% at 70% 20%, rgba(83, 73, 126, 0.45), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 30% 10%, rgba(56, 152, 236, 0.15), transparent 55%);
+  --gradient-inset-highlight: inset 0 -4px 6.9px rgba(255, 255, 255, 0.2);
+  --gradient-tab-active-highlight: inset 0 15px 18px rgba(255, 255, 255, 0.3);
+
+  /* Semantic UI Tokens para Tailwind */
+  --radius: 1.125rem; /* 18px */
+  --background: #050a14;
+  --foreground: #eaeaea;
+  --card: rgba(234, 234, 234, 0.04);
+  --card-foreground: #eaeaea;
+  --popover: #0d1424;
+  --popover-foreground: #eaeaea;
+  --primary: #6958e2;
+  --primary-foreground: #ffffff;
+  --secondary: #0d1424;
+  --secondary-foreground: #eaeaea;
+  --muted: rgba(234, 234, 234, 0.05);
+  --muted-foreground: #9ea6b6;
+  --accent: rgba(105, 88, 226, 0.15);
+  --accent-foreground: #eaeaea;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #171e2c;
+  --input: #171e2c;
+  --ring: #6958e2;
+
+  --sidebar: #050a14;
+  --sidebar-foreground: #eaeaea;
+  --sidebar-primary: #6958e2;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(234, 234, 234, 0.05);
+  --sidebar-accent-foreground: #eaeaea;
+  --sidebar-border: #171e2c;
+  --sidebar-ring: #6958e2;
+
+  font-family: "Plus Jakarta Sans", "Creato Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Atmosfera de fundo do Midnight */
+html[data-design="midnight"] body {
+  background-color: #050a14;
+  background-image: 
+    radial-gradient(ellipse 60% 50% at 70% 20%, rgba(83, 73, 126, 0.45), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 30% 10%, rgba(56, 152, 236, 0.15), transparent 55%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: #eaeaea;
+}
+
+/* Tipografia de títulos com tracking negativo (-0.02em) conforme a especificação */
+html[data-design="midnight"] h1,
+html[data-design="midnight"] h2,
+html[data-design="midnight"] h3,
+html[data-design="midnight"] .display-title,
+html[data-design="midnight"] .section-heading {
+  letter-spacing: -0.02em;
+}
+
+/* Superfícies dos cartões com vidro escuro e lavagem de 4% de luz */
+html[data-design="midnight"] .bg-card,
+html[data-design="midnight"] [data-slot="card"] {
+  background-color: rgba(234, 234, 234, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: #171e2c;
+}
+
+/* Cabeçalho e barra inferior com vidro escuro */
+html[data-design="midnight"] header,
+html[data-design="midnight"] nav.fixed {
+  background-color: rgba(5, 10, 20, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-color: #171e2c;
+}
+
+/* Botões primários com gradiente violeta para magenta */
+html[data-design="midnight"] button.bg-primary,
+html[data-design="midnight"] .btn-gradient,
+html[data-design="midnight"] .bg-primary:not([class*="bg-primary/"]):not(.badge):not(.avatar) {
+  background: linear-gradient(90deg, #6958e2 20%, #7317d5);
+  color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(105, 88, 226, 0.35);
+  border: none;
+}
+
+html[data-design="midnight"] button.bg-primary:hover,
+html[data-design="midnight"] .btn-gradient:hover {
+  opacity: 0.92;
+}
+
+/* Inset highlight tátil em pills e botões secundários */
+html[data-design="midnight"] .rounded-full:not(.animate-ping),
+html[data-design="midnight"] .rounded-pill {
+  box-shadow: inset 0 -1px 2px rgba(255, 255, 255, 0.15);
+}
+
+/* Inputs e campos de texto translúcidos */
+html[data-design="midnight"] input,
+html[data-design="midnight"] textarea {
+  background-color: rgba(234, 234, 234, 0.04);
+  border-color: #171e2c;
+  color: #eaeaea;
+}
+
+html[data-design="midnight"] input:focus,
+html[data-design="midnight"] textarea:focus {
+  border-color: #6958e2;
+  box-shadow: 0 0 0 2px rgba(105, 88, 226, 0.25);
+}
+
+/* Modais e Dialogs no Midnight */
+html[data-design="midnight"] [role="dialog"],
+html[data-design="midnight"] [data-radix-dialog-content] {
+  background-color: #0d1424;
+  border-color: #171e2c;
+  box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.8), 0 0 60px -10px rgba(83, 73, 126, 0.35);
+}
+
+/* Texto gradiente para números e destaques */
+.midnight-gradient-text {
+  background: linear-gradient(90deg, rgb(105, 88, 226) 20%, rgb(255, 255, 255));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+

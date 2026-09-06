@@ -84,6 +84,25 @@ function SmartLanguageApp() {
     }
   }, [progress.fontSize]);
 
+  // Aplica o tema de design no elemento <html> para todo o app
+  useEffect(() => {
+    const design =
+      progress.design ||
+      (typeof window !== "undefined"
+        ? (localStorage.getItem("smart_language_design") as "classic" | "midnight")
+        : null) ||
+      "classic";
+    document.documentElement.setAttribute("data-design", design);
+    if (design === "midnight") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    if (typeof window !== "undefined") {
+      localStorage.setItem("smart_language_design", design);
+    }
+  }, [progress.design]);
+
   const handleLoginSuccess = (newSession: UserSession) => {
     setSession(newSession);
     setProgress(newSession.progress);

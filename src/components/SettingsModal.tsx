@@ -27,6 +27,8 @@ import {
   Check,
   Type,
   Globe,
+  Palette,
+  Sun,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -52,6 +54,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     progress.selectedTutorId || getDefaultTutorForLanguage(progress.selectedLanguage || "en").id
   );
   const [fontSize, setFontSize] = useState<"sm" | "md" | "lg" | "xl">(progress.fontSize || "md");
+  const [design, setDesign] = useState<"classic" | "midnight">(
+    progress.design ||
+      (typeof window !== "undefined"
+        ? (localStorage.getItem("smart_language_design") as "classic" | "midnight")
+        : null) ||
+      "classic"
+  );
+
+  // Sincroniza o design quando o modal é aberto
+  React.useEffect(() => {
+    if (open) {
+      setDesign(
+        progress.design ||
+          (typeof window !== "undefined"
+            ? (localStorage.getItem("smart_language_design") as "classic" | "midnight")
+            : null) ||
+          "classic"
+      );
+    }
+  }, [open, progress.design]);
 
   const currentTutor = getTutorById(selectedTutorId);
   const currentLang = getLanguageById(selectedLanguage);
@@ -63,6 +85,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setSelectedTutorId(defTutor.id);
   };
 
+  const handleDesignChange = (newDesign: "classic" | "midnight") => {
+    setDesign(newDesign);
+    // Aplicação instantânea com preview em tempo real
+    document.documentElement.setAttribute("data-design", newDesign);
+    if (newDesign === "midnight") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
+
+  const handleCancel = () => {
+    // Reverte o preview em tempo real para o design salvo anteriormente
+    const savedDesign = progress.design || "classic";
+    document.documentElement.setAttribute("data-design", savedDesign);
+    if (savedDesign === "midnight") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    onOpenChange(false);
+  };
+
   const handleSave = () => {
     const updated: UserProgress = {
       ...progress,
@@ -71,7 +116,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       selectedLanguage,
       selectedTutorId,
       fontSize,
+      design,
     };
+    if (typeof window !== "undefined") {
+      localStorage.setItem("smart_language_design", design);
+    }
     onUpdateProgress(updated);
     toast.success("Configurações salvas com sucesso!");
     onOpenChange(false);
@@ -101,7 +150,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         selectedLanguage: "en",
         selectedTutorId: "leo",
         fontSize: "md",
+        design: "classic",
       };
+      document.documentElement.setAttribute("data-design", "classic");
+      document.documentElement.classList.remove("dark");
+      if (typeof window !== "undefined") {
+        localStorage.setItem("smart_language_design", "classic");
+      }
       onUpdateProgress(reset);
       toast.info("Progresso reiniciado com sucesso.");
       onOpenChange(false);
@@ -109,7 +164,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          handleCancel();
+        } else {
+          onOpenChange(true);
+        }
+      }}
+    >
       <DialogContent className="max-w-lg w-[94vw] rounded-2xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="text-left">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
@@ -217,7 +281,103 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* 3. Velocidade da Fala / Comunicação */}
+          {/* 3. Estilo Visual & Design (Seletor de Design) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
+                <Palette className="h-4 w-4 text-primary" />
+                Estilo Visual & Design
+              </Label>
+              <span className="text-[11px] text-muted-foreground font-semibold">
+                {design === "midnight" ? "Midnight Glow (Fintech Void)" : "Clássico (Smart Studio)"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {/* Opção 1: Clássico (Smart Studio) */}
+              <button
+                type="button"
+                onClick={() => handleDesignChange("classic")}
+                className={`rounded-2xl border p-3 text-left transition-all cursor-pointer relative flex flex-col justify-between ${
+                  design === "classic"
+                    ? "border-primary bg-primary/10 ring-2 ring-primary/25 shadow-xs font-semibold"
+                    : "border-border bg-card/60 hover:bg-muted/40"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-xs shrink-0">
+                      <Sun className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-foreground">Clássico</div>
+                      <div className="text-[10px] text-muted-foreground">Smart Studio Padrão</div>
+                    </div>
+                  </div>
+                  {design === "classic" && (
+                    <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4 bg-primary text-primary-foreground font-bold">
+                      Ativo
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Mini preview de cores e tags */}
+                <div className="mt-3 flex items-center justify-between gap-1 pt-2 border-t border-border/60">
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-5 rounded-full bg-[#2563eb]" title="Azul Studio" />
+                    <div className="h-3 w-5 rounded-full bg-[#f8fafc] border border-slate-300 dark:border-slate-600" title="Branco Suave" />
+                    <div className="h-3 w-5 rounded-full bg-[#10b981]" title="Verde Sucesso" />
+                  </div>
+                  <span className="text-[9.5px] text-muted-foreground font-medium">Claro / Equilibrado</span>
+                </div>
+              </button>
+
+              {/* Opção 2: Midnight Glow (Fintech Void) */}
+              <button
+                type="button"
+                onClick={() => handleDesignChange("midnight")}
+                className={`rounded-2xl border p-3 text-left transition-all cursor-pointer relative flex flex-col justify-between ${
+                  design === "midnight"
+                    ? "border-[#6958e2] bg-[#0d1424] ring-2 ring-[#6958e2]/60 shadow-md shadow-[#6958e2]/20 font-semibold"
+                    : "border-border bg-card/60 hover:bg-muted/40"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-xl bg-gradient-to-r from-[#6958e2] to-[#7317d5] flex items-center justify-center text-white shadow-xs shrink-0">
+                      <Sparkles className="h-4 w-4 text-amber-200" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-foreground flex items-center gap-1">
+                        Midnight Glow
+                        <span className="text-[8.5px] bg-gradient-to-r from-[#6958e2]/25 to-[#7317d5]/25 text-[#6958e2] dark:text-[#c4b5fd] border border-[#6958e2]/30 px-1 py-0.2 rounded font-bold">
+                          NOVO
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">Fintech Dark Void & Radial Glow</div>
+                    </div>
+                  </div>
+                  {design === "midnight" && (
+                    <Badge className="text-[9px] px-1.5 py-0 h-4 bg-gradient-to-r from-[#6958e2] to-[#7317d5] text-white font-bold border-none">
+                      Ativo
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Mini preview de cores e tags */}
+                <div className="mt-3 flex items-center justify-between gap-1 pt-2 border-t border-border/60">
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-5 rounded-full bg-[#050a14] border border-[#171e2c]" title="Ink-Navy Canvas #050a14" />
+                    <div className="h-3 w-5 rounded-full bg-gradient-to-r from-[#6958e2] to-[#7317d5]" title="Violet to Magenta CTA" />
+                    <div className="h-3 w-5 rounded-full bg-[#3898ec]" title="Cool Blue Accent" />
+                  </div>
+                  <span className="text-[9.5px] text-muted-foreground font-medium">Vidro & Violeta</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* 4. Velocidade da Fala / Comunicação */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5">
@@ -264,7 +424,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* 4. Tamanho da Fonte para Leitura Facilitada */}
+          {/* 5. Tamanho da Fonte para Leitura Facilitada */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5">
@@ -311,7 +471,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* 5. Modo de Inteligência Artificial */}
+          {/* 6. Modo de Inteligência Artificial */}
           <div className="space-y-2 rounded-xl border border-border bg-card/60 p-3.5">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5">
@@ -338,7 +498,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* 6. Instalação no Celular (PWA) */}
+          {/* 7. Instalação no Celular (PWA) */}
           <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3.5">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
@@ -369,7 +529,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         <DialogFooter className="flex-row gap-2 sm:justify-end">
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none">
+          <Button variant="outline" size="sm" onClick={handleCancel} className="flex-1 sm:flex-none">
             Cancelar
           </Button>
           <Button size="sm" onClick={handleSave} className="flex-1 sm:flex-none">
