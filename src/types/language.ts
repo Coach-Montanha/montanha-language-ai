@@ -123,7 +123,7 @@ export interface WeeklyMission {
   script?: DialogueScriptLine[] | undefined;
 }
 
-export type SupportedLanguage = "en" | "es" | "ja" | "el-koine" | "it" | "fr" | "de";
+export type SupportedLanguage = "en" | "es" | "ja" | "el-koine" | "it" | "fr" | "de" | "ru";
 
 export interface LanguageDefinition {
   id: SupportedLanguage;

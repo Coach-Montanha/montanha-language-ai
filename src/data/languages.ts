@@ -71,6 +71,16 @@ export const SUPPORTED_LANGUAGES: LanguageDefinition[] = [
     welcomeMessage: "Herzlich willkommen! Lass uns zusammen Deutsch üben. (Boas-vindas! Vamos praticar alemão juntos.)",
     defaultTutorId: "max",
   },
+  {
+    id: "ru",
+    name: "Russo",
+    nativeName: "Русский",
+    flag: "🇷🇺",
+    speechLangCode: "ru-RU",
+    description: "Rico alfabeto cirílico, fonética expressiva, grande literatura clássica e conversação cotidiana.",
+    welcomeMessage: "Добро пожаловать! Давайте вместе учить русский язык. (Boas-vindas! Vamos praticar russo juntos.)",
+    defaultTutorId: "dmitri",
+  },
 ];
 
 export const DEFAULT_LANGUAGE = SUPPORTED_LANGUAGES[0]!;

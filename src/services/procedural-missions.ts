@@ -455,6 +455,72 @@ export const PROCEDURAL_THEMES: ProceduralTheme[] = [
           ],
         },
       ],
+      ru: [
+        {
+          title: "Check-in no Aeroporto de Sheremetyevo",
+          icon: "Compass",
+          situation:
+            "Você está no balcão de check-in da Aeroflot no Aeroporto de Sheremetyevo em Moscou. Precisa despachar uma mala e pedir assento na janela.",
+          aiRole: "Funcionária do Check-in em Moscou",
+          userRole: "Passageiro internacional",
+          opening:
+            "Здравствуйте! Ваш заграничный паспорт и номер бронирования, пожалуйста. Вы летите в Санкт-Петербург?",
+          phonetic:
+            "Zdrást-vuy-tye! Vash za-gra-nítch-nyy pás-part i nó-myer bra-ni-ró-va-ni-ya, pa-zhá-luy-sta. Vy li-tí-tye v Sankt-Pe-ter-búrk?",
+          pt: "Olá! Seu passaporte internacional e o número da reserva, por favor. O senhor(a) voa para São Petersburgo?",
+          objective:
+            "Apresentar passaporte, despachar 1 mala e solicitar assento na janela (место у окна).",
+          tip: "Para assento na janela diga 'Место у окна, пожалуйста' (Myés-ta u ak-ná), e para corredor 'Место у прохода' (Myés-ta u pra-khó-da).",
+          suggestions: [
+            {
+              target: "Здравствуйте! Вот мой паспорт. Можно место у окна?",
+              phonetic: "Zdrást-vuy-tye! Vot moy pás-part. Mózh-na myés-ta u ak-ná?",
+              pt: "Olá! Aqui está meu passaporte. É possível um assento na janela?",
+            },
+            {
+              target: "У меня один чемодан в багаж.",
+              phonetic: "U mi-nyá a-dín tchi-ma-dán v ba-gásh.",
+              pt: "Eu tenho uma mala para despachar.",
+            },
+            {
+              target: "Подскажите, к какому выходу на посадку мне идти?",
+              phonetic: "Pat-ska-zhí-tye, k ka-kó-mu vý-kha-du na pa-sát-ku mnye it-tí?",
+              pt: "Poderia informar a qual portão de embarque devo ir?",
+            },
+          ],
+          script: [
+            {
+              speaker: "Funcionária",
+              roleType: "ai",
+              target: "Здравствуйте! Ваш паспорт, пожалуйста. Багаж сдаёте?",
+              phonetic: "Zdrást-vuy-tye! Vash pás-part, pa-zhá-luy-sta. Ba-gásh zda-yó-tye?",
+              pt: "Olá! Seu passaporte, por favor. Vai despachar bagagem?",
+            },
+            {
+              speaker: "Você",
+              roleType: "user",
+              target: "Здравствуйте! Да, один чемодан. И пожалуйста, место у окна.",
+              phonetic: "Zdrást-vuy-tye! Da, a-dín tchi-ma-dán. I pa-zhá-luy-sta, myés-ta u ak-ná.",
+              pt: "Olá! Sim, uma mala. E por favor, um assento na janela.",
+            },
+            {
+              speaker: "Funcionária",
+              roleType: "ai",
+              target: "Пожалуйста, место 12А. Посадка начнётся через сорок минут у выхода 24.",
+              phonetic:
+                "Pa-zhá-luy-sta, myés-ta 12A. Pa-sát-ka na-tchnyót-sya tchye-ryez só-rak mi-nút u vý-kha-da 24.",
+              pt: "Aqui está, assento 12A. O embarque começa em quarenta minutos no portão 24.",
+            },
+            {
+              speaker: "Você",
+              roleType: "user",
+              target: "Большое спасибо! Приятного вам дня.",
+              phonetic: "Bal'-shó-ye spa-sí-ba! Pri-yát-na-va vam dnya.",
+              pt: "Muito obrigado! Tenha um ótimo dia.",
+            },
+          ],
+        },
+      ],
     },
   },
 
@@ -749,6 +815,70 @@ export const PROCEDURAL_THEMES: ProceduralTheme[] = [
               target: "Sweet potato fries, please! And could we also get the check when you have a moment?",
               phonetic: "Suít po-têi-tou fráis, plíz! Énd cûd uí ól-sou guét da tchék uén iú rév a môu-mênt?",
               pt: "Fritas de batata-doce, por favor! E você poderia nos trazer a conta quando tiver um momento?",
+            },
+          ],
+        },
+      ],
+      ru: [
+        {
+          title: "Jantar Tradicional Russo em São Petersburgo",
+          icon: "Coffee",
+          situation:
+            "Você entra em um acolhedor restaurante tradicional perto do canal Griboedov. Deseja pedir borsch com smetana, pelmeni artesanais e mors de frutas silvestres.",
+          aiRole: "Garçom no Restaurante Tradicional",
+          userRole: "Cliente apreciador da gastronomia",
+          opening: "Добрый вечер! Столик на одного? Присаживайтесь, пожалуйста, вот наше меню.",
+          phonetic:
+            "Dó-bryy vyé-tcher! Stó-lik na ad-na-vó? Pri-sá-zhi-vay-tyes', pa-zhá-luy-sta, vot ná-she me-nyú.",
+          pt: "Boa noite! Mesa para um? Sente-se, por favor, aqui está nosso cardápio.",
+          objective:
+            "Pedir borsch tradicional, porção de pelmeni e a bebida típica mors de bagas.",
+          tip: "Diga 'Принесите, пожалуйста, борщ и порцию пельменей'. Para pedir a conta: 'Счёт, пожалуйста!'.",
+          suggestions: [
+            {
+              target: "Мне, пожалуйста, традиционный борщ со сметаной.",
+              phonetic: "Mnye, pa-zhá-luy-sta, tra-dit-si-ón-nyy borsch sa smi-tá-nay.",
+              pt: "Para mim, por favor, borsch tradicional com creme azedo.",
+            },
+            {
+              target: "И порцию сибирских пельменей с маслом.",
+              phonetic: "I pór-tsi-yu si-bír-skih pyel'-myé-nyey s más-lam.",
+              pt: "E uma porção de pelmenis siberianos com manteiga.",
+            },
+            {
+              target: "Можно стакан ягодного морса, пожалуйста?",
+              phonetic: "Mózh-na sta-kán yá-gad-na-va mór-sa, pa-zhá-luy-sta?",
+              pt: "Poderia trazer um copo de mors de frutas silvestres, por favor?",
+            },
+          ],
+          script: [
+            {
+              speaker: "Garçom",
+              roleType: "ai",
+              target: "Добрый вечер! Вы готовы сделать заказ?",
+              phonetic: "Dó-bryy vyé-tcher! Vy ga-tó-vy zdyé-lat' za-kás?",
+              pt: "Boa noite! Estão prontos para fazer o pedido?",
+            },
+            {
+              speaker: "Você",
+              roleType: "user",
+              target: "Да, пожалуйста! Мне тарелку борща и пельмени.",
+              phonetic: "Da, pa-zhá-luy-sta! Mnye ta-ryél-ku bar-shchá i pyel'-myé-ni.",
+              pt: "Sim, por favor! Para mim um prato de borsch e pelmeni.",
+            },
+            {
+              speaker: "Garçom",
+              roleType: "ai",
+              target: "Прекрасный выбор! Что будете из напитков?",
+              phonetic: "Pri-krás-nyy vý-bar! Shto bú-dye-tye iz na-pít-kaf?",
+              pt: "Ótima escolha! O que vai querer de bebida?",
+            },
+            {
+              speaker: "Você",
+              roleType: "user",
+              target: "Один стакан холодного морса, спасибо!",
+              phonetic: "A-dín sta-kán kha-lód-na-va mór-sa, spa-sí-ba!",
+              pt: "Um copo de mors gelado, obrigado!",
             },
           ],
         },

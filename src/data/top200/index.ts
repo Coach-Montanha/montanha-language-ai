@@ -7,6 +7,7 @@ import { TOP_200_FRENCH } from "./fr";
 import { TOP_200_ENGLISH } from "./en";
 import { TOP_200_JAPANESE } from "./ja";
 import { TOP_200_KOINE_GREEK } from "./el";
+import { TOP_200_RUSSIAN } from "./ru";
 
 export * from "./types";
 export {
@@ -17,6 +18,7 @@ export {
   TOP_200_ENGLISH,
   TOP_200_JAPANESE,
   TOP_200_KOINE_GREEK,
+  TOP_200_RUSSIAN,
 };
 
 const LANGUAGE_TOP_200_MAP: Record<SupportedLanguage, TopWordCard[]> = {
@@ -27,6 +29,7 @@ const LANGUAGE_TOP_200_MAP: Record<SupportedLanguage, TopWordCard[]> = {
   en: TOP_200_ENGLISH,
   ja: TOP_200_JAPANESE,
   "el-koine": TOP_200_KOINE_GREEK,
+  ru: TOP_200_RUSSIAN,
 };
 
 export const getTop200Words = (language: SupportedLanguage): TopWordCard[] => {

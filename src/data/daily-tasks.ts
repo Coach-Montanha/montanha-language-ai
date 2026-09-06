@@ -253,6 +253,39 @@ export const DAILY_SPRINT_BY_LANGUAGE: Record<SupportedLanguage, DailySprintExer
       translationPt: "Quero falar inglês fluentemente e naturalmente todos os dias.",
     },
   },
+
+  // ================= 🇷🇺 RUSSO =================
+  ru: {
+    reading: {
+      title: "Утренний чай в Санкт-Петербурге",
+      passage:
+        "Дмитрий начинает свой день с горячего чёрного чая с лимоном и свежего пирожка. Он любит гулять по Невскому проспекту утром, когда город только просыпается и улицы спокойные.",
+      translationPt:
+        "Dmitri começa o seu dia com um chá preto bem quente com limão e um pirozhok fresco. Ele adora caminhar pela Avenida Névski pela manhã, quando a cidade está apenas acordando e as ruas estão tranquilas.",
+      question: "Por que Dmitri gosta de caminhar pela Avenida Névski pela manhã?",
+      options: [
+        { text: "Porque todas as lojas estão fechadas", correct: false },
+        { text: "Porque a cidade está acordando e as ruas estão tranquilas", correct: true },
+        { text: "Porque o metrô não funciona de manhã", correct: false },
+      ],
+    },
+    listening: {
+      phraseToListen: "Осторожно, двери закрываются. Следующая станция — Охотный Ряд.",
+      translation: "Cuidado, as portas estão se fechando. Próxima estação: Okhotny Ryad.",
+      question: "Qual aviso importante está sendo anunciado no metrô?",
+      options: [
+        { text: "O trem está sem energia e vai parar", correct: false },
+        { text: "As portas estão se fechando e a próxima estação é Okhotny Ryad", correct: true },
+        { text: "É proibido usar fones de ouvido no vagão", correct: false },
+      ],
+    },
+    speaking: {
+      promptPt: "Fale em voz alta ou digite em russo:",
+      phrase: "Я хочу говорить по-русски красиво и уверенно каждый день.",
+      phonetic: "[ ya kha-tchú ga-va-rít' pa-rús-ski kra-sí-va i u-vyé-ren-na kázh-dyy dyen' ]",
+      translationPt: "Quero falar russo de forma bonita e confiante todos os dias.",
+    },
+  },
 };
 
 export function getDailySprintForLanguage(language: SupportedLanguage): DailySprintExercise {

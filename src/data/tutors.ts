@@ -350,6 +350,50 @@ export const TUTORS: TutorPersona[] = [
     speechPitch: 1.05,
     samplePhrase: "Wunderbar! Du machst das schon richtig gut — immer weiter so!",
   },
+
+  // ================= 🇷🇺 RUSSO =================
+  {
+    id: "dmitri",
+    language: "ru",
+    name: "Dmitri",
+    gender: "male",
+    avatar: "🪆",
+    city: "São Petersburgo",
+    country: "Rússia",
+    flag: "🇷🇺",
+    styleTitle: "Culto, Caloroso & Paciente",
+    styleDesc: "Russo elegante e claro de São Petersburgo. Apaixonado por literatura, música e conversas reflexivas com pronúncia precisa.",
+    bioPt: "Nascido em São Petersburgo, Dmitri adora história, literatura russa e um bom chá quente (chai). Paciente e encorajador, ele descomplica o alfabeto cirílico e a fonética russa, garantindo que você se sinta confiante a cada palavra falada.",
+    initialGreeting:
+      "Здравствуйте! Меня зовут Дмитрий, я из Санкт-Петербурга. Очень рад нашему знакомству! Не переживайте из-за ошибок — мы разберём каждую фразу с заботой. Как ваши дела сегодня?",
+    initialGreetingPhonetic:
+      "Zdrást-vuy-tye! Me-nyá za-vút Dmí-triy, ya iz Sankt-Pe-ter-búr-ga. Ó-chin rad ná-she-mu zna-kómst-vu! Nye pe-re-zhi-váy-tye iz-za o-shí-bak — my raz-bi-ryóm kázh-du-yu frá-zu s za-bó-toy. Kak va-shi dye-lá se-vód-nya?",
+    initialGreetingPt:
+      "Olá! Meu nome é Dmitri, sou de São Petersburgo. Muito feliz em te conhecer! Não se preocupe com erros — vamos analisar cada frase com carinho. Como estão suas coisas hoje?",
+    speechPitch: 0.95,
+    samplePhrase: "Всё получится! Шаг за шагом мы освоим русский язык вместе. (Vai dar tudo certo! Passo a passo dominaremos o russo juntos.)",
+  },
+  {
+    id: "elena",
+    language: "ru",
+    name: "Elena",
+    gender: "female",
+    avatar: "❄️",
+    city: "Moscou",
+    country: "Rússia",
+    flag: "🇷🇺",
+    styleTitle: "Animada, Expressiva & Prática",
+    styleDesc: "Voz límpida e acolhedora de Moscou. Focada no russo falado na vida real, viagens, cafés e situações do dia a dia.",
+    bioPt: "Elena mora em Moscou e é apaixonada pelo ensino de línguas e viagens. Com energia contagiante e muita didática, ela ajuda os alunos a vencerem o receio do cirílico e das terminações verbais, explicando tudo com comparações simples em português.",
+    initialGreeting:
+      "Привет! Я Елена из Москвы. Добро пожаловать в мир русского языка! Говорите свободно, я всегда бережно помогу и подскажу правильное звучание. Чем вы сегодня занимались?",
+    initialGreetingPhonetic:
+      "Pri-vyét! Ya E-lyé-na iz Mask-vý. Da-bró pa-zhá-la-vat' v mir rús-ska-va ya-zy-ká! Ga-va-rí-tye sva-bód-na, ya fsi-gdá bé-rezh-na pa-ma-gú i pat-ska-zhú pra-víl'-na-ye zvu-chá-ni-ye. Tchyem vy se-vód-nya za-ni-má-lis'?",
+    initialGreetingPt:
+      "Oi! Eu sou a Elena de Moscou. Boas-vindas ao mundo da língua russa! Fale livremente, sempre vou te ajudar com carinho e indicar a sonoridade correta. O que você fez hoje?",
+    speechPitch: 1.05,
+    samplePhrase: "Отлично! Каждый шаг приближает вас к свободной речи. (Excelente! Cada passo te aproxima da fala fluente.)",
+  },
 ];
 
 export const DEFAULT_TUTOR = TUTORS[0]!;
