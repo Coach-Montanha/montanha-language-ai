@@ -118,6 +118,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [previewSpeakingText, setPreviewSpeakingText] = useState<string | null>(null);
   const [autoSpeak, setAutoSpeak] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
     const saved = localStorage.getItem("smart_language_autospeak");
@@ -245,6 +246,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
     stopSpeaking();
     setSpeakingMessageId(null);
+    setPreviewSpeakingText(null);
 
     setInput("");
     const userMsgId = `user-${Date.now()}`;
@@ -468,14 +470,25 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
   // Reproduzir áudio de prévia de uma sugestão antes de enviar
   const handleSpeakPreview = (text: string) => {
+    if (previewSpeakingText === text) {
+      stopSpeaking();
+      setPreviewSpeakingText(null);
+      return;
+    }
     stopSpeaking();
     setSpeakingMessageId(null);
+    setPreviewSpeakingText(text);
     speakText(text, {
       rate: progress.audioSpeed || 0.85,
       gender: activeTutor.gender,
       pitch: activeTutor.speechPitch,
       lang: activeLanguage.speechLangCode,
+      onEnd: () => setPreviewSpeakingText(null),
+      onError: () => setPreviewSpeakingText(null),
     });
+    setTimeout(() => {
+      setPreviewSpeakingText((prev) => (prev === text ? null : prev));
+    }, 2500);
   };
 
   const speedDisplay =
@@ -495,8 +508,9 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         <button
           type="button"
           onClick={() => setIsTutorModalOpen(true)}
-          className="flex items-center gap-2 text-left hover:opacity-85 transition-opacity group cursor-pointer"
+          className="flex items-center gap-2 text-left hover:opacity-85 transition-opacity group cursor-pointer min-h-[44px] active:scale-95"
           title="Clique para escolher outro tutor ou tutora"
+          aria-label={`Tutor atual ${activeTutor.name} (${activeLanguage.name}). Clique para trocar de tutor ou idioma`}
         >
           <div className="relative">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-base shadow-xs group-hover:scale-105 transition-transform">
@@ -528,7 +542,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
             variant="outline"
             size="sm"
             onClick={handleCycleSpeed}
-            className={`h-7 px-1.5 text-[10px] gap-1 rounded-lg border font-mono transition-all ${
+            className={`h-8 min-h-[40px] px-2 text-[10px] gap-1 rounded-xl border font-mono transition-all active:scale-95 cursor-pointer ${
               (progress.audioSpeed || 0.85) <= 0.75
                 ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold"
                 : (progress.audioSpeed || 0.85) === 0.85
@@ -536,24 +550,26 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                 : "border-border text-foreground"
             }`}
             title="Ajustar velocidade de fala (0.7x Lento, 0.85x Confortável, 1.0x Normal, 1.2x Rápido)"
+            aria-label="Ajustar velocidade da fala"
           >
-            <Gauge className="h-3 w-3 text-primary" />
+            <Gauge className="h-3.5 w-3.5 text-primary" />
             <span>{speedDisplay}</span>
           </Button>
 
           {/* 3. BOTÃO DE AUTO-VOZ */}
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
             onClick={handleToggleAutoSpeak}
-            className={`h-7 px-1.5 text-[10px] gap-1 rounded-lg border transition-all ${
+            className={`h-8 w-8 min-h-[40px] min-w-[40px] rounded-xl border transition-all active:scale-95 cursor-pointer flex items-center justify-center ${
               autoSpeak
                 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold"
                 : "text-muted-foreground bg-muted/40"
             }`}
             title={autoSpeak ? "Leitura automática ativada" : "Leitura automática pausada"}
+            aria-label={autoSpeak ? "Desativar leitura automática da voz" : "Ativar leitura automática da voz"}
           >
-            {autoSpeak ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+            {autoSpeak ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
           </Button>
 
           {/* 4. BOTÃO PARA GERENCIAR / LIMPAR MENSAGENS */}
@@ -561,20 +577,24 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
             variant={isSelecting ? "secondary" : "ghost"}
             size="icon"
             onClick={() => setIsSelecting(!isSelecting)}
-            className={`h-7 w-7 ${isSelecting ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+            className={`h-8 w-8 min-h-[40px] min-w-[40px] rounded-xl active:scale-95 cursor-pointer flex items-center justify-center ${
+              isSelecting ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
             title={isSelecting ? "Sair do modo de seleção" : "Selecionar mensagens para apagar"}
+            aria-label={isSelecting ? "Sair da seleção de mensagens" : "Selecionar mensagens para apagar"}
           >
-            {isSelecting ? <X className="h-3.5 w-3.5" /> : <CheckSquare className="h-3.5 w-3.5" />}
+            {isSelecting ? <X className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
             onClick={handleClearAllChat}
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+            className="h-8 w-8 min-h-[40px] min-w-[40px] rounded-xl text-muted-foreground hover:text-destructive active:scale-95 cursor-pointer flex items-center justify-center"
             title="Apagar todas as mensagens da conversa"
+            aria-label="Limpar todas as mensagens da conversa"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -687,26 +707,29 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                   <button
                     type="button"
                     onClick={() => handleDeleteSingleMessage(msg.id)}
-                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-70 hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity"
+                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-70 hover:opacity-100 min-h-[36px] min-w-[36px] flex items-center justify-center p-1.5 text-muted-foreground hover:text-destructive active:scale-95 transition-all cursor-pointer"
                     title="Apagar esta mensagem"
+                    aria-label="Apagar esta mensagem"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
 
-                  {/* Texto Principal da Mensagem com Tamanho de Fonte Controlável */}
-                  <p className={`${fontConfig.textClass} font-medium pr-3`}>{msg.text}</p>
+                  {/* Texto Principal da Mensagem com Linha Confortável e Escala Controlável */}
+                  <p className={`${fontConfig.textClass} font-medium pr-3 leading-relaxed tracking-normal max-w-prose select-text`}>
+                    {msg.text}
+                  </p>
 
                   {/* 1. Elementos da Mensagem do Tutor: Fonética & Tradução */}
                   {!isUser && (
                     <div className="mt-2.5 pt-2 border-t border-border/50 space-y-1.5 text-left">
                       {phoneticText && (
-                        <div className="flex items-start gap-1.5 bg-primary/5 rounded-lg px-2 py-1 border border-primary/15">
+                        <div className="flex items-start gap-1.5 bg-primary/5 rounded-lg px-2 py-1.5 border border-primary/15">
                           <span className="text-xs select-none">🗣️</span>
                           <div className="flex-1">
                             <span className="text-[9px] font-bold text-primary block leading-none mb-0.5">
                               Como Falar (Fonética):
                             </span>
-                            <p className={`font-mono text-primary font-semibold tracking-wide leading-relaxed ${fontConfig.phoneticClass}`}>
+                            <p className={`font-mono text-primary font-semibold tracking-wide leading-relaxed py-0.5 select-text ${fontConfig.phoneticClass}`}>
                               [{phoneticText}]
                             </p>
                           </div>
@@ -714,33 +737,42 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                       )}
 
                       {translationText && (
-                        <div className="flex items-start gap-1.5 bg-muted/40 rounded-lg px-2 py-1 border border-border/40">
+                        <div className="flex items-start gap-1.5 bg-muted/40 rounded-lg px-2 py-1.5 border border-border/40">
                           <span className="text-xs select-none">🇧🇷</span>
                           <div className="flex-1">
                             <span className="text-[9px] font-bold text-muted-foreground block leading-none mb-0.5">
                               Tradução em Português:
                             </span>
-                            <p className={`text-foreground/90 font-medium leading-relaxed ${fontConfig.translationClass}`}>
+                            <p className={`text-foreground/90 font-medium leading-relaxed py-0.5 select-text ${fontConfig.translationClass}`}>
                               {translationText}
                             </p>
                           </div>
                         </div>
                       )}
 
-                      {/* Botão de Ouvir Tutor */}
+                      {/* Botão de Ouvir Tutor com Soundwave Animado */}
                       <button
                         type="button"
                         onClick={() => handleSpeakMessage(msg.id, msg.text)}
-                        className={`mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold transition-colors ${
+                        aria-label={isSpeakingThis ? "Pausar fala do tutor" : `Ouvir pronúncia oficial (${speedDisplay})`}
+                        className={`mt-1.5 flex items-center gap-2 text-[11px] font-semibold transition-all px-2.5 py-1.5 rounded-xl active:scale-95 min-h-[38px] cursor-pointer ${
                           isSpeakingThis
-                            ? "text-emerald-600 dark:text-emerald-400 animate-pulse"
-                            : "text-muted-foreground hover:text-foreground"
+                            ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-bold"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                         }`}
                         title={isSpeakingThis ? "Pausar fala" : `Ouvir pronúncia (${speedDisplay})`}
                       >
-                        <Volume2 className="h-3.5 w-3.5" />
+                        {isSpeakingThis ? (
+                          <span className="flex items-center gap-0.5 h-3.5 px-0.5" aria-hidden="true">
+                            <span className="w-1 bg-current rounded-full animate-wave-1" />
+                            <span className="w-1 bg-current rounded-full animate-wave-2" />
+                            <span className="w-1 bg-current rounded-full animate-wave-3" />
+                          </span>
+                        ) : (
+                          <Volume2 className="h-4 w-4" />
+                        )}
                         <span>
-                          {isSpeakingThis ? "Falando..." : `Ouvir pronúncia (${speedDisplay})`}
+                          {isSpeakingThis ? "Falando pronúncia nativa..." : `Ouvir pronúncia (${speedDisplay})`}
                         </span>
                       </button>
                     </div>
@@ -750,13 +782,13 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                   {isUser && (phoneticText || translationText) && (
                     <div className="mt-2.5 pt-2 border-t border-primary-foreground/20 space-y-1.5 text-left">
                       {phoneticText && (
-                        <div className="flex items-start gap-1.5 bg-black/20 dark:bg-black/30 rounded-lg px-2 py-1 border border-primary-foreground/15">
+                        <div className="flex items-start gap-1.5 bg-black/20 dark:bg-black/30 rounded-lg px-2 py-1.5 border border-primary-foreground/15">
                           <span className="text-xs select-none">🗣️</span>
                           <div className="flex-1">
                             <span className="text-[9px] font-bold text-primary-foreground/90 block leading-none mb-0.5">
                               Como Falar (Sua Pronúncia):
                             </span>
-                            <p className={`font-mono text-primary-foreground font-semibold tracking-wide leading-relaxed ${fontConfig.phoneticClass}`}>
+                            <p className={`font-mono text-primary-foreground font-semibold tracking-wide leading-relaxed py-0.5 select-text ${fontConfig.phoneticClass}`}>
                               [{phoneticText}]
                             </p>
                           </div>
@@ -764,31 +796,40 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                       )}
 
                       {translationText && (
-                        <div className="flex items-start gap-1.5 bg-black/15 dark:bg-black/25 rounded-lg px-2 py-1 border border-primary-foreground/10">
+                        <div className="flex items-start gap-1.5 bg-black/15 dark:bg-black/25 rounded-lg px-2 py-1.5 border border-primary-foreground/10">
                           <span className="text-xs select-none">🇧🇷</span>
                           <div className="flex-1">
                             <span className="text-[9px] font-bold text-primary-foreground/80 block leading-none mb-0.5">
                               Significado em Português:
                             </span>
-                            <p className={`text-primary-foreground font-medium leading-relaxed ${fontConfig.translationClass}`}>
+                            <p className={`text-primary-foreground font-medium leading-relaxed py-0.5 select-text ${fontConfig.translationClass}`}>
                               {translationText}
                             </p>
                           </div>
                         </div>
                       )}
 
-                      {/* Botão de Ouvir Minha Resposta com Sotaque Nativo */}
+                      {/* Botão de Ouvir Minha Resposta com Soundwave Animado */}
                       <button
                         type="button"
                         onClick={() => handleSpeakMessage(msg.id, msg.text)}
-                        className={`mt-1 flex items-center gap-1.5 text-[11px] font-semibold transition-all px-2 py-1 rounded-md ${
+                        aria-label={isSpeakingThis ? "Pausar fala da sua resposta" : `Ouvir pronúncia da minha resposta (${speedDisplay})`}
+                        className={`mt-1.5 flex items-center gap-2 text-[11px] font-semibold transition-all px-2.5 py-1.5 rounded-xl active:scale-95 min-h-[38px] cursor-pointer ${
                           isSpeakingThis
-                            ? "bg-white/30 text-white font-bold animate-pulse"
+                            ? "bg-white/30 text-white font-bold"
                             : "bg-white/15 hover:bg-white/25 text-primary-foreground"
                         }`}
                         title={isSpeakingThis ? "Pausar fala" : `Ouvir pronúncia da minha resposta (${speedDisplay})`}
                       >
-                        <Volume2 className="h-3.5 w-3.5" />
+                        {isSpeakingThis ? (
+                          <span className="flex items-center gap-0.5 h-3.5 px-0.5" aria-hidden="true">
+                            <span className="w-1 bg-current rounded-full animate-wave-1" />
+                            <span className="w-1 bg-current rounded-full animate-wave-2" />
+                            <span className="w-1 bg-current rounded-full animate-wave-3" />
+                          </span>
+                        ) : (
+                          <Volume2 className="h-4 w-4" />
+                        )}
                         <span>
                           {isSpeakingThis ? "Ouvindo sua resposta..." : `Ouvir minha resposta (${speedDisplay})`}
                         </span>
@@ -848,8 +889,9 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
             variant="ghost"
             size="sm"
             onClick={handleRefreshSuggestions}
-            className="h-6 text-[10px] px-2 gap-1 text-muted-foreground hover:text-foreground"
+            className="h-7 min-h-[36px] text-[10px] px-2.5 gap-1 text-muted-foreground hover:text-foreground active:scale-95 cursor-pointer"
             title="Trazer novas sugestões de fala"
+            aria-label="Trazer novas sugestões de resposta"
           >
             <RotateCcw className="h-3 w-3" />
             <span>Novas Sugestões</span>
@@ -859,6 +901,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
           {currentSuggestions.map((sug, idx) => {
             const isExpanded = expandedSuggestionIndex === idx;
+            const isPreviewPlaying = previewSpeakingText === sug.text;
 
             return (
               <div
@@ -869,13 +912,14 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                     : "border-border/70 bg-card hover:border-primary/40"
                 }`}
               >
-                <div className="flex items-center gap-1 p-1">
+                <div className="flex items-center gap-1 p-0.5 sm:p-1">
                   {/* Botão de Enviar Direto */}
                   <button
                     type="button"
                     onClick={() => handleSend(sug.text)}
-                    className="text-[11px] font-medium text-foreground hover:text-primary transition-colors text-left px-1.5 py-0.5 rounded-lg hover:bg-primary/10 flex items-center gap-1.5"
+                    className="text-[11px] font-medium text-foreground hover:text-primary transition-colors text-left px-2 py-1.5 min-h-[38px] rounded-lg hover:bg-primary/10 active:scale-95 flex items-center gap-1.5 cursor-pointer"
                     title={`Enviar resposta: "${sug.text}"`}
+                    aria-label={`Enviar resposta rápida: "${sug.text}"`}
                   >
                     <span className="font-semibold text-xs">{sug.label}</span>
                     <span className="text-[10px] text-muted-foreground hidden sm:inline truncate max-w-[140px]">
@@ -883,29 +927,43 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                     </span>
                   </button>
 
-                  {/* Botão de Ouvir Prévia em Áudio */}
+                  {/* Botão de Ouvir Prévia em Áudio com Soundwave */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleSpeakPreview(sug.text);
                     }}
-                    className="h-6 w-6 p-1 text-muted-foreground hover:text-emerald-600 rounded-md hover:bg-emerald-500/10 transition-colors shrink-0"
-                    title="Ouvir pronúncia desta frase antes de enviar"
+                    className={`h-8 w-8 min-h-[36px] min-w-[36px] p-1.5 rounded-lg active:scale-95 transition-all shrink-0 flex items-center justify-center cursor-pointer ${
+                      isPreviewPlaying
+                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold"
+                        : "text-muted-foreground hover:text-emerald-600 hover:bg-emerald-500/10"
+                    }`}
+                    title={isPreviewPlaying ? "Pausar prévia" : "Ouvir pronúncia desta frase antes de enviar"}
+                    aria-label={isPreviewPlaying ? "Pausar prévia da pronúncia" : `Ouvir prévia de pronúncia de "${sug.text}"`}
                   >
-                    <Volume2 className="h-3.5 w-3.5" />
+                    {isPreviewPlaying ? (
+                      <span className="flex items-center gap-0.5 h-3 px-0.5" aria-hidden="true">
+                        <span className="w-0.5 bg-current rounded-full animate-wave-1" />
+                        <span className="w-0.5 bg-current rounded-full animate-wave-2" />
+                        <span className="w-0.5 bg-current rounded-full animate-wave-3" />
+                      </span>
+                    ) : (
+                      <Volume2 className="h-4 w-4" />
+                    )}
                   </button>
 
                   {/* Botão de Ver Fonética e Tradução */}
                   <button
                     type="button"
                     onClick={() => setExpandedSuggestionIndex(isExpanded ? null : idx)}
-                    className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors shrink-0 font-medium ${
+                    className={`text-[9.5px] px-2 py-1 min-h-[36px] rounded-lg border transition-all active:scale-95 shrink-0 font-medium flex items-center cursor-pointer ${
                       isExpanded
                         ? "bg-primary text-primary-foreground border-primary font-bold"
                         : "bg-muted text-muted-foreground border-border/50 hover:text-foreground"
                     }`}
                     title="Ver pronúncia fonética e tradução em português"
+                    aria-label={isExpanded ? "Ocultar fonética e tradução" : "Ver fonética e tradução da sugestão"}
                   >
                     {isExpanded ? "Ocultar" : "Fonética"}
                   </button>
@@ -913,27 +971,28 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
                 {/* Bloco Expandido de Fonética e Tradução */}
                 {isExpanded && (
-                  <div className="mt-1 pt-1.5 border-t border-border/40 text-left text-[11px] space-y-1 animate-in fade-in">
+                  <div className="mt-1 pt-1.5 border-t border-border/40 text-left text-[11px] space-y-1.5 animate-in fade-in">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold text-foreground">{sug.text}</p>
+                      <p className="font-semibold text-foreground leading-relaxed max-w-prose select-text">{sug.text}</p>
                       <Button
                         size="sm"
                         onClick={() => handleSend(sug.text)}
-                        className="h-6 text-[10px] px-2 gap-1 rounded-lg shrink-0"
+                        className="h-8 min-h-[36px] text-[10px] px-2.5 gap-1 rounded-xl shrink-0 active:scale-95 cursor-pointer"
+                        aria-label={`Enviar resposta: "${sug.text}"`}
                       >
-                        <Send className="h-3 w-3" />
+                        <Send className="h-3.5 w-3.5" />
                         <span>Enviar</span>
                       </Button>
                     </div>
-                    <div className="flex items-start gap-1 bg-primary/10 rounded-md px-1.5 py-0.5 border border-primary/20">
+                    <div className="flex items-start gap-1 bg-primary/10 rounded-lg px-2 py-1 border border-primary/20">
                       <span className="text-[10px] select-none">🗣️</span>
-                      <p className="text-primary font-mono text-[10px] font-semibold">
+                      <p className="text-primary font-mono text-[10px] font-semibold leading-relaxed select-text">
                         [{sug.phonetic}]
                       </p>
                     </div>
-                    <div className="flex items-start gap-1 bg-muted/60 rounded-md px-1.5 py-0.5 border border-border/40">
+                    <div className="flex items-start gap-1 bg-muted/60 rounded-lg px-2 py-1 border border-border/40">
                       <span className="text-[10px] select-none">🇧🇷</span>
-                      <p className="text-muted-foreground text-[10px]">
+                      <p className="text-muted-foreground text-[10px] leading-relaxed select-text">
                         {sug.translationPt}
                       </p>
                     </div>
@@ -951,17 +1010,18 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
           e.preventDefault();
           handleSend();
         }}
-        className="p-2 border-t border-border bg-card/60 flex items-center gap-1.5"
+        className="p-2 border-t border-border bg-card/60 flex items-center gap-2"
       >
         <Button
           type="button"
           size="icon"
           variant={isRecording ? "destructive" : "outline"}
           onClick={isRecording ? handleStopRecording : handleStartRecording}
-          className={`h-9 w-9 shrink-0 rounded-xl transition-all ${
-            isRecording ? "animate-pulse ring-2 ring-red-400" : ""
+          className={`h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 rounded-2xl transition-all active:scale-95 cursor-pointer flex items-center justify-center ${
+            isRecording ? "animate-pulse ring-2 ring-red-400 shadow-md shadow-red-500/20" : ""
           }`}
           title={isRecording ? "Parar gravação" : "Falar no microfone (Reconhecimento de fala)"}
+          aria-label={isRecording ? "Parar gravação de voz" : "Falar no microfone (reconhecimento de fala)"}
         >
           {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4 text-primary" />}
         </Button>
@@ -971,15 +1031,17 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
           onChange={(e) => setInput(e.target.value)}
           placeholder={isRecording ? "Ouvindo sua fala..." : `Converse em ${activeLanguage.name} com ${activeTutor.name}...`}
           disabled={isLoading}
-          className="flex-1 h-9 text-xs rounded-xl bg-background"
+          className="flex-1 h-11 text-xs sm:text-sm rounded-2xl bg-background px-3 border-border/80"
+          aria-label={`Mensagem em ${activeLanguage.name}`}
         />
 
         <Button
           type="submit"
           size="icon"
           disabled={!input.trim() || isLoading}
-          className="h-9 w-9 shrink-0 rounded-xl"
+          className="h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 rounded-2xl active:scale-95 cursor-pointer flex items-center justify-center transition-transform"
           title="Enviar mensagem"
+          aria-label="Enviar mensagem"
         >
           <Send className="h-4 w-4" />
         </Button>

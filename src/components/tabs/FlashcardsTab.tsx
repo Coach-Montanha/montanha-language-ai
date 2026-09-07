@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Flashcard, UserProgress, SupportedLanguage } from "@/types/language";
 import { getPresetThemesForLanguage } from "@/data/vocabulary";
 import { getLanguageById } from "@/data/languages";
 import { getTutorsForLanguage } from "@/data/tutors";
 import { generateFlashcards } from "@/services/ai-engine";
-import { speakText } from "@/services/speech";
+import { speakText, stopSpeaking } from "@/services/speech";
 import {
   addXP,
   saveCustomFlashcard,
@@ -34,6 +34,9 @@ import {
   CheckCircle2,
   HelpCircle,
   Undo2,
+  BarChart3,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -62,6 +65,8 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   const [topIndex, setTopIndex] = useState<number>(0);
   const [isReviewCard, setIsReviewCard] = useState<boolean>(false);
   const [interleavedCounter, setInterleavedCounter] = useState<number>(0);
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const [showCategoryChart, setShowCategoryChart] = useState<boolean>(false);
 
   // ================= ESTADOS DE TEMAS & IA =================
   const [themeInput, setThemeInput] = useState("");
@@ -83,6 +88,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
     setTopIndex(Math.min(p.currentIndex, 199));
     setIsReviewCard(false);
     setInterleavedCounter(0);
+    setIsPlayingAudio(false);
 
     const langThemes = getPresetThemesForLanguage(activeLang);
     const newCards = langThemes["viagem"] || Object.values(langThemes)[0] || [];
@@ -102,13 +108,44 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   const reviewQueueCount = topProgress.reviewQueue.length;
   const masteredPercent = Math.min(Math.round((masteredCount / 200) * 100), 100);
 
+  // Estatísticas e progresso por categoria das 200 palavras
+  const categoryStats = useMemo(() => {
+    const stats: Record<string, { total: number; mastered: number; firstIndex: number }> = {};
+    top200List.forEach((w, idx) => {
+      const cat = w.category || "Comunicação";
+      if (!stats[cat]) {
+        stats[cat] = { total: 0, mastered: 0, firstIndex: idx };
+      }
+      stats[cat].total += 1;
+      if (topProgress.masteredIds.includes(w.id)) {
+        stats[cat].mastered += 1;
+      }
+    });
+    return Object.entries(stats).map(([cat, val]) => ({
+      name: cat,
+      total: val.total,
+      mastered: val.mastered,
+      firstIndex: val.firstIndex,
+      percentage: Math.round((val.mastered / val.total) * 100),
+    }));
+  }, [top200List, topProgress.masteredIds]);
+
   const handlePlayAudio = (e: React.MouseEvent, text: string) => {
     e.stopPropagation();
+    if (isPlayingAudio) {
+      stopSpeaking();
+      setIsPlayingAudio(false);
+      return;
+    }
+    setIsPlayingAudio(true);
     speakText(text, {
       rate: progress.audioSpeed,
       lang: langDef.speechLangCode,
       gender: activeTutor.gender,
     });
+    setTimeout(() => {
+      setIsPlayingAudio(false);
+    }, 2200);
   };
 
   // ================= NAVEGAÇÃO E REPETIÇÃO DO TOP 200 =================
@@ -269,35 +306,39 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   return (
     <div className="flex flex-col h-[calc(100vh-8.5rem)] max-w-lg mx-auto w-full p-3 space-y-3">
       {/* SELETOR DE MODO: TOP 200 vs TEMAS & IA */}
-      <div className="flex items-center justify-between gap-1 p-1 bg-muted/70 rounded-2xl border border-border/80">
+      <div className="flex items-center justify-between gap-1.5 p-1 bg-muted/70 rounded-2xl border border-border/80">
         <button
+          type="button"
           onClick={() => {
             setActiveMode("top200");
             setIsFlipped(false);
           }}
-          className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+          aria-label="Modo Top 200 Palavras Mais Usadas"
+          className={`flex-1 py-2 px-3 min-h-[44px] rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer ${
             activeMode === "top200"
               ? "bg-card text-foreground shadow-xs border border-border"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <Flame className="h-4 w-4 text-orange-500 animate-pulse" />
-          <span>🔥 Top 200 Mais Usadas</span>
+          <span>Top 200 Mais Usadas</span>
         </button>
 
         <button
+          type="button"
           onClick={() => {
             setActiveMode("themes");
             setIsFlipped(false);
           }}
-          className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+          aria-label="Modo Temas e Vocabulário com Inteligência Artificial"
+          className={`flex-1 py-2 px-3 min-h-[44px] rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer ${
             activeMode === "themes"
               ? "bg-card text-foreground shadow-xs border border-border"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <Layers className="h-4 w-4 text-primary" />
-          <span>📂 Temas & IA</span>
+          <span>Temas & IA</span>
         </button>
       </div>
 
@@ -333,20 +374,65 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
             {/* Barra de Progresso */}
             <Progress value={masteredPercent} className="h-2 rounded-full" />
 
-            {/* Seletor rápido de posição / info da palavra */}
+            {/* Seletor rápido de posição / info da palavra / botão de categorias */}
             <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
               <span>
                 Sequência: <strong className="text-foreground">#{topIndex + 1}</strong> de 200
               </span>
-              <span className="text-[10px] uppercase font-bold text-primary">
-                Categoria: {currentTopWord?.category || "Comunicação"}
-              </span>
+              <button
+                type="button"
+                onClick={() => setShowCategoryChart(!showCategoryChart)}
+                className="text-[10px] uppercase font-bold text-primary hover:underline flex items-center gap-1 py-1 px-1.5 rounded-md hover:bg-primary/10 transition-colors cursor-pointer active:scale-95"
+                aria-expanded={showCategoryChart}
+                aria-label="Alternar painel de categorias e progresso"
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+                <span>{showCategoryChart ? "Ocultar Categorias" : `Cat: ${currentTopWord?.category || "Comunicação"}`}</span>
+                {showCategoryChart ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              </button>
             </div>
+
+            {/* Painel Expansível de Progresso por Categoria */}
+            {showCategoryChart && (
+              <div className="pt-2 border-t border-border/60 space-y-1.5 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold">
+                  <span>Domínio por Área ({categoryStats.length} categorias):</span>
+                  <span>Toque para saltar</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-0.5">
+                  {categoryStats.map((c) => (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => {
+                        advanceTopSequence(topProgress, c.firstIndex);
+                        toast.info(`Saltou para a categoria: ${c.name}`);
+                      }}
+                      className="text-left p-2 rounded-xl border border-border/70 bg-card hover:border-primary/50 transition-all text-[10px] space-y-1 active:scale-95 cursor-pointer"
+                      title={`Ir para ${c.name} (Começa na palavra #${c.firstIndex + 1})`}
+                      aria-label={`Categoria ${c.name}: ${c.mastered} de ${c.total} dominadas, ${c.percentage}% concluído`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold truncate text-foreground">{c.name}</span>
+                        <span className="text-[9px] font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                          {c.percentage}%
+                        </span>
+                      </div>
+                      <Progress value={c.percentage} className="h-1.5 rounded-full" />
+                      <div className="text-[8.5px] text-muted-foreground flex justify-between">
+                        <span>{c.mastered}/{c.total} dominadas</span>
+                        <span>#{c.firstIndex + 1}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Banner de Aviso de Repetição Espaçada */}
           {isReviewCard && (
-            <div className="flex items-center justify-between px-3 py-1.5 bg-amber-500/15 border border-amber-500/30 rounded-xl text-[11px] text-amber-700 dark:text-amber-300 font-semibold animate-in fade-in duration-200">
+            <div className="flex items-center justify-between px-3 py-2 bg-amber-500/15 border border-amber-500/30 rounded-xl text-[11px] text-amber-700 dark:text-amber-300 font-semibold animate-in fade-in duration-200">
               <div className="flex items-center gap-1.5">
                 <RefreshCw className="h-3.5 w-3.5 animate-spin text-amber-600" />
                 <span>Fixação de Pronúncia: Repita em voz alta 3 vezes!</span>
@@ -354,11 +440,20 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
             </div>
           )}
 
-          {/* O CARTÃO TOP 200 (Flip Card 3D) */}
+          {/* O CARTÃO TOP 200 (Flip Card 3D Acessível) */}
           {currentTopWord && (
             <div
+              role="button"
+              tabIndex={0}
               onClick={() => setIsFlipped(!isFlipped)}
-              className={`group relative flex-1 min-h-[250px] cursor-pointer rounded-3xl border-2 p-5 sm:p-6 shadow-md transition-all duration-300 flex flex-col justify-between select-none ${
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setIsFlipped(!isFlipped);
+                }
+              }}
+              aria-label="Virar cartão de estudo. Toque ou pressione Enter para alternar entre palavra e tradução."
+              className={`group relative flex-1 min-h-[260px] cursor-pointer rounded-3xl border-2 p-5 sm:p-6 shadow-md transition-all duration-300 flex flex-col justify-between select-none active:scale-[0.99] ${
                 isReviewCard
                   ? "border-amber-500/60 bg-gradient-to-b from-amber-500/5 to-card hover:border-amber-500"
                   : isMastered
@@ -402,10 +497,19 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                     size="icon"
                     variant="secondary"
                     onClick={(e) => handlePlayAudio(e, currentTopWord.word)}
-                    className="h-9 w-9 rounded-full shadow-xs text-primary hover:scale-105 transition-transform"
+                    className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full shadow-xs text-primary hover:scale-105 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+                    aria-label={isPlayingAudio ? "Pausar pronúncia" : `Ouvir pronúncia oficial em ${langDef.name}`}
                     title={`Ouvir pronúncia oficial em ${langDef.name}`}
                   >
-                    <Volume2 className="h-4 w-4" />
+                    {isPlayingAudio ? (
+                      <span className="flex items-center gap-0.5 h-4 px-1" aria-hidden="true">
+                        <span className="w-1 bg-primary rounded-full animate-wave-1" />
+                        <span className="w-1 bg-primary rounded-full animate-wave-2" />
+                        <span className="w-1 bg-primary rounded-full animate-wave-3" />
+                      </span>
+                    ) : (
+                      <Volume2 className="h-5 w-5" />
+                    )}
                   </Button>
                 </div>
               </div>
@@ -413,11 +517,11 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
               {/* Conteúdo Frente vs Verso */}
               {!isFlipped ? (
                 <div className="my-auto text-center space-y-2.5 py-4">
-                  <h3 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+                  <h3 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-relaxed py-1 select-text">
                     {currentTopWord.word}
                   </h3>
                   <div className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                    <p className="text-sm font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                    <p className="text-sm font-mono text-emerald-600 dark:text-emerald-400 font-bold leading-relaxed py-0.5 select-text">
                       {currentTopWord.phonetic}
                     </p>
                   </div>
@@ -431,7 +535,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                     <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Tradução em Português:
                     </span>
-                    <h4 className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                    <h4 className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400 leading-normal py-1">
                       {currentTopWord.translation}
                     </h4>
                   </div>
@@ -439,18 +543,20 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                   {/* Frase Comunicativa de Exemplo */}
                   <div className="rounded-2xl bg-muted/60 p-3.5 text-left space-y-1.5 border border-border/70">
                     <div className="flex items-start justify-between gap-1">
-                      <p className="text-xs font-semibold text-foreground leading-relaxed">
+                      <p className="text-xs sm:text-sm font-semibold text-foreground leading-relaxed max-w-prose">
                         &ldquo;{currentTopWord.exampleSentence}&rdquo;
                       </p>
                       <button
+                        type="button"
                         onClick={(e) => handlePlayAudio(e, currentTopWord.exampleSentence)}
-                        className="text-muted-foreground hover:text-primary shrink-0 p-1"
+                        className="text-muted-foreground hover:text-primary shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-xl hover:bg-primary/10 active:scale-95 transition-all cursor-pointer"
                         title="Ouvir frase em ritmo natural"
+                        aria-label="Ouvir frase de exemplo"
                       >
                         <Volume2 className="h-4 w-4 text-primary" />
                       </button>
                     </div>
-                    <p className="text-[11px] text-muted-foreground italic border-t border-border/40 pt-1">
+                    <p className="text-[11px] sm:text-xs text-muted-foreground italic border-t border-border/40 pt-1 leading-relaxed">
                       {currentTopWord.exampleTranslation}
                     </p>
                   </div>
@@ -466,13 +572,14 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
           )}
 
           {/* Barra de Controles e Treino */}
-          <div className="flex items-center justify-between gap-1.5 pt-1">
+          <div className="flex items-center justify-between gap-2 pt-1">
             <Button
               variant="outline"
               size="icon"
               onClick={handlePrevTop}
-              className="h-10 w-10 rounded-2xl shrink-0"
+              className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-2xl shrink-0 active:scale-95 cursor-pointer"
               title="Palavra anterior"
+              aria-label="Palavra anterior na sequência"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -482,12 +589,13 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
               variant={isInReviewQueue ? "secondary" : "outline"}
               size="sm"
               onClick={handleToggleReviewQueue}
-              className={`flex-1 text-xs h-10 rounded-2xl gap-1.5 ${
+              className={`flex-1 text-xs h-11 min-h-[44px] rounded-2xl gap-1.5 active:scale-95 cursor-pointer ${
                 isInReviewQueue
                   ? "bg-amber-500/15 border border-amber-500/40 text-amber-700 dark:text-amber-300 font-bold"
                   : ""
               }`}
               title="Adicionar esta palavra à fila de repetição periódica para fixação da pronúncia"
+              aria-label="Adicionar esta palavra à fila de repetição periódica para fixação da pronúncia"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               <span>{isInReviewQueue ? "Na Repetição" : "Repetir p/ Fixar"}</span>
@@ -497,12 +605,13 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
             <Button
               size="sm"
               onClick={handleMarkTopMastered}
-              className={`flex-1 text-xs h-10 rounded-2xl gap-1.5 font-bold shadow-xs transition-colors ${
+              className={`flex-1 text-xs h-11 min-h-[44px] rounded-2xl gap-1.5 font-bold shadow-xs active:scale-95 cursor-pointer transition-colors ${
                 isMastered
                   ? "bg-emerald-700 hover:bg-emerald-800 text-white"
                   : "bg-emerald-600 hover:bg-emerald-700 text-white"
               }`}
               title={isMastered ? "Palavra já dominada! Clique para avançar" : "Marcar como dominada e ganhar +15 XP"}
+              aria-label={isMastered ? "Palavra já dominada! Clique para avançar" : "Marcar como dominada e ganhar +15 XP"}
             >
               <Check className="h-4 w-4" />
               <span>{isMastered ? "✓ Dominada" : "Já Dominei"}</span>
@@ -512,8 +621,9 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
               variant="outline"
               size="icon"
               onClick={() => advanceTopSequence()}
-              className="h-10 w-10 rounded-2xl shrink-0"
+              className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-2xl shrink-0 active:scale-95 cursor-pointer"
               title="Próxima palavra na sequência"
+              aria-label="Próxima palavra na sequência"
             >
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -542,15 +652,15 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                 e.preventDefault();
                 handleGenerateTheme();
               }}
-              className="flex gap-1.5"
+              className="flex gap-2"
             >
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   value={themeInput}
                   onChange={(e) => setThemeInput(e.target.value)}
                   placeholder={`Digite tema em ${langDef.name} (ex: Aeroporto, Restaurante)...`}
-                  className="text-xs h-9 pl-9 rounded-xl bg-background"
+                  className="text-xs h-11 pl-9 rounded-xl bg-background"
                   disabled={isLoadingTheme}
                 />
               </div>
@@ -558,7 +668,8 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                 type="submit"
                 size="sm"
                 disabled={!themeInput.trim() || isLoadingTheme}
-                className="h-9 px-3 text-xs gap-1 rounded-xl shadow-xs"
+                className="h-11 min-h-[44px] px-3.5 text-xs gap-1 rounded-xl shadow-xs active:scale-95 cursor-pointer"
+                aria-label="Gerar cartões por inteligência artificial"
               >
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>Gerar</span>
@@ -570,8 +681,10 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
               {quickThemes.map((t) => (
                 <button
                   key={t.key}
+                  type="button"
                   onClick={() => handleGenerateTheme(t.key)}
-                  className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all ${
+                  aria-label={`Carregar tema ${t.label}`}
+                  className={`shrink-0 px-3 py-1.5 min-h-[38px] rounded-full text-[11px] font-medium border transition-all duration-200 active:scale-95 cursor-pointer ${
                     currentTheme.toLowerCase().includes(t.key)
                       ? "border-primary bg-primary/10 text-primary font-bold"
                       : "border-border bg-card hover:bg-muted text-muted-foreground"
@@ -586,8 +699,17 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
           {/* Cartão de Tema */}
           {customCards[customIndex] ? (
             <div
+              role="button"
+              tabIndex={0}
               onClick={() => setIsFlipped(!isFlipped)}
-              className="group relative flex-1 min-h-[250px] cursor-pointer rounded-3xl border-2 border-border bg-card p-6 shadow-md transition-all duration-300 hover:border-primary/50 hover:shadow-lg flex flex-col justify-between select-none"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setIsFlipped(!isFlipped);
+                }
+              }}
+              aria-label="Virar cartão de estudo. Toque ou pressione Enter para ver a tradução."
+              className="group relative flex-1 min-h-[260px] cursor-pointer rounded-3xl border-2 border-border bg-card p-6 shadow-md transition-all duration-300 hover:border-primary/50 hover:shadow-lg flex flex-col justify-between select-none active:scale-[0.99]"
             >
               <div className="flex items-center justify-between">
                 <Badge variant="outline" className="text-[10px] uppercase font-bold text-primary">
@@ -597,48 +719,51 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                   size="icon"
                   variant="secondary"
                   onClick={(e) => handlePlayAudio(e, customCards[customIndex].word)}
-                  className="h-8 w-8 rounded-full shadow-xs text-primary"
+                  className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full shadow-xs text-primary active:scale-95 cursor-pointer flex items-center justify-center"
                   title={`Ouvir palavra em ${langDef.name}`}
+                  aria-label={`Ouvir palavra em ${langDef.name}`}
                 >
-                  <Volume2 className="h-4 w-4" />
+                  <Volume2 className="h-5 w-5" />
                 </Button>
               </div>
 
               {!isFlipped ? (
-                <div className="my-auto text-center space-y-2">
-                  <h3 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+                <div className="my-auto text-center space-y-2 py-3">
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight leading-relaxed py-1 select-text">
                     {customCards[customIndex].word}
                   </h3>
-                  <p className="text-sm font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                  <p className="text-sm font-mono text-emerald-600 dark:text-emerald-400 font-bold leading-relaxed py-0.5 select-text">
                     {customCards[customIndex].phonetic}
                   </p>
-                  <p className="text-xs text-muted-foreground pt-4">
-                    (Toque para ver a tradução e frase)
+                  <p className="text-xs text-muted-foreground pt-3 flex items-center justify-center gap-1">
+                    <RotateCw className="h-3 w-3" /> Toque no cartão para ver a tradução e frase
                   </p>
                 </div>
               ) : (
-                <div className="my-auto text-center space-y-3 animate-in fade-in duration-200">
+                <div className="my-auto text-center space-y-3 py-2 animate-in fade-in duration-200">
                   <div>
-                    <span className="text-xs font-semibold text-muted-foreground">Tradução:</span>
-                    <h4 className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tradução:</span>
+                    <h4 className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 leading-normal py-1">
                       {customCards[customIndex].translation}
                     </h4>
                   </div>
 
                   <div className="rounded-2xl bg-muted/60 p-3.5 text-left space-y-1.5 border border-border/60">
                     <div className="flex items-start justify-between gap-1">
-                      <p className="text-xs font-semibold text-foreground leading-relaxed">
+                      <p className="text-xs sm:text-sm font-semibold text-foreground leading-relaxed max-w-prose">
                         &ldquo;{customCards[customIndex].exampleSentence}&rdquo;
                       </p>
                       <button
+                        type="button"
                         onClick={(e) => handlePlayAudio(e, customCards[customIndex].exampleSentence)}
-                        className="text-muted-foreground hover:text-primary shrink-0 p-1"
+                        className="text-muted-foreground hover:text-primary shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-xl hover:bg-primary/10 active:scale-95 transition-all cursor-pointer"
                         title="Ouvir frase completa"
+                        aria-label="Ouvir frase completa"
                       >
-                        <Volume2 className="h-3.5 w-3.5" />
+                        <Volume2 className="h-4 w-4 text-primary" />
                       </button>
                     </div>
-                    <p className="text-[11px] text-muted-foreground italic border-t border-border/40 pt-1">
+                    <p className="text-[11px] sm:text-xs text-muted-foreground italic border-t border-border/40 pt-1 leading-relaxed">
                       {customCards[customIndex].exampleTranslation}
                     </p>
                   </div>
@@ -666,8 +791,9 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
               variant="outline"
               size="icon"
               onClick={handleCustomPrev}
-              className="h-10 w-10 rounded-2xl"
+              className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-2xl active:scale-95 cursor-pointer"
               title="Cartão anterior"
+              aria-label="Cartão anterior"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -676,7 +802,8 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
               variant="outline"
               size="sm"
               onClick={() => setIsFlipped(!isFlipped)}
-              className="flex-1 text-xs h-10 rounded-2xl gap-1.5"
+              className="flex-1 text-xs h-11 min-h-[44px] rounded-2xl gap-1.5 active:scale-95 cursor-pointer"
+              aria-label="Alternar entre frente e verso do cartão"
             >
               <RotateCw className="h-3.5 w-3.5" />
               <span>{isFlipped ? "Ver Frente" : "Ver Tradução"}</span>
@@ -685,7 +812,8 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
             <Button
               size="sm"
               onClick={handleCustomMastered}
-              className="flex-1 text-xs h-10 rounded-2xl gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+              className="flex-1 text-xs h-11 min-h-[44px] rounded-2xl gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs active:scale-95 cursor-pointer"
+              aria-label="Marcar palavra do tema como dominada"
             >
               <Check className="h-4 w-4" />
               <span>Já Dominei</span>
@@ -695,8 +823,9 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
               variant="outline"
               size="icon"
               onClick={handleCustomNext}
-              className="h-10 w-10 rounded-2xl"
+              className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-2xl active:scale-95 cursor-pointer"
               title="Próximo cartão"
+              aria-label="Próximo cartão"
             >
               <ArrowRight className="h-4 w-4" />
             </Button>

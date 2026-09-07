@@ -172,5 +172,5 @@ export interface UserProgress {
   selectedTutorId?: string | undefined;
   selectedLanguage?: SupportedLanguage | undefined;
   fontSize?: ("sm" | "md" | "lg" | "xl") | undefined;
-  design?: ("classic" | "midnight") | undefined;
+  design?: ("classic" | "midnight" | "focus") | undefined;
 }

@@ -76,10 +76,12 @@ export const AlphabetTab: React.FC<AlphabetTabProps> = ({
         ].map((tab) => (
           <button
             key={tab.id}
+            type="button"
             onClick={() => setFilter(tab.id as typeof filter)}
-            className={`py-1.5 text-[11px] font-semibold rounded-lg transition-all ${
+            aria-label={`Filtrar por ${tab.label}`}
+            className={`py-2 min-h-[40px] text-[11px] font-semibold rounded-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center ${
               filter === tab.id
-                ? "bg-background text-primary shadow-xs"
+                ? "bg-background text-primary shadow-xs font-bold"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -96,8 +98,10 @@ export const AlphabetTab: React.FC<AlphabetTabProps> = ({
             return (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => handleSelectItem(item)}
-                className="group relative flex flex-col items-center justify-between p-2.5 rounded-2xl border border-border bg-card hover:border-primary/60 hover:shadow-sm transition-all duration-150 text-center"
+                aria-label={`Letra ou som ${item.letter}, pronúncia ${item.phoneticPt}. Toque para ouvir`}
+                className="group relative flex flex-col items-center justify-between p-2.5 min-h-[72px] rounded-2xl border border-border bg-card hover:border-primary/60 hover:shadow-sm transition-all duration-150 text-center active:scale-95 cursor-pointer"
               >
                 <div className="w-full flex items-center justify-between text-[10px] text-muted-foreground">
                   <span className="font-mono text-primary font-bold">{item.phoneticIpa}</span>
@@ -155,15 +159,16 @@ export const AlphabetTab: React.FC<AlphabetTabProps> = ({
               variant="ghost"
               size="icon"
               onClick={() => setSelectedItem(null)}
-              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              className="h-8 w-8 min-h-[36px] min-w-[36px] text-muted-foreground hover:text-foreground active:scale-95 cursor-pointer"
+              aria-label="Fechar detalhes da letra"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
 
           <div className="rounded-xl bg-muted/50 p-2.5 space-y-1.5 text-xs">
-            <div className="flex items-center justify-between">
-              <div className="text-foreground font-medium flex items-center gap-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-foreground font-medium flex items-center gap-1.5 flex-wrap">
                 <span>Exemplo:</span>
                 <strong className="text-primary text-sm">{selectedItem.exampleWord}</strong>
                 <span className="text-muted-foreground">({selectedItem.exampleTranslation})</span>
@@ -172,7 +177,8 @@ export const AlphabetTab: React.FC<AlphabetTabProps> = ({
                 size="sm"
                 variant="secondary"
                 onClick={() => handlePlayAudio(selectedItem.exampleWord)}
-                className="h-7 text-xs gap-1 rounded-lg"
+                className="h-8 min-h-[36px] text-xs gap-1 rounded-xl active:scale-95 cursor-pointer shrink-0"
+                aria-label="Ouvir exemplo da letra"
               >
                 <Volume2 className="h-3.5 w-3.5" /> Ouvir Exemplo
               </Button>

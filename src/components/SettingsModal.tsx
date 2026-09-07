@@ -29,6 +29,7 @@ import {
   Globe,
   Palette,
   Sun,
+  GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -54,10 +55,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     progress.selectedTutorId || getDefaultTutorForLanguage(progress.selectedLanguage || "en").id
   );
   const [fontSize, setFontSize] = useState<"sm" | "md" | "lg" | "xl">(progress.fontSize || "md");
-  const [design, setDesign] = useState<"classic" | "midnight">(
+  const [design, setDesign] = useState<"classic" | "midnight" | "focus">(
     progress.design ||
       (typeof window !== "undefined"
-        ? (localStorage.getItem("smart_language_design") as "classic" | "midnight")
+        ? (localStorage.getItem("smart_language_design") as "classic" | "midnight" | "focus")
         : null) ||
       "classic"
   );
@@ -68,7 +69,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setDesign(
         progress.design ||
           (typeof window !== "undefined"
-            ? (localStorage.getItem("smart_language_design") as "classic" | "midnight")
+            ? (localStorage.getItem("smart_language_design") as "classic" | "midnight" | "focus")
             : null) ||
           "classic"
       );
@@ -85,7 +86,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setSelectedTutorId(defTutor.id);
   };
 
-  const handleDesignChange = (newDesign: "classic" | "midnight") => {
+  const handleDesignChange = (newDesign: "classic" | "midnight" | "focus") => {
     setDesign(newDesign);
     // Aplicação instantânea com preview em tempo real
     document.documentElement.setAttribute("data-design", newDesign);
@@ -289,16 +290,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 Estilo Visual & Design
               </Label>
               <span className="text-[11px] text-muted-foreground font-semibold">
-                {design === "midnight" ? "Midnight Glow (Fintech Void)" : "Clássico (Smart Studio)"}
+                {design === "midnight"
+                  ? "Midnight Glow (Fintech Void)"
+                  : design === "focus"
+                  ? "Focus Academy (Edu AI)"
+                  : "Clássico (Smart Studio)"}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {/* Opção 1: Clássico (Smart Studio) */}
               <button
                 type="button"
                 onClick={() => handleDesignChange("classic")}
-                className={`rounded-2xl border p-3 text-left transition-all cursor-pointer relative flex flex-col justify-between ${
+                aria-label="Selecionar tema Clássico Smart Studio"
+                className={`rounded-2xl border p-3 text-left transition-all duration-200 cursor-pointer relative flex flex-col justify-between active:scale-95 min-h-[44px] ${
                   design === "classic"
                     ? "border-primary bg-primary/10 ring-2 ring-primary/25 shadow-xs font-semibold"
                     : "border-border bg-card/60 hover:bg-muted/40"
@@ -328,7 +334,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className="h-3 w-5 rounded-full bg-[#f8fafc] border border-slate-300 dark:border-slate-600" title="Branco Suave" />
                     <div className="h-3 w-5 rounded-full bg-[#10b981]" title="Verde Sucesso" />
                   </div>
-                  <span className="text-[9.5px] text-muted-foreground font-medium">Claro / Equilibrado</span>
+                  <span className="text-[9.5px] text-muted-foreground font-medium">Equilibrado</span>
                 </div>
               </button>
 
@@ -336,7 +342,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 type="button"
                 onClick={() => handleDesignChange("midnight")}
-                className={`rounded-2xl border p-3 text-left transition-all cursor-pointer relative flex flex-col justify-between ${
+                aria-label="Selecionar tema Midnight Glow"
+                className={`rounded-2xl border p-3 text-left transition-all duration-200 cursor-pointer relative flex flex-col justify-between active:scale-95 min-h-[44px] ${
                   design === "midnight"
                     ? "border-[#6958e2] bg-[#0d1424] ring-2 ring-[#6958e2]/60 shadow-md shadow-[#6958e2]/20 font-semibold"
                     : "border-border bg-card/60 hover:bg-muted/40"
@@ -350,11 +357,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div>
                       <div className="text-xs font-bold text-foreground flex items-center gap-1">
                         Midnight Glow
-                        <span className="text-[8.5px] bg-gradient-to-r from-[#6958e2]/25 to-[#7317d5]/25 text-[#6958e2] dark:text-[#c4b5fd] border border-[#6958e2]/30 px-1 py-0.2 rounded font-bold">
-                          NOVO
-                        </span>
                       </div>
-                      <div className="text-[10px] text-muted-foreground">Fintech Dark Void & Radial Glow</div>
+                      <div className="text-[10px] text-muted-foreground">Dark Void & Radial</div>
                     </div>
                   </div>
                   {design === "midnight" && (
@@ -371,7 +375,51 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className="h-3 w-5 rounded-full bg-gradient-to-r from-[#6958e2] to-[#7317d5]" title="Violet to Magenta CTA" />
                     <div className="h-3 w-5 rounded-full bg-[#3898ec]" title="Cool Blue Accent" />
                   </div>
-                  <span className="text-[9.5px] text-muted-foreground font-medium">Vidro & Violeta</span>
+                  <span className="text-[9.5px] text-muted-foreground font-medium">Vidro Escuro</span>
+                </div>
+              </button>
+
+              {/* Opção 3: Focus Academy (Educational + AI Native) */}
+              <button
+                type="button"
+                onClick={() => handleDesignChange("focus")}
+                aria-label="Selecionar tema Focus Academy"
+                className={`rounded-2xl border p-3 text-left transition-all duration-200 cursor-pointer relative flex flex-col justify-between active:scale-95 min-h-[44px] ${
+                  design === "focus"
+                    ? "border-[#4f46e5] bg-[#eef2ff] dark:bg-[#1e1b4b]/50 ring-2 ring-[#4f46e5]/50 shadow-md font-semibold"
+                    : "border-border bg-card/60 hover:bg-muted/40"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-xl bg-[#4f46e5] flex items-center justify-center text-white shadow-xs shrink-0">
+                      <GraduationCap className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-foreground flex items-center gap-1">
+                        Focus Academy
+                        <span className="text-[8px] bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/30 px-1 rounded font-bold">
+                          PRO
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">Foco & Gamificação</div>
+                    </div>
+                  </div>
+                  {design === "focus" && (
+                    <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4 bg-[#4f46e5] text-white font-bold border-none">
+                      Ativo
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Mini preview de cores e tags */}
+                <div className="mt-3 flex items-center justify-between gap-1 pt-2 border-t border-border/60">
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-5 rounded-full bg-[#4f46e5]" title="Indigo Acadêmico #4f46e5" />
+                    <div className="h-3 w-5 rounded-full bg-[#f97316]" title="Laranja Streak #f97316" />
+                    <div className="h-3 w-5 rounded-full bg-[#10b981]" title="Verde Sucesso #10b981" />
+                  </div>
+                  <span className="text-[9.5px] text-muted-foreground font-medium">Claro / Foco</span>
                 </div>
               </button>
             </div>

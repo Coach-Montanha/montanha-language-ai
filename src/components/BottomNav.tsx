@@ -40,7 +40,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 key="treino-sprint"
                 type="button"
                 onClick={() => onOpenDailySprint?.()}
-                className="group flex flex-1 flex-col items-center justify-center py-1 px-0.5 transition-all duration-200 rounded-lg cursor-pointer"
+                aria-label={dailySprintDone ? "Treino diário concluído" : "Abrir treino diário de 5 minutos"}
+                className="group flex flex-1 flex-col items-center justify-center py-1.5 px-0.5 min-h-[44px] min-w-[44px] transition-all duration-200 rounded-xl cursor-pointer active:scale-95"
                 title="Treino rápido diário de 5 minutos"
               >
                 <div
@@ -80,7 +81,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <button
               key={item.id}
               onClick={() => onChangeTab(item.id)}
-              className={`group flex flex-1 flex-col items-center justify-center py-1 px-0.5 transition-all duration-200 rounded-lg cursor-pointer ${
+              aria-label={`Aba ${item.label}`}
+              aria-current={isActive ? "page" : undefined}
+              className={`group flex flex-1 flex-col items-center justify-center py-1.5 px-0.5 min-h-[44px] min-w-[44px] transition-all duration-200 rounded-xl cursor-pointer active:scale-95 ${
                 isActive
                   ? "text-primary font-bold scale-105"
                   : "text-muted-foreground hover:text-foreground font-medium"

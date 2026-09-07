@@ -89,7 +89,7 @@ function SmartLanguageApp() {
     const design =
       progress.design ||
       (typeof window !== "undefined"
-        ? (localStorage.getItem("smart_language_design") as "classic" | "midnight")
+        ? (localStorage.getItem("smart_language_design") as "classic" | "midnight" | "focus")
         : null) ||
       "classic";
     document.documentElement.setAttribute("data-design", design);
