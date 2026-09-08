@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -64,7 +64,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   );
 
   // Sincroniza o design quando o modal é aberto
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) {
       setDesign(
         progress.design ||

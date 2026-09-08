@@ -81,7 +81,7 @@ export interface AlphabetItem {
 
 export interface Flashcard {
   id: string;
-  theme: string;
+  theme?: string | undefined;
   word: string;
   phonetic: string;
   translation: string;

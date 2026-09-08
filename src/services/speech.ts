@@ -198,8 +198,8 @@ export function createSpeechRecognizer(
     typeof handlersOrOnFinal === "function"
       ? {
           onFinal: handlersOrOnFinal,
-          onError: legacyOnError,
-          onEnd: legacyOnEnd,
+          ...(legacyOnError ? { onError: legacyOnError } : {}),
+          ...(legacyOnEnd ? { onEnd: legacyOnEnd } : {}),
         }
       : handlersOrOnFinal;
 

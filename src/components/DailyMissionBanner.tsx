@@ -51,7 +51,8 @@ export const DailyMissionBanner: React.FC<DailyMissionBannerProps> = ({
   onStartMission,
   onUpdateProgress,
 }) => {
-  const currentWeek = progress.currentWeek || 1;
+  const currentWeek: 1 | 2 | 3 =
+    progress.currentWeek === 2 || progress.currentWeek === 3 ? progress.currentWeek : 1;
   const [selectedWeek, setSelectedWeek] = useState<1 | 2 | 3>(currentWeek);
 
   const missionsInWeek = getMissionsByWeek(selectedWeek);

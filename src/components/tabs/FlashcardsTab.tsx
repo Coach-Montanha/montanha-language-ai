@@ -718,7 +718,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                 <Button
                   size="icon"
                   variant="secondary"
-                  onClick={(e) => handlePlayAudio(e, customCards[customIndex].word)}
+                  onClick={(e) => handlePlayAudio(e, customCards[customIndex]?.word || "")}
                   className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full shadow-xs text-primary active:scale-95 cursor-pointer flex items-center justify-center"
                   title={`Ouvir palavra em ${langDef.name}`}
                   aria-label={`Ouvir palavra em ${langDef.name}`}
@@ -755,7 +755,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                       </p>
                       <button
                         type="button"
-                        onClick={(e) => handlePlayAudio(e, customCards[customIndex].exampleSentence)}
+                        onClick={(e) => handlePlayAudio(e, customCards[customIndex]?.exampleSentence || "")}
                         className="text-muted-foreground hover:text-primary shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-xl hover:bg-primary/10 active:scale-95 transition-all cursor-pointer"
                         title="Ouvir frase completa"
                         aria-label="Ouvir frase completa"

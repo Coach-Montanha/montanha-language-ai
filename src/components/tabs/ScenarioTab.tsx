@@ -322,16 +322,20 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
     }
 
     const recognizer = createSpeechRecognizer(
-      langDef.speechLangCode,
-      (text) => {
-        setIsRecording(false);
-        handleSend(text);
+      {
+        onFinal: (text) => {
+          setIsRecording(false);
+          handleSend(text);
+        },
+        onError: (err: string) => {
+          setIsRecording(false);
+          toast.error(`Erro no microfone: ${err}`);
+        },
+        onEnd: () => setIsRecording(false),
       },
-      (err) => {
-        setIsRecording(false);
-        toast.error(`Erro no microfone: ${err}`);
-      },
-      () => setIsRecording(false)
+      undefined,
+      undefined,
+      langDef.speechLangCode
     );
 
     if (recognizer) {

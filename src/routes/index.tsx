@@ -26,6 +26,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
+  ssr: false,
   component: SmartLanguageApp,
 });
 
