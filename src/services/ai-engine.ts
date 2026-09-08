@@ -2403,7 +2403,11 @@ export async function tutorChat(
   isPortugueseInput?: boolean
 ): Promise<TutorChatResponse> {
   const activeTutor = tutorPersona || DEFAULT_TUTOR;
-  const userIsPortuguese = isPortugueseInput ?? isPortugueseText(userInput, activeTutor.language);
+  const hasTargetNativeScript =
+    (activeTutor.language === "ru" && /[а-яА-ЯёЁ]/.test(userInput)) ||
+    (activeTutor.language === "el-koine" && /[α-ωΑ-Ω]/.test(userInput)) ||
+    (activeTutor.language === "ja" && /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(userInput));
+  const userIsPortuguese = !hasTargetNativeScript && (isPortugueseInput ?? isPortugueseText(userInput, activeTutor.language));
   const langNames: Record<string, string> = {
     en: "English",
     es: "Spanish (Español)",
@@ -2472,13 +2476,14 @@ Interaction Guidelines:
 6. USER TRANSLATION & PHONETICS:${userIsPortuguese ? `
    - The student typed or spoke in Brazilian Portuguese: "${userInput}".
    - "userTranslatedText": YOU MUST translate "${userInput}" into natural, communicative, authentic ${targetLangName}. NEVER leave it in Portuguese under any circumstance! For example, if teaching Russian and the user wrote "Como está o clima hoje na Rússia?", "userTranslatedText" MUST be in Cyrillic "Какая сегодня погода в России?".
-   - "userPhonetic": friendly phonetic transcription of "userTranslatedText" using Brazilian Portuguese syllables (e.g. "[ uót táim dâz dã miu-zí-âm óupên ]") so the student knows exactly how to pronounce it!
+   - "userPhonetic": friendly phonetic transcription of "userTranslatedText" using Brazilian Portuguese syllables with hyphens (e.g. "[ uót táim dâz dã miu-zí-âm óupên ]" or for Russian "[ iá sta-rá-yus prak-ti-ka-vát rús-skiy ya-zýk kázh-dyy dyen pa-ni-mnó-gu ]") so the student knows exactly how to pronounce it!
    - "userTranslationPt": Brazilian Portuguese meaning ("${userInput}").
    - "wasTranslated": true.` : `
    - The student spoke/typed directly in ${targetLangName}: "${userInput}".
-   - "userTranslatedText": keep what the student said (or corrected version).
-   - "userPhonetic": friendly phonetic transcription in Brazilian Portuguese syllables for what the student said.
-   - "userTranslationPt": Brazilian Portuguese translation of what the student said.`}
+   - "userTranslatedText": keep what the student said in ${targetLangName} (or corrected version).
+   - "userPhonetic": friendly phonetic transcription of what the student said using Brazilian Portuguese syllables with hyphens and stress accents.
+   - "userTranslationPt": accurate Brazilian Portuguese translation of what the student said (NEVER repeat the foreign sentence here!).
+   - "wasTranslated": false.`}
 7. EXPANDED DYNAMIC SUGGESTIONS (PROVIDE 5 TO 6 VARIED OPTIONS):
    - Provide 5 to 6 varied, natural suggested replies in "suggestedReplies" in ${targetLangName} that directly relate to what was just discussed or what you just asked!
    - Include diverse angles:
@@ -2554,8 +2559,14 @@ Respond in strictly valid JSON format matching that exact structure.`;
       const userOriginalPt = userIsPortuguese ? userInput : undefined;
       const userPhonetic =
         parsed.userPhonetic || generatePhoneticGuide(userTranslatedText, activeTutor.language);
-      const userTranslationPt =
-        parsed.userTranslationPt || (userIsPortuguese ? userInput : getPortugueseTranslation(userInput, activeTutor.language));
+      const userTranslationPt = userIsPortuguese
+        ? userInput
+        : (parsed.userTranslationPt &&
+           !/[а-яА-ЯёЁ]/.test(parsed.userTranslationPt) &&
+           !/[α-ωΑ-Ω]/.test(parsed.userTranslationPt) &&
+           !/[\u3040-\u30ff]/.test(parsed.userTranslationPt)
+            ? parsed.userTranslationPt
+            : getPortugueseTranslation(userInput, activeTutor.language));
 
       const rawSuggestions = Array.isArray(parsed.suggestedReplies) ? parsed.suggestedReplies : [];
       const suggestedReplies: ContextualSuggestion[] = rawSuggestions.length >= 3
@@ -2890,6 +2901,36 @@ export function generatePhoneticGuide(
       город: "gó-rat",
       время: "vrié-mya",
       человек: "tchi-la-viék",
+      стараюсь: "sta-rá-yus'",
+      практиковать: "prak-ti-ka-vát'",
+      русский: "rús-skiy",
+      язык: "ya-zýk",
+      каждый: "kázh-dyy",
+      понемногу: "pa-ni-mnó-gu",
+      изучать: "i-zu-tchát'",
+      путешествие: "pu-ti-shés-tvi-ye",
+      увлекательное: "uv-li-ká-tyel'-na-ye",
+      это: "é-ta",
+      сегодня: "si-vód-nya",
+      погода: "pa-gó-da",
+      почему: "pa-tchi-mú",
+      что: "shto",
+      где: "gde",
+      куда: "ku-dá",
+      откуда: "at-kú-da",
+      когда: "kag-dá",
+      сколько: "skól'-ka",
+      стоит: "stó-it",
+      понимаю: "pa-ni-má-yu",
+      говорю: "ga-va-ryú",
+      немного: "ni-mnó-ga",
+      конечно: "ka-nyésh-na",
+      правда: "práv-da",
+      замечательно: "za-mi-tchá-tyel'-na",
+      интересно: "in-ti-ryés-na",
+      хочу: "kha-tchú",
+      люблю: "lyub-lyú",
+      знаю: "zná-yu",
     };
 
     const words = text.replace(/[.,!?;:«»"—"()]/g, " ").split(/\s+/).filter(Boolean);
@@ -3046,6 +3087,15 @@ export function getPortugueseTranslation(
     }
     if (lower.includes("изучать русский") || lower.includes("кириллица")) {
       return "Estudar a língua russa é uma jornada fascinante! O cirílico logo se tornará familiar. O que no russo você acha mais interessante?";
+    }
+    if (lower.includes("стараюсь") || lower.includes("практиковать") || (lower.includes("русский") && lower.includes("каждый день"))) {
+      return "Tento praticar a língua russa todos os dias aos poucos.";
+    }
+    if (lower.includes("увлекательное путешествие") || (lower.includes("изучать") && lower.includes("путешествие"))) {
+      return "Aprender russo é uma viagem fascinante!";
+    }
+    if (lower.includes("немного иначе") || lower.includes("не согласен")) {
+      return "Para ser sincero, vejo isso de uma forma um pouco diferente.";
     }
     if (lower.includes("здравствуйте") || lower.includes("привет")) {
       return "Olá! Muito bom falar com você. Como vão suas coisas hoje?";

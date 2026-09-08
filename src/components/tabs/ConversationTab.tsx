@@ -332,7 +332,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   };
 
   // Envio de mensagem com gravação de som procedural e injeção de memória
-  const handleSend = async (textToSend?: string) => {
+  const handleSend = async (textToSend?: string, suggestionMeta?: ContextualSuggestion) => {
     const query = (textToSend || input).trim();
     if (!query || isLoading) return;
 
@@ -342,17 +342,35 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     playMessageSentSound();
 
     setInput("");
-    const isPt = translateFromPt || isPortugueseText(query, activeTutor.language);
+
+    const hasTargetNativeScript =
+      (activeTutor.language === "ru" && /[а-яА-ЯёЁ]/.test(query)) ||
+      (activeTutor.language === "el-koine" && /[α-ωΑ-Ω]/.test(query)) ||
+      (activeTutor.language === "ja" && /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(query));
+
+    // Apenas é traduzido do português se:
+    // 1. NÃO for uma sugestão rápida pré-selecionada (já vem na língua alvo com tradução perfeita)
+    // 2. NÃO contiver alfabeto nativo não-latino (cirílico, grego, japonês NUNCA são português)
+    // 3. O modo tradução estiver ativo OU o texto for detectado como português
+    const isPt = !suggestionMeta && !hasTargetNativeScript && (translateFromPt || isPortugueseText(query, activeTutor.language));
     const initialTrans = isPt ? translatePortugueseOffline(query, activeTutor.language) : null;
     const userMsgId = `user-${Date.now()}`;
     const userMsg: ChatMessage = {
       id: userMsgId,
       sender: "user",
-      text: initialTrans ? initialTrans.translated : query,
+      text: isPt ? (initialTrans ? initialTrans.translated : query) : query,
       originalPt: isPt ? query : undefined,
       wasTranslated: isPt,
-      phonetic: initialTrans ? initialTrans.phonetic : (isPt ? undefined : generatePhoneticGuide(query, activeTutor.language)),
-      translationPt: isPt ? query : getPortugueseTranslation(query, activeTutor.language),
+      phonetic: suggestionMeta
+        ? suggestionMeta.phonetic
+        : (initialTrans
+            ? initialTrans.phonetic
+            : generatePhoneticGuide(query, activeTutor.language)),
+      translationPt: suggestionMeta
+        ? suggestionMeta.translationPt
+        : (isPt
+            ? query
+            : getPortugueseTranslation(query, activeTutor.language)),
       timestamp: Date.now(),
     };
 
@@ -371,16 +389,40 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         isPt
       );
 
-      if (response.userTranslatedText) {
-        userMsg.text = response.userTranslatedText;
+      if (isPt) {
+        if (response.userTranslatedText) {
+          userMsg.text = response.userTranslatedText;
+        }
+        if (response.userPhonetic) {
+          userMsg.phonetic = response.userPhonetic;
+        }
         userMsg.originalPt = response.userOriginalPt || query;
         userMsg.wasTranslated = true;
-      }
-      if (response.userPhonetic) {
-        userMsg.phonetic = response.userPhonetic;
-      }
-      if (response.userTranslationPt) {
-        userMsg.translationPt = response.userTranslationPt;
+        userMsg.translationPt = response.userTranslationPt || query;
+      } else if (suggestionMeta) {
+        // Preserva integralmente a fonética e a tradução oficial da sugestão escolhida
+        userMsg.text = suggestionMeta.text;
+        userMsg.phonetic = suggestionMeta.phonetic;
+        userMsg.translationPt = suggestionMeta.translationPt;
+        userMsg.wasTranslated = false;
+        userMsg.originalPt = undefined;
+      } else {
+        if (response.userTranslatedText) {
+          userMsg.text = response.userTranslatedText;
+        }
+        if (response.userPhonetic) {
+          userMsg.phonetic = response.userPhonetic;
+        }
+        if (
+          response.userTranslationPt &&
+          !/[а-яА-ЯёЁ]/.test(response.userTranslationPt) &&
+          !/[α-ωΑ-Ω]/.test(response.userTranslationPt) &&
+          !/[\u3040-\u30ff]/.test(response.userTranslationPt)
+        ) {
+          userMsg.translationPt = response.userTranslationPt;
+        }
+        userMsg.wasTranslated = false;
+        userMsg.originalPt = undefined;
       }
       if (response.suggestedReplies && response.suggestedReplies.length > 0) {
         setCurrentSuggestions(response.suggestedReplies);
@@ -799,6 +841,17 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
           const phoneticText = msg.phonetic || generatePhoneticGuide(msg.text, activeTutor.language);
           const translationText = msg.translationPt || getPortugueseTranslation(msg.text, activeTutor.language);
 
+          // Validação estrita: uma mensagem só é "traduzida do português" se foi sinalizada como tal,
+          // possuir texto original e o texto original NÃO contiver alfabetos não-latinos (cirílico, grego, japonês)
+          const isActuallyTranslatedFromPt = Boolean(
+            isUser &&
+              msg.wasTranslated &&
+              msg.originalPt &&
+              !/[а-яА-ЯёЁ]/.test(msg.originalPt) &&
+              !/[α-ωΑ-Ω]/.test(msg.originalPt) &&
+              !/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(msg.originalPt)
+          );
+
           return (
             <div
               key={msg.id}
@@ -838,7 +891,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                   }`}
                 >
                   {/* Badge sutil quando a mensagem foi traduzida do português */}
-                  {isUser && msg.wasTranslated && (
+                  {isActuallyTranslatedFromPt && (
                     <div className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold bg-black/25 dark:bg-black/40 text-primary-foreground/95 px-2 py-0.5 rounded-md w-fit border border-primary-foreground/20">
                       <span>🇧🇷 ➔ {activeLanguage.flag}</span>
                       <span>Traduzido</span>
@@ -992,7 +1045,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                           </button>
                         )}
 
-                        {(msg.originalPt || translationText) && (
+                        {(isActuallyTranslatedFromPt ? msg.originalPt : (translationText || msg.translationPt)) && (
                           <button
                             type="button"
                             onClick={() => toggleTranslation(msg.id)}
@@ -1001,10 +1054,16 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                                 ? "bg-white/30 text-white border-white/40 font-semibold"
                                 : "bg-white/10 text-primary-foreground/90 border-white/20 hover:bg-white/20"
                             }`}
-                            title="Ver ou ocultar original em português"
+                            title={isActuallyTranslatedFromPt ? "Ver o que você digitou em português" : "Ver significado em português"}
                           >
                             <span>🇧🇷</span>
-                            <span>{expandedTranslationIds[msg.id] ? "Ocultar" : "Português"}</span>
+                            <span>
+                              {expandedTranslationIds[msg.id]
+                                ? "Ocultar"
+                                : isActuallyTranslatedFromPt
+                                ? "Original 🇧🇷"
+                                : "Tradução 🇧🇷"}
+                            </span>
                           </button>
                         )}
                       </div>
@@ -1022,13 +1081,15 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                       )}
 
                       {/* Gaveta de Original / Tradução Português */}
-                      {(msg.originalPt || translationText) && expandedTranslationIds[msg.id] && (
+                      {(isActuallyTranslatedFromPt ? msg.originalPt : (translationText || msg.translationPt)) && expandedTranslationIds[msg.id] && (
                         <div className="mt-2 bg-black/20 dark:bg-black/30 rounded-lg p-2 border border-primary-foreground/10 animate-in fade-in slide-in-from-top-1 text-left">
                           <span className="text-[9px] font-bold text-primary-foreground/80 block leading-none mb-0.5">
-                            {msg.originalPt ? "O que você falou / digitou em Português:" : "Significado em Português:"}
+                            {isActuallyTranslatedFromPt
+                              ? "O que você falou / digitou em Português:"
+                              : "Significado em Português:"}
                           </span>
                           <p className={`text-primary-foreground font-medium py-0.5 select-text ${fontConfig.translationClass}`}>
-                            "{msg.originalPt || translationText}"
+                            "{isActuallyTranslatedFromPt ? msg.originalPt : (translationText || msg.translationPt)}"
                           </p>
                         </div>
                       )}
@@ -1104,7 +1165,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                   {/* Botão de Enviar Direto */}
                   <button
                     type="button"
-                    onClick={() => handleSend(sug.text)}
+                    onClick={() => handleSend(sug.text, sug)}
                     className="flex items-center gap-1.5 text-left cursor-pointer active:scale-95"
                     title={`Enviar: "${sug.text}" • Tradução: "${sug.translationPt}"`}
                     aria-label={`Enviar resposta: "${sug.text}"`}
