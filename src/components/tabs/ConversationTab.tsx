@@ -50,6 +50,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
   Send,
   Mic,
   MicOff,
@@ -70,6 +77,7 @@ import {
   Languages,
   Brain,
   CheckCircle2,
+  MoreVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -164,6 +172,18 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     const saved = localStorage.getItem("smart_language_translate_pt");
     return saved !== null ? saved === "true" : true;
   });
+
+  // Estados para exibição progressiva sob demanda (Fonética e Tradução)
+  const [expandedPhoneticIds, setExpandedPhoneticIds] = useState<Record<string, boolean>>({});
+  const [expandedTranslationIds, setExpandedTranslationIds] = useState<Record<string, boolean>>({});
+
+  const togglePhonetic = (id: string) => {
+    setExpandedPhoneticIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const toggleTranslation = (id: string) => {
+    setExpandedTranslationIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Memória Conversacional Tiered do Aluno
   const [learnerMemory, setLearnerMemory] = useState<LearnerProfileMemory>(() =>
@@ -553,12 +573,10 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   const [currentSuggestions, setCurrentSuggestions] = useState<ContextualSuggestion[]>(() =>
     getDynamicSuggestions(activeTutor.language, "", activeTutor)
   );
-  const [expandedSuggestionIndex, setExpandedSuggestionIndex] = useState<number | null>(null);
 
   // Atualizar sugestões sempre que o tutor ou o idioma de estudo mudar
   useEffect(() => {
     setCurrentSuggestions(getDynamicSuggestions(activeTutor.language, "", activeTutor));
-    setExpandedSuggestionIndex(null);
   }, [activeTutor.id, activeTutor.language]);
 
   // Função para renovar / trazer sugestões frescas a qualquer momento
@@ -570,7 +588,6 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
       activeTutor
     );
     setCurrentSuggestions(fresh);
-    setExpandedSuggestionIndex(null);
     toast.info("Sugestões de resposta renovadas!");
   };
 
@@ -608,116 +625,124 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
   return (
     <div className="flex flex-col h-[calc(100vh-8.5rem)] max-w-lg mx-auto w-full">
-      {/* Topo do Chat com Seletor de Tutor, Fonte, Velocidade e Limpeza */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border/80 bg-card/40 rounded-t-xl gap-1">
+      {/* Topo do Chat Limpo com Perfil do Tutor, Áudio e Menu de Opções */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/80 bg-card/40 rounded-t-xl gap-2">
         {/* Tutor Ativo (Clicável para abrir catálogo) */}
         <button
           type="button"
           onClick={() => setIsTutorModalOpen(true)}
-          className="flex items-center gap-2 text-left hover:opacity-85 transition-opacity group cursor-pointer min-h-[44px] active:scale-95"
-          title="Clique para escolher outro tutor ou tutora"
-          aria-label={`Tutor atual ${activeTutor.name} (${activeLanguage.name}). Clique para trocar de tutor ou idioma`}
+          className="flex items-center gap-2.5 text-left hover:opacity-85 transition-opacity group cursor-pointer min-h-[44px] py-1 active:scale-98 min-w-0"
+          title="Clique para escolher outro tutor ou idioma"
+          aria-label={`Tutor atual ${activeTutor.name} (${activeLanguage.name}). Toque para trocar`}
         >
-          <div className="relative">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-base shadow-xs group-hover:scale-105 transition-transform">
+          <div className="relative shrink-0">
+            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-base shadow-xs group-hover:scale-105 transition-transform">
               {activeTutor.avatar}
             </div>
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-background" />
+            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
           </div>
-          <div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-bold text-foreground flex items-center gap-0.5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 leading-tight">
+              <span className="text-xs sm:text-sm font-bold text-foreground truncate">
                 {activeTutor.name}
-                <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors" />
               </span>
-              <span className="text-[10px] bg-primary/15 text-primary font-bold px-1.5 py-0.2 rounded-full">
-                {activeTutor.city} {activeTutor.flag}
-              </span>
+              <span className="text-xs shrink-0">{activeTutor.flag}</span>
+              <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
             </div>
-            <p className="text-[10px] text-muted-foreground font-medium truncate max-w-[120px] xs:max-w-[160px]">
-              {activeTutor.gender === "female" ? "Tutora" : "Tutor"} &bull;{" "}
-              <span className="text-amber-600 dark:text-amber-400 font-semibold">Gentil & Corrige!</span>
+            <p className="text-[10px] text-muted-foreground font-medium truncate mt-0.5">
+              {activeTutor.city} &bull; <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Online</span>
             </p>
           </div>
         </button>
 
-        {/* Controles de Leitura, Áudio e Limpeza */}
+        {/* Controles de Áudio e Menu Expandido */}
         <div className="flex items-center gap-1 shrink-0">
-          {/* BOTÃO DE MEMÓRIA CONVERSACIONAL DO ALUNO */}
+          {/* Botão Rápido de Auto-Voz */}
           <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowMemoryModal(true)}
-            className="h-8 min-h-[40px] px-2 text-[10px] gap-1 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary font-medium active:scale-95 cursor-pointer"
-            title="Ver tópicos e memória conversacional acompanhados pelo tutor"
-            aria-label="Ver memória conversacional do aluno"
-          >
-            <Brain className="h-3.5 w-3.5 text-primary" />
-            <span className="hidden xs:inline">Memória</span>
-            <span className="text-[9px] bg-primary/20 px-1 rounded-full font-bold">
-              {learnerMemory.topicsDiscussed.length}
-            </span>
-          </Button>
-
-          {/* 1. CONTROLE DIRETO DE VELOCIDADE (0.7x, 0.85x, 1.0x, 1.2x) */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCycleSpeed}
-            className={`h-8 min-h-[40px] px-2 text-[10px] gap-1 rounded-xl border font-mono transition-all active:scale-95 cursor-pointer ${
-              (progress.audioSpeed || 0.85) <= 0.75
-                ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold"
-                : (progress.audioSpeed || 0.85) === 0.85
-                ? "border-primary/40 bg-primary/10 text-primary font-bold"
-                : "border-border text-foreground"
-            }`}
-            title="Ajustar velocidade de fala (0.7x Lento, 0.85x Confortável, 1.0x Normal, 1.2x Rápido)"
-            aria-label="Ajustar velocidade da fala"
-          >
-            <Gauge className="h-3.5 w-3.5 text-primary" />
-            <span>{speedDisplay}</span>
-          </Button>
-
-          {/* 3. BOTÃO DE AUTO-VOZ */}
-          <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
             onClick={handleToggleAutoSpeak}
-            className={`h-8 w-8 min-h-[40px] min-w-[40px] rounded-xl border transition-all active:scale-95 cursor-pointer flex items-center justify-center ${
+            className={`h-9 w-9 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center justify-center ${
               autoSpeak
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold"
-                : "text-muted-foreground bg-muted/40"
+                ? "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                : "text-muted-foreground hover:bg-muted/50"
             }`}
-            title={autoSpeak ? "Leitura automática ativada" : "Leitura automática pausada"}
-            aria-label={autoSpeak ? "Desativar leitura automática da voz" : "Ativar leitura automática da voz"}
+            title={autoSpeak ? "Leitura automática ativada (clique para silenciar)" : "Leitura silenciada (clique para ativar)"}
+            aria-label={autoSpeak ? "Desativar fala automática" : "Ativar fala automática"}
           >
             {autoSpeak ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
           </Button>
 
-          {/* 4. BOTÃO PARA GERENCIAR / LIMPAR MENSAGENS */}
-          <Button
-            variant={isSelecting ? "secondary" : "ghost"}
-            size="icon"
-            onClick={() => setIsSelecting(!isSelecting)}
-            className={`h-8 w-8 min-h-[40px] min-w-[40px] rounded-xl active:scale-95 cursor-pointer flex items-center justify-center ${
-              isSelecting ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
-            }`}
-            title={isSelecting ? "Sair do modo de seleção" : "Selecionar mensagens para apagar"}
-            aria-label={isSelecting ? "Sair da seleção de mensagens" : "Selecionar mensagens para apagar"}
-          >
-            {isSelecting ? <X className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
-          </Button>
+          {/* Menu com Todas as Opções Avançadas (Sem poluição na tela) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground active:scale-95 cursor-pointer flex items-center justify-center"
+                title="Mais opções da conversa"
+                aria-label="Mais opções da conversa"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-xl">
+              <DropdownMenuItem
+                onClick={() => setShowMemoryModal(true)}
+                className="flex items-center gap-2.5 cursor-pointer py-2 text-xs"
+              >
+                <Brain className="h-4 w-4 text-primary" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-foreground">Memória do Aluno</div>
+                  <div className="text-[10px] text-muted-foreground truncate">
+                    {learnerMemory.topicsDiscussed.length} tópicos registrados
+                  </div>
+                </div>
+              </DropdownMenuItem>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClearAllChat}
-            className="h-8 w-8 min-h-[40px] min-w-[40px] rounded-xl text-muted-foreground hover:text-destructive active:scale-95 cursor-pointer flex items-center justify-center"
-            title="Apagar todas as mensagens da conversa"
-            aria-label="Limpar todas as mensagens da conversa"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+              <DropdownMenuItem
+                onClick={handleCycleSpeed}
+                className="flex items-center gap-2.5 cursor-pointer py-2 text-xs"
+              >
+                <Gauge className="h-4 w-4 text-primary" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-foreground">Velocidade da Voz</div>
+                  <div className="text-[10px] text-muted-foreground">{speedDisplay}</div>
+                </div>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => setIsTutorModalOpen(true)}
+                className="flex items-center gap-2.5 cursor-pointer py-2 text-xs"
+              >
+                <Languages className="h-4 w-4 text-primary" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-foreground">Trocar Tutor / Idioma</div>
+                  <div className="text-[10px] text-muted-foreground truncate">
+                    {activeTutor.name} ({activeLanguage.name})
+                  </div>
+                </div>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onClick={() => setIsSelecting(!isSelecting)}
+                className="flex items-center gap-2.5 cursor-pointer py-2 text-xs"
+              >
+                <CheckSquare className="h-4 w-4 text-muted-foreground" />
+                <span>{isSelecting ? "Sair do modo de seleção" : "Selecionar mensagens"}</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={handleClearAllChat}
+                className="flex items-center gap-2.5 cursor-pointer py-2 text-xs text-destructive focus:text-destructive focus:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Limpar histórico do chat</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -758,26 +783,6 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
               Cancelar
             </Button>
           </div>
-        </div>
-      )}
-
-      {/* Indicador quando o microfone estiver gravando */}
-      {isRecording && (
-        <div className="flex items-center justify-between px-3 py-1.5 bg-red-500/15 border-b border-red-500/30 text-red-600 dark:text-red-400 text-xs animate-in fade-in">
-          <div className="flex items-center gap-1.5 font-medium">
-            <Radio className="h-3.5 w-3.5 animate-pulse" />
-            <span>
-              {translateFromPt
-                ? `Ouvindo em Português... Traduziremos automaticamente para ${activeLanguage.name}`
-                : `Ouvindo sua voz... Fale direto em ${activeLanguage.name}`}
-            </span>
-          </div>
-          <button
-            onClick={handleStopRecording}
-            className="text-[11px] font-bold underline hover:opacity-80 cursor-pointer"
-          >
-            Concluir Fala
-          </button>
         </div>
       )}
 
@@ -831,9 +836,9 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                 >
                   {/* Badge sutil quando a mensagem foi traduzida do português */}
                   {isUser && msg.wasTranslated && (
-                    <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold bg-black/25 dark:bg-black/40 text-primary-foreground/95 px-2 py-0.5 rounded-md w-fit border border-primary-foreground/20">
-                      <span>🇧🇷</span>
-                      <span>Traduzido para {activeLanguage.name}</span>
+                    <div className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold bg-black/25 dark:bg-black/40 text-primary-foreground/95 px-2 py-0.5 rounded-md w-fit border border-primary-foreground/20">
+                      <span>🇧🇷 ➔ {activeLanguage.flag}</span>
+                      <span>Traduzido</span>
                     </div>
                   )}
 
@@ -841,148 +846,189 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                   <button
                     type="button"
                     onClick={() => handleDeleteSingleMessage(msg.id)}
-                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-70 hover:opacity-100 min-h-[36px] min-w-[36px] flex items-center justify-center p-1.5 text-muted-foreground hover:text-destructive active:scale-95 transition-all cursor-pointer"
+                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-70 hover:opacity-100 min-h-[32px] min-w-[32px] flex items-center justify-center p-1 text-muted-foreground hover:text-destructive active:scale-95 transition-all cursor-pointer"
                     title="Apagar esta mensagem"
                     aria-label="Apagar esta mensagem"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-3 w-3" />
                   </button>
 
-                  {/* Texto Principal da Mensagem com Linha Confortável e Escala Controlável */}
-                  <p className={`${fontConfig.textClass} font-medium pr-3 leading-relaxed tracking-normal max-w-prose select-text`}>
+                  {/* Texto Principal da Mensagem */}
+                  <p className={`${fontConfig.textClass} font-medium pr-3 leading-relaxed tracking-normal select-text`}>
                     {msg.text}
                   </p>
 
-                  {/* 1. Elementos da Mensagem do Tutor: Fonética & Tradução */}
+                  {/* 1. Elementos Interativos da Mensagem do Tutor */}
                   {!isUser && (
-                    <div className="mt-2.5 pt-2 border-t border-border/50 space-y-1.5 text-left">
-                      {phoneticText && (
-                        <div className="flex items-start gap-1.5 bg-primary/5 rounded-lg px-2 py-1.5 border border-primary/15">
-                          <span className="text-xs select-none">🗣️</span>
-                          <div className="flex-1">
-                            <span className="text-[9px] font-bold text-primary block leading-none mb-0.5">
-                              Como Falar (Fonética):
+                    <div className="mt-2 pt-2 border-t border-border/40 text-left">
+                      {/* Barra de Ações Compacta: Ouvir + Pills de Fonética e Tradução */}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSpeakMessage(msg.id, msg.text)}
+                          aria-label={isSpeakingThis ? "Pausar fala" : "Ouvir pronúncia"}
+                          className={`flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-lg transition-all active:scale-95 cursor-pointer ${
+                            isSpeakingThis
+                              ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 font-semibold"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                          }`}
+                          title={isSpeakingThis ? "Pausar fala" : `Ouvir pronúncia (${speedDisplay})`}
+                        >
+                          {isSpeakingThis ? (
+                            <span className="flex items-center gap-0.5 h-3 px-0.5" aria-hidden="true">
+                              <span className="w-0.5 bg-current rounded-full animate-wave-1" />
+                              <span className="w-0.5 bg-current rounded-full animate-wave-2" />
+                              <span className="w-0.5 bg-current rounded-full animate-wave-3" />
                             </span>
-                            <p className={`font-mono text-primary font-semibold tracking-wide leading-relaxed py-0.5 select-text ${fontConfig.phoneticClass}`}>
-                              [{phoneticText}]
-                            </p>
-                          </div>
-                        </div>
-                      )}
+                          ) : (
+                            <Volume2 className="h-3.5 w-3.5" />
+                          )}
+                          <span>{isSpeakingThis ? "Falando..." : "Ouvir"}</span>
+                        </button>
 
-                      {translationText && (
-                        <div className="flex items-start gap-1.5 bg-muted/40 rounded-lg px-2 py-1.5 border border-border/40">
-                          <span className="text-xs select-none">🇧🇷</span>
-                          <div className="flex-1">
-                            <span className="text-[9px] font-bold text-muted-foreground block leading-none mb-0.5">
-                              Tradução em Português:
-                            </span>
-                            <p className={`text-foreground/90 font-medium leading-relaxed py-0.5 select-text ${fontConfig.translationClass}`}>
-                              {translationText}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Botão de Ouvir Tutor com Soundwave Animado */}
-                      <button
-                        type="button"
-                        onClick={() => handleSpeakMessage(msg.id, msg.text)}
-                        aria-label={isSpeakingThis ? "Pausar fala do tutor" : `Ouvir pronúncia oficial (${speedDisplay})`}
-                        className={`mt-1.5 flex items-center gap-2 text-[11px] font-semibold transition-all px-2.5 py-1.5 rounded-xl active:scale-95 min-h-[38px] cursor-pointer ${
-                          isSpeakingThis
-                            ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-bold"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                        }`}
-                        title={isSpeakingThis ? "Pausar fala" : `Ouvir pronúncia (${speedDisplay})`}
-                      >
-                        {isSpeakingThis ? (
-                          <span className="flex items-center gap-0.5 h-3.5 px-0.5" aria-hidden="true">
-                            <span className="w-1 bg-current rounded-full animate-wave-1" />
-                            <span className="w-1 bg-current rounded-full animate-wave-2" />
-                            <span className="w-1 bg-current rounded-full animate-wave-3" />
-                          </span>
-                        ) : (
-                          <Volume2 className="h-4 w-4" />
+                        {phoneticText && (
+                          <button
+                            type="button"
+                            onClick={() => togglePhonetic(msg.id)}
+                            className={`flex items-center gap-1 text-[10.5px] font-medium px-2 py-0.5 rounded-lg transition-all active:scale-95 cursor-pointer border ${
+                              expandedPhoneticIds[msg.id]
+                                ? "bg-primary/20 text-primary border-primary/30 font-semibold"
+                                : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground hover:bg-muted"
+                            }`}
+                            title="Ver ou ocultar pronúncia fonética"
+                          >
+                            <span>🗣️</span>
+                            <span>{expandedPhoneticIds[msg.id] ? "Ocultar" : "Fonética"}</span>
+                          </button>
                         )}
-                        <span>
-                          {isSpeakingThis ? "Falando pronúncia nativa..." : `Ouvir pronúncia (${speedDisplay})`}
-                        </span>
-                      </button>
+
+                        {translationText && (
+                          <button
+                            type="button"
+                            onClick={() => toggleTranslation(msg.id)}
+                            className={`flex items-center gap-1 text-[10.5px] font-medium px-2 py-0.5 rounded-lg transition-all active:scale-95 cursor-pointer border ${
+                              expandedTranslationIds[msg.id]
+                                ? "bg-primary/20 text-primary border-primary/30 font-semibold"
+                                : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground hover:bg-muted"
+                            }`}
+                            title="Ver ou ocultar tradução em português"
+                          >
+                            <span>🇧🇷</span>
+                            <span>{expandedTranslationIds[msg.id] ? "Ocultar" : "Tradução"}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Gaveta de Fonética (Exibida sob demanda) */}
+                      {phoneticText && expandedPhoneticIds[msg.id] && (
+                        <div className="mt-2 bg-primary/5 rounded-lg p-2 border border-primary/15 animate-in fade-in slide-in-from-top-1 text-left">
+                          <span className="text-[9px] font-bold text-primary block leading-none mb-0.5">
+                            Como Falar (Fonética):
+                          </span>
+                          <p className={`font-mono text-primary font-semibold tracking-wide py-0.5 select-text ${fontConfig.phoneticClass}`}>
+                            [{phoneticText}]
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Gaveta de Tradução (Exibida sob demanda) */}
+                      {translationText && expandedTranslationIds[msg.id] && (
+                        <div className="mt-2 bg-muted/40 rounded-lg p-2 border border-border/40 animate-in fade-in slide-in-from-top-1 text-left">
+                          <span className="text-[9px] font-bold text-muted-foreground block leading-none mb-0.5">
+                            Tradução em Português:
+                          </span>
+                          <p className={`text-foreground/90 font-medium py-0.5 select-text ${fontConfig.translationClass}`}>
+                            {translationText}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {/* 2. Elementos da Mensagem do Usuário: Ler Fonética, Ler Tradução / Original PT e Ouvir Minha Resposta */}
-                  {isUser && (phoneticText || translationText || msg.originalPt) && (
-                    <div className="mt-2.5 pt-2 border-t border-primary-foreground/20 space-y-1.5 text-left">
-                      {phoneticText && (
-                        <div className="flex items-start gap-1.5 bg-black/20 dark:bg-black/30 rounded-lg px-2 py-1.5 border border-primary-foreground/15">
-                          <span className="text-xs select-none">🗣️</span>
-                          <div className="flex-1">
-                            <span className="text-[9px] font-bold text-primary-foreground/90 block leading-none mb-0.5">
-                              Como Falar (Sua Pronúncia em {activeLanguage.name}):
+                  {/* 2. Elementos Interativos da Mensagem do Usuário */}
+                  {isUser && (
+                    <div className="mt-2 pt-2 border-t border-primary-foreground/20 text-left">
+                      {/* Barra de Ações Compacta: Ouvir Resposta + Pills */}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSpeakMessage(msg.id, msg.text)}
+                          aria-label={isSpeakingThis ? "Pausar fala" : "Ouvir minha resposta"}
+                          className={`flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-lg transition-all active:scale-95 cursor-pointer ${
+                            isSpeakingThis
+                              ? "bg-white/30 text-white font-bold"
+                              : "bg-white/15 hover:bg-white/25 text-primary-foreground"
+                          }`}
+                          title={isSpeakingThis ? "Pausar fala" : "Ouvir minha resposta"}
+                        >
+                          {isSpeakingThis ? (
+                            <span className="flex items-center gap-0.5 h-3 px-0.5" aria-hidden="true">
+                              <span className="w-0.5 bg-current rounded-full animate-wave-1" />
+                              <span className="w-0.5 bg-current rounded-full animate-wave-2" />
+                              <span className="w-0.5 bg-current rounded-full animate-wave-3" />
                             </span>
-                            <p className={`font-mono text-primary-foreground font-semibold tracking-wide leading-relaxed py-0.5 select-text ${fontConfig.phoneticClass}`}>
-                              [{phoneticText}]
-                            </p>
-                          </div>
+                          ) : (
+                            <Volume2 className="h-3.5 w-3.5" />
+                          )}
+                          <span>{isSpeakingThis ? "Falando..." : "Ouvir"}</span>
+                        </button>
+
+                        {phoneticText && (
+                          <button
+                            type="button"
+                            onClick={() => togglePhonetic(msg.id)}
+                            className={`flex items-center gap-1 text-[10.5px] font-medium px-2 py-0.5 rounded-lg transition-all active:scale-95 cursor-pointer border ${
+                              expandedPhoneticIds[msg.id]
+                                ? "bg-white/30 text-white border-white/40 font-semibold"
+                                : "bg-white/10 text-primary-foreground/90 border-white/20 hover:bg-white/20"
+                            }`}
+                            title="Ver ou ocultar fonética da sua fala"
+                          >
+                            <span>🗣️</span>
+                            <span>{expandedPhoneticIds[msg.id] ? "Ocultar" : "Fonética"}</span>
+                          </button>
+                        )}
+
+                        {(msg.originalPt || translationText) && (
+                          <button
+                            type="button"
+                            onClick={() => toggleTranslation(msg.id)}
+                            className={`flex items-center gap-1 text-[10.5px] font-medium px-2 py-0.5 rounded-lg transition-all active:scale-95 cursor-pointer border ${
+                              expandedTranslationIds[msg.id]
+                                ? "bg-white/30 text-white border-white/40 font-semibold"
+                                : "bg-white/10 text-primary-foreground/90 border-white/20 hover:bg-white/20"
+                            }`}
+                            title="Ver ou ocultar original em português"
+                          >
+                            <span>🇧🇷</span>
+                            <span>{expandedTranslationIds[msg.id] ? "Ocultar" : "Português"}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Gaveta de Fonética Usuário */}
+                      {phoneticText && expandedPhoneticIds[msg.id] && (
+                        <div className="mt-2 bg-black/25 dark:bg-black/35 rounded-lg p-2 border border-primary-foreground/15 animate-in fade-in slide-in-from-top-1 text-left">
+                          <span className="text-[9px] font-bold text-primary-foreground/90 block leading-none mb-0.5">
+                            Como Falar (Sua Pronúncia em {activeLanguage.name}):
+                          </span>
+                          <p className={`font-mono text-primary-foreground font-semibold tracking-wide py-0.5 select-text ${fontConfig.phoneticClass}`}>
+                            [{phoneticText}]
+                          </p>
                         </div>
                       )}
 
-                      {/* Exibir o que o usuário falou/digitou originalmente em português */}
-                      {msg.originalPt ? (
-                        <div className="flex items-start gap-1.5 bg-black/15 dark:bg-black/25 rounded-lg px-2 py-1.5 border border-primary-foreground/10">
-                          <span className="text-xs select-none">🇧🇷</span>
-                          <div className="flex-1">
-                            <span className="text-[9px] font-bold text-primary-foreground/80 block leading-none mb-0.5">
-                              O que você falou / digitou em Português:
-                            </span>
-                            <p className={`text-primary-foreground font-medium leading-relaxed py-0.5 select-text ${fontConfig.translationClass}`}>
-                              "{msg.originalPt}"
-                            </p>
-                          </div>
-                        </div>
-                      ) : translationText ? (
-                        <div className="flex items-start gap-1.5 bg-black/15 dark:bg-black/25 rounded-lg px-2 py-1.5 border border-primary-foreground/10">
-                          <span className="text-xs select-none">🇧🇷</span>
-                          <div className="flex-1">
-                            <span className="text-[9px] font-bold text-primary-foreground/80 block leading-none mb-0.5">
-                              Significado em Português:
-                            </span>
-                            <p className={`text-primary-foreground font-medium leading-relaxed py-0.5 select-text ${fontConfig.translationClass}`}>
-                              {translationText}
-                            </p>
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {/* Botão de Ouvir Minha Resposta em Pronúncia Nativa com Soundwave Animado */}
-                      <button
-                        type="button"
-                        onClick={() => handleSpeakMessage(msg.id, msg.text)}
-                        aria-label={isSpeakingThis ? "Pausar fala da sua resposta" : `Ouvir pronúncia da minha resposta em ${activeLanguage.name} (${speedDisplay})`}
-                        className={`mt-1.5 flex items-center gap-2 text-[11px] font-semibold transition-all px-2.5 py-1.5 rounded-xl active:scale-95 min-h-[38px] cursor-pointer ${
-                          isSpeakingThis
-                            ? "bg-white/30 text-white font-bold"
-                            : "bg-white/15 hover:bg-white/25 text-primary-foreground"
-                        }`}
-                        title={isSpeakingThis ? "Pausar fala" : `Ouvir pronúncia da minha resposta em ${activeLanguage.name} (${speedDisplay})`}
-                      >
-                        {isSpeakingThis ? (
-                          <span className="flex items-center gap-0.5 h-3.5 px-0.5" aria-hidden="true">
-                            <span className="w-1 bg-current rounded-full animate-wave-1" />
-                            <span className="w-1 bg-current rounded-full animate-wave-2" />
-                            <span className="w-1 bg-current rounded-full animate-wave-3" />
+                      {/* Gaveta de Original / Tradução Português */}
+                      {(msg.originalPt || translationText) && expandedTranslationIds[msg.id] && (
+                        <div className="mt-2 bg-black/20 dark:bg-black/30 rounded-lg p-2 border border-primary-foreground/10 animate-in fade-in slide-in-from-top-1 text-left">
+                          <span className="text-[9px] font-bold text-primary-foreground/80 block leading-none mb-0.5">
+                            {msg.originalPt ? "O que você falou / digitou em Português:" : "Significado em Português:"}
                           </span>
-                        ) : (
-                          <Volume2 className="h-4 w-4" />
-                        )}
-                        <span>
-                          {isSpeakingThis
-                            ? `Ouvindo sua resposta em ${activeLanguage.name}...`
-                            : `Ouvir minha resposta em ${activeLanguage.name} (${speedDisplay})`}
-                        </span>
-                      </button>
+                          <p className={`text-primary-foreground font-medium py-0.5 select-text ${fontConfig.translationClass}`}>
+                            "{msg.originalPt || translationText}"
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -995,20 +1041,17 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                 )}
               </div>
 
-              {/* Balão de Correção em 1 Linha com Explicação em Português */}
+              {/* Balão de Correção do Tutor */}
               {msg.correction && msg.correction.hasError && (
-                <div className="mt-1.5 max-w-[92%] sm:max-w-[88%] rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-left space-y-1 animate-in fade-in">
-                  <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold text-xs">
+                <div className="mt-1.5 max-w-[92%] sm:max-w-[88%] rounded-xl border border-amber-500/30 bg-amber-500/10 p-2 text-left space-y-1 animate-in fade-in">
+                  <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold text-[11px]">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                    <span>Dica de {activeTutor.name} ({activeTutor.city}):</span>
+                    <span>Dica de {activeTutor.name}:</span>
                   </div>
-                  <div className={`text-muted-foreground ${fontConfig.translationClass}`}>
-                    Você disse: <span className="line-through text-destructive font-medium">{msg.correction.original}</span>
+                  <div className="text-[11px] text-muted-foreground">
+                    Você disse: <span className="line-through text-destructive">{msg.correction.original}</span> &bull; Como falar: <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{msg.correction.corrected}</span>
                   </div>
-                  <div className={`text-foreground font-semibold flex items-center gap-1 ${fontConfig.textClass}`}>
-                    Como falar: <span className="text-emerald-600 dark:text-emerald-400">{msg.correction.corrected}</span>
-                  </div>
-                  <p className={`text-amber-700 dark:text-amber-300 font-medium italic border-t border-amber-500/20 pt-1 ${fontConfig.translationClass}`}>
+                  <p className="text-amber-700 dark:text-amber-300 text-[10.5px] font-medium italic border-t border-amber-500/20 pt-1">
                     💡 {msg.correction.explanationPt}
                   </p>
                 </div>
@@ -1026,209 +1069,104 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Sugestões de Respostas Ricas & Contextuais (com Fonética, Tradução e Áudio de Prévia) */}
-      <div className="p-2 border-t border-border/50 bg-background/95 space-y-1.5">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] text-foreground font-bold flex items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-            Sugestões de Resposta ({currentSuggestions.length} opções):
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleRefreshSuggestions}
-            className="h-7 min-h-[36px] text-[10px] px-2.5 gap-1 text-muted-foreground hover:text-foreground active:scale-95 cursor-pointer"
-            title="Trazer novas sugestões de fala"
-            aria-label="Trazer novas sugestões de resposta"
-          >
-            <RotateCcw className="h-3 w-3" />
-            <span>Novas Sugestões</span>
-          </Button>
-        </div>
+      {/* Sugestões de Respostas em Carrossel Horizontal Fluido */}
+      {currentSuggestions && currentSuggestions.length > 0 && (
+        <div className="px-3 py-1.5 border-t border-border/40 bg-card/30">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10.5px] text-muted-foreground font-semibold flex items-center gap-1">
+              <Sparkles className="h-3 w-3 text-amber-500" />
+              Sugestões rápidas
+            </span>
+            <button
+              type="button"
+              onClick={handleRefreshSuggestions}
+              className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 px-1.5 py-0.5 rounded-md active:scale-95 transition-all cursor-pointer"
+              title="Trazer novas sugestões de resposta"
+              aria-label="Novas sugestões"
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span>Novas</span>
+            </button>
+          </div>
 
-        <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-          {currentSuggestions.map((sug, idx) => {
-            const isExpanded = expandedSuggestionIndex === idx;
-            const isPreviewPlaying = previewSpeakingText === sug.text;
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar scroll-smooth">
+            {currentSuggestions.map((sug, idx) => {
+              const isPreviewPlaying = previewSpeakingText === sug.text;
 
-            return (
-              <div
-                key={`${sug.text}-${idx}`}
-                className={`flex flex-col rounded-xl border transition-all ${
-                  isExpanded
-                    ? "w-full border-primary/40 bg-primary/5 p-2 shadow-xs"
-                    : "border-border/70 bg-card hover:border-primary/40"
-                }`}
-              >
-                <div className="flex items-center gap-1 p-0.5 sm:p-1">
+              return (
+                <div
+                  key={`${sug.text}-${idx}`}
+                  className="flex items-center shrink-0 bg-card hover:bg-accent/40 border border-border/70 hover:border-primary/40 rounded-full pl-3 pr-1 py-1 transition-all shadow-2xs group"
+                >
                   {/* Botão de Enviar Direto */}
                   <button
                     type="button"
                     onClick={() => handleSend(sug.text)}
-                    className="text-[11px] font-medium text-foreground hover:text-primary transition-colors text-left px-2 py-1.5 min-h-[38px] rounded-lg hover:bg-primary/10 active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                    title={`Enviar resposta: "${sug.text}"`}
-                    aria-label={`Enviar resposta rápida: "${sug.text}"`}
+                    className="flex items-center gap-1.5 text-left cursor-pointer active:scale-95"
+                    title={`Enviar: "${sug.text}" • Tradução: "${sug.translationPt}"`}
+                    aria-label={`Enviar resposta: "${sug.text}"`}
                   >
-                    <span className="font-semibold text-xs">{sug.label}</span>
-                    <span className="text-[10px] text-muted-foreground hidden sm:inline truncate max-w-[140px]">
+                    <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {sug.label}
+                    </span>
+                    <span className="text-[10.5px] text-muted-foreground max-w-[140px] truncate hidden xs:inline">
                       {sug.text}
                     </span>
                   </button>
 
-                  {/* Botão de Ouvir Prévia em Áudio com Soundwave */}
+                  {/* Botão de Ouvir Prévia em Áudio */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleSpeakPreview(sug.text);
                     }}
-                    className={`h-8 w-8 min-h-[36px] min-w-[36px] p-1.5 rounded-lg active:scale-95 transition-all shrink-0 flex items-center justify-center cursor-pointer ${
+                    className={`h-6 w-6 ml-1 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                       isPreviewPlaying
-                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold"
-                        : "text-muted-foreground hover:text-emerald-600 hover:bg-emerald-500/10"
+                        ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }`}
-                    title={isPreviewPlaying ? "Pausar prévia" : "Ouvir pronúncia desta frase antes de enviar"}
-                    aria-label={isPreviewPlaying ? "Pausar prévia da pronúncia" : `Ouvir prévia de pronúncia de "${sug.text}"`}
+                    title={isPreviewPlaying ? "Pausar prévia" : `Ouvir pronúncia de "${sug.text}"`}
+                    aria-label={`Ouvir pronúncia de "${sug.text}"`}
                   >
                     {isPreviewPlaying ? (
-                      <span className="flex items-center gap-0.5 h-3 px-0.5" aria-hidden="true">
+                      <span className="flex items-center gap-0.5 h-2.5">
                         <span className="w-0.5 bg-current rounded-full animate-wave-1" />
                         <span className="w-0.5 bg-current rounded-full animate-wave-2" />
-                        <span className="w-0.5 bg-current rounded-full animate-wave-3" />
                       </span>
                     ) : (
-                      <Volume2 className="h-4 w-4" />
+                      <Volume2 className="h-3 w-3" />
                     )}
                   </button>
-
-                  {/* Botão de Ver Fonética e Tradução */}
-                  <button
-                    type="button"
-                    onClick={() => setExpandedSuggestionIndex(isExpanded ? null : idx)}
-                    className={`text-[9.5px] px-2 py-1 min-h-[36px] rounded-lg border transition-all active:scale-95 shrink-0 font-medium flex items-center cursor-pointer ${
-                      isExpanded
-                        ? "bg-primary text-primary-foreground border-primary font-bold"
-                        : "bg-muted text-muted-foreground border-border/50 hover:text-foreground"
-                    }`}
-                    title="Ver pronúncia fonética e tradução em português"
-                    aria-label={isExpanded ? "Ocultar fonética e tradução" : "Ver fonética e tradução da sugestão"}
-                  >
-                    {isExpanded ? "Ocultar" : "Fonética"}
-                  </button>
                 </div>
-
-                {/* Bloco Expandido de Fonética e Tradução */}
-                {isExpanded && (
-                  <div className="mt-1 pt-1.5 border-t border-border/40 text-left text-[11px] space-y-1.5 animate-in fade-in">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold text-foreground leading-relaxed max-w-prose select-text">{sug.text}</p>
-                      <Button
-                        size="sm"
-                        onClick={() => handleSend(sug.text)}
-                        className="h-8 min-h-[36px] text-[10px] px-2.5 gap-1 rounded-xl shrink-0 active:scale-95 cursor-pointer"
-                        aria-label={`Enviar resposta: "${sug.text}"`}
-                      >
-                        <Send className="h-3.5 w-3.5" />
-                        <span>Enviar</span>
-                      </Button>
-                    </div>
-                    <div className="flex items-start gap-1 bg-primary/10 rounded-lg px-2 py-1 border border-primary/20">
-                      <span className="text-[10px] select-none">🗣️</span>
-                      <p className="text-primary font-mono text-[10px] font-semibold leading-relaxed select-text">
-                        [{sug.phonetic}]
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-1 bg-muted/60 rounded-lg px-2 py-1 border border-border/40">
-                      <span className="text-[10px] select-none">🇧🇷</span>
-                      <p className="text-muted-foreground text-[10px] leading-relaxed select-text">
-                        {sug.translationPt}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Seletor de Modo de Resposta (Português com Tradução Automática vs Falar Direto no Idioma) */}
-      <div className="px-3 py-1.5 bg-muted/40 border-t border-border/70 flex items-center justify-between text-xs gap-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <Languages className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[11px] text-muted-foreground truncate">
-            {translateFromPt ? (
-              <>
-                <span className="font-semibold text-foreground">Modo Tradução Ativo:</span> responda em Português 🇧🇷
-              </>
-            ) : (
-              <>
-                <span className="font-semibold text-foreground">Modo Direto:</span> fale/digite direto em {activeLanguage.flag} {activeLanguage.name}
-              </>
-            )}
-          </span>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleToggleTranslateFromPt}
-          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all active:scale-95 shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs ${
-            translateFromPt
-              ? "bg-primary/15 text-primary border-primary/30 hover:bg-primary/20"
-              : "bg-background text-muted-foreground border-border hover:text-foreground"
-          }`}
-          title={
-            translateFromPt
-              ? `Clique para alternar: Falar/digitar direto em ${activeLanguage.name}`
-              : `Clique para alternar: Responder em Português com tradução automática para ${activeLanguage.name}`
-          }
-          aria-label={
-            translateFromPt
-              ? `Desativar tradução e falar direto em ${activeLanguage.name}`
-              : `Ativar tradução de Português para ${activeLanguage.name}`
-          }
-        >
-          {translateFromPt ? (
-            <>
-              <span>🇧🇷 ➔ {activeLanguage.flag}</span>
-              <span className="hidden sm:inline">Traduzir p/ {activeLanguage.name}</span>
-              <span className="sm:hidden">Traduzir</span>
-            </>
-          ) : (
-            <>
-              <span>{activeLanguage.flag}</span>
-              <span className="hidden sm:inline">Falar direto em {activeLanguage.name}</span>
-              <span className="sm:hidden">Direto</span>
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Indicador Ativo de Turnos e Barge-In (Voice AI Engine) */}
+      {/* Indicador Ativo de Turnos e Barge-In */}
       {(isRecording || speakingMessageId || isLoading) && (
-        <div className="px-3 py-1.5 bg-background/95 border-t border-border/80 flex items-center justify-between text-[11px] animate-in fade-in transition-all">
+        <div className="px-3 py-1 bg-muted/40 border-t border-border/40 flex items-center justify-between text-[11px] animate-in fade-in transition-all">
           {isRecording ? (
-            <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+            <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-semibold">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
               </span>
               <span>
-                Sua vez: Gravando sua voz em {translateFromPt ? "Português 🇧🇷" : activeLanguage.name}...
+                Gravando voz em {translateFromPt ? "Português 🇧🇷" : activeLanguage.name}...
               </span>
             </div>
           ) : speakingMessageId ? (
-            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold">
+            <div className="flex items-center gap-1.5 text-primary font-medium">
               <Volume2 className="h-3.5 w-3.5 animate-pulse" />
-              <span>
-                {activeTutor.name} falando • Toque no mic para interromper (Barge-In)
-              </span>
+              <span>{activeTutor.name} falando...</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-semibold">
-              <Sparkles className="h-3.5 w-3.5 animate-spin" />
-              <span>{activeTutor.name} pensando na resposta personalizada...</span>
+            <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium">
+              <Bot className="h-3.5 w-3.5 animate-spin" />
+              <span>{activeTutor.name} digitando...</span>
             </div>
           )}
 
@@ -1241,21 +1179,21 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                 bargeInInterrupt();
                 setSpeakingMessageId(null);
               }}
-              className="h-6 text-[10px] text-muted-foreground hover:text-foreground px-2"
+              className="h-6 text-[10px] text-muted-foreground hover:text-foreground px-1.5 underline cursor-pointer"
             >
-              Parar fala
+              Parar
             </Button>
           )}
         </div>
       )}
 
-      {/* Barra de Entrada (Texto + Microfone) */}
+      {/* Barra de Entrada com Tradução Integrada */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
           handleSend();
         }}
-        className="p-2 border-t border-border bg-card/60 flex items-center gap-2"
+        className="p-2 border-t border-border/60 bg-card/60 flex items-center gap-2"
       >
         <Button
           type="button"
@@ -1266,31 +1204,52 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
             isRecording ? "animate-pulse ring-2 ring-red-400 shadow-md shadow-red-500/20" : ""
           }`}
           title={isRecording ? "Parar gravação" : "Falar no microfone (Reconhecimento de fala)"}
-          aria-label={isRecording ? "Parar gravação de voz" : "Falar no microfone (reconhecimento de fala)"}
+          aria-label={isRecording ? "Parar gravação de voz" : "Falar no microfone"}
         >
           {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4 text-primary" />}
         </Button>
 
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={
-            isRecording
-              ? translateFromPt
-                ? "Ouvindo sua fala em Português..."
-                : `Ouvindo sua fala em ${activeLanguage.name}...`
-              : translateFromPt
-              ? `Digite em Português ou em ${activeLanguage.name}...`
-              : `Converse em ${activeLanguage.name} com ${activeTutor.name}...`
-          }
-          disabled={isLoading}
-          className="flex-1 h-11 text-xs sm:text-sm rounded-2xl bg-background px-3 border-border/80"
-          aria-label={
-            translateFromPt
-              ? `Mensagem em Português para traduzir para ${activeLanguage.name}`
-              : `Mensagem em ${activeLanguage.name}`
-          }
-        />
+        <div className="relative flex-1 flex items-center">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={
+              isRecording
+                ? translateFromPt
+                  ? "Ouvindo em Português..."
+                  : `Ouvindo em ${activeLanguage.name}...`
+                : translateFromPt
+                ? `Digite em Português (traduz p/ ${activeLanguage.name})...`
+                : `Converse em ${activeLanguage.name}...`
+            }
+            disabled={isLoading}
+            className="h-11 text-xs sm:text-sm rounded-2xl bg-background pl-3 pr-16 border-border/80"
+            aria-label={
+              translateFromPt
+                ? `Mensagem em Português para traduzir para ${activeLanguage.name}`
+                : `Mensagem em ${activeLanguage.name}`
+            }
+          />
+
+          {/* Badge Interativo de Alternância de Idioma Embutido no Input */}
+          <button
+            type="button"
+            onClick={handleToggleTranslateFromPt}
+            className={`absolute right-1.5 px-2 py-1 rounded-xl text-[10px] font-bold border transition-all active:scale-95 cursor-pointer flex items-center gap-1 shadow-2xs ${
+              translateFromPt
+                ? "bg-primary/15 text-primary border-primary/30 hover:bg-primary/25"
+                : "bg-muted text-muted-foreground border-border hover:text-foreground hover:bg-muted/80"
+            }`}
+            title={
+              translateFromPt
+                ? `Modo Tradução Ativo: Responda em Português 🇧🇷 e traduziremos para ${activeLanguage.name}. Toque para falar direto no idioma.`
+                : `Modo Direto Ativo: Você fala direto em ${activeLanguage.flag} ${activeLanguage.name}. Toque para responder em Português.`
+            }
+            aria-label={translateFromPt ? "Modo tradução ativo. Toque para alternar" : "Modo direto ativo. Toque para alternar"}
+          >
+            <span>{translateFromPt ? `🇧🇷➔${activeLanguage.flag}` : activeLanguage.flag}</span>
+          </button>
+        </div>
 
         <Button
           type="submit"
