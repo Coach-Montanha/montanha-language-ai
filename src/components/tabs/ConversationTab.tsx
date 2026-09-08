@@ -12,6 +12,7 @@ import {
   getPortugueseTranslation,
   getDynamicSuggestions,
   isPortugueseText,
+  translatePortugueseOffline,
 } from "@/services/ai-engine";
 import {
   speakText,
@@ -342,14 +343,15 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
     setInput("");
     const isPt = translateFromPt || isPortugueseText(query, activeTutor.language);
+    const initialTrans = isPt ? translatePortugueseOffline(query, activeTutor.language) : null;
     const userMsgId = `user-${Date.now()}`;
     const userMsg: ChatMessage = {
       id: userMsgId,
       sender: "user",
-      text: query,
+      text: initialTrans ? initialTrans.translated : query,
       originalPt: isPt ? query : undefined,
       wasTranslated: isPt,
-      phonetic: isPt ? undefined : generatePhoneticGuide(query, activeTutor.language),
+      phonetic: initialTrans ? initialTrans.phonetic : (isPt ? undefined : generatePhoneticGuide(query, activeTutor.language)),
       translationPt: isPt ? query : getPortugueseTranslation(query, activeTutor.language),
       timestamp: Date.now(),
     };
@@ -365,7 +367,8 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         messages,
         progress.geminiApiKey,
         activeTutor,
-        learnerMemory
+        learnerMemory,
+        isPt
       );
 
       if (response.userTranslatedText) {

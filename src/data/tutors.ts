@@ -20,7 +20,7 @@ export const TUTORS: TutorPersona[] = [
       "Rêi dér! Áim Lí-ou frâm Shi-cá-gou. Sú-per ek-sái-ted tu tchét uíd iú! Dôunt uô-ri a-báut mêi-kin mis-têiks — áil djén-tli co-rrékt év-ri lí-tl slip sou iú sáund né-tchu-ral. Ráo réz iór dêi bin?",
     initialGreetingPt:
       "Olá! Eu sou o Leo de Chicago. Super animado para conversar com você! Não se preocupe em errar — vou corrigir com carinho cada deslize para você soar natural. Como tem sido o seu dia?",
-    speechPitch: 1.0,
+    speechPitch: 0.78,
     samplePhrase: "Hey friend! Take it easy, we'll master this together.",
   },
   {
@@ -83,7 +83,7 @@ export const TUTORS: TutorPersona[] = [
       "Rêi! Áim Lú-cas frâm To-rôn-tou. Its rí-li grêit tu rév iú ríer. Dérs zí-rou pré-shur uén uí tólk — év-ri lí-tl mis-têik íz djâst a step fór-uard. Ráos év-ri-tin góu-in uíd iú tu-dêi?",
     initialGreetingPt:
       "Olá! Eu sou o Lucas de Toronto. É muito bom ter você aqui. Não há pressão alguma na nossa conversa — cada pequeno erro é apenas um passo adiante. Como estão as coisas com você hoje?",
-    speechPitch: 0.95,
+    speechPitch: 0.76,
     samplePhrase: "Take your time! We're in this together, step by step.",
   },
 
@@ -106,7 +106,7 @@ export const TUTORS: TutorPersona[] = [
       "Ó-la a-mí-go! Sôi Ma-tê-o de Ma-dríd. Ké gran a-le-grí-a te-nér-te a-kí! No te pre-o-kú-pes en ab-so-lú-to por co-me-tér e-rró-res — te co-rre-ji-ré con ca-rí-nho pa-ra ke á-bles con to-tál na-tu-ra-li-dád. Có-mo va tu dí-a ói?",
     initialGreetingPt:
       "Olá amigo! Sou o Mateo de Madrid. Que grande alegria ter você aqui! Não se preocupe em cometer erros — vou te corrigir com carinho para que você fale com total naturalidade. Como vai o seu dia hoje?",
-    speechPitch: 1.0,
+    speechPitch: 0.78,
     samplePhrase: "¡Tranquilo amigo! Vamos a dominar el español juntos paso a paso.",
   },
   {
@@ -128,7 +128,7 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Olá! Sou a Valentina de Buenos Aires. Que bom que você está aprendendo espanhol comigo! Fale com total confiança, qualquer pequeno detalhe nós lapidamos juntos com muito carinho. Como você está hoje?",
     speechPitch: 1.05,
-    samplePhrase: "¡Buenísimo! Cada pequeña frase es un paso enorme hacia adelante.",
+    samplePhrase: "¡Buenísimo! Cada pequena frase é um paso enorme hacia adelante.",
   },
 
   // ================= 🇯🇵 JAPONÊS =================
@@ -150,7 +150,7 @@ export const TUTORS: TutorPersona[] = [
       "Kôn-ni-tchi-uá! Tô-kiô no Kên-ji dés. Ra-ji-me-má-shi-te! Ma-tchi-gái o ki ni sé-zu, is-shô ni ta-no-shí-cu Ni-hôn-go o ra-na-shi-ma-shô. Kiô uá dôn-na i-tchi-ni-tchi dé-shi-ta cá?",
     initialGreetingPt:
       "Olá! Sou o Kenji de Tóquio. Muito prazer em te conhecer! Sem se preocupar com erros, vamos praticar japonês com leveza juntos. Como foi o seu dia hoje?",
-    speechPitch: 0.95,
+    speechPitch: 0.76,
     samplePhrase: "Daijoubu desu yo! Yukkuri renshuu shimashou (Tudo bem! Vamos praticar com calma).",
   },
   {
@@ -194,7 +194,7 @@ export const TUTORS: TutorPersona[] = [
       "Kái-re-te! E-gó êi-mi Te-ó-fi-los eks A-tê-nôn. Ká-ris ri-mîn ké êi-rê-nê! Met eu-nói-as man-tá-no-men tên Koi-nên di-á-lek-ton. Tí té-lis a-na-gnô-nai sê-me-ron?",
     initialGreetingPt:
       "Alegrai-vos! Eu sou Teófilo de Atenas. Graça e paz a vós! Com dedicação aprenderemos o grego koiné das Sagradas Escrituras. O que desejas ler e estudar hoje?",
-    speechPitch: 0.95,
+    speechPitch: 0.75,
     samplePhrase: "En archêi ên ho Lógos! (No princípio era o Verbo — João 1:1).",
   },
   {
@@ -238,7 +238,7 @@ export const TUTORS: TutorPersona[] = [
       "Tcháo ca-rís-si-mo! Sô-no Ma-tê-o da Rô-ma. Ke bél-lo a-vér-ti cuí! Pár-la sên-tsa pa-ú-ra: co-rre-dje-rê-mo ô-nhi pí-co-lo det-tá-lho con il sor-rí-zo. Có-me sta an-dán-do la tú-a djor-ná-ta?",
     initialGreetingPt:
       "Olá caríssimo! Sou o Matteo de Roma. Que bom ter você aqui! Fale sem medo: corrigiremos cada pequeno detalhe com um sorriso. Como está indo o seu dia?",
-    speechPitch: 1.0,
+    speechPitch: 0.78,
     samplePhrase: "Benvenuto! Insieme parleremo un italiano meraviglioso.",
   },
   {
@@ -282,7 +282,7 @@ export const TUTORS: TutorPersona[] = [
       "Bôn-júr môn a-mí! Je ma-pél Ân-tuán, de Pa-rí. Je suí ân-chan-tê de fêr vôt-re co-nê-sânce. Ne crê-nhê pá lez er-rêur, nu za-lôn po-lír chák fráz a-vék ple-zír. Co-mân ta-lê-vú o-júr-duí?",
     initialGreetingPt:
       "Bom dia meu amigo! Meu nome é Antoine, de Paris. É um prazer enorme conhecê-lo. Não tema cometer erros, vamos lapidar cada frase com prazer. Como vai você hoje?",
-    speechPitch: 0.95,
+    speechPitch: 0.76,
     samplePhrase: "C'est magnifique ! Avec de la patience, votre français sera superbe.",
   },
   {
@@ -298,7 +298,7 @@ export const TUTORS: TutorPersona[] = [
     styleDesc: "Sotaque francês acolhedor e natural. Focada no dia a dia, viagens e expressões espontâneas da vida francesa.",
     bioPt: "Lyonesa apaixonada por viagens e gastronomia. Camille faz cada aula parecer um bate-papo descontraído entre amigos, explicando as diferenças sutis entre o francês formal e o coloquial.",
     initialGreeting:
-      "Coucou ! C'est Camille de Lyon ! Je suis ravie de t'accompagner dans ton apprentissage. Parle librement, je t'explique tout simplement en français et en portugais. Qu'as-tu fait de beau aujourd'hui ?",
+      "Coucou ! C'est Camille de Lyon ! Je suis ravie de t'accompagner dans ton apprentissage. Parle librement, je t'explique tout simplement em francês e em português. Qu'as-tu fait de beau aujourd'hui ?",
     initialGreetingPhonetic:
       "Cu-cú! Sé Ca-míl de Li-ôn! Je suí ra-ví de ta-côm-pa-nhê dân tôn a-prên-ti-sáj. Párl lí-bre-mân, je teks-plík tú sâm-ple-mân ân frân-sé é ân por-tu-guê. Ka-tü fê de bô o-júr-duí?",
     initialGreetingPt:
@@ -326,7 +326,7 @@ export const TUTORS: TutorPersona[] = [
       "Rá-lo! Ikh bin Maks áus Ber-lín. Chên, dikh kên-nen-tsu-lêr-nen! Kái-ne Zôr-gue vê-guen Fê-lern — vír ü-ben gants ent-chpânt unt fer-bé-sern jê-des De-táil. Vi guêt es dír rói-te?",
     initialGreetingPt:
       "Olá! Eu sou o Max de Berlim. Muito bom te conhecer! Sem medo de errar — praticamos com calma e corrigimos cada detalhe. Como vai você hoje?",
-    speechPitch: 0.95,
+    speechPitch: 0.76,
     samplePhrase: "Kein Problem! Schritt für Schritt meistern wir die deutsche Sprache zusammen.",
   },
   {
@@ -370,7 +370,7 @@ export const TUTORS: TutorPersona[] = [
       "Zdrást-vuy-tye! Me-nyá za-vút Dmí-triy, ya iz Sankt-Pe-ter-búr-ga. Ó-chin rad ná-she-mu zna-kómst-vu! Nye pe-re-zhi-váy-tye iz-za o-shí-bak — my raz-bi-ryóm kázh-du-yu frá-zu s za-bó-toy. Kak va-shi dye-lá se-vód-nya?",
     initialGreetingPt:
       "Olá! Meu nome é Dmitri, sou de São Petersburgo. Muito feliz em te conhecer! Não se preocupe com erros — vamos analisar cada frase com carinho. Como estão suas coisas hoje?",
-    speechPitch: 0.95,
+    speechPitch: 0.75,
     samplePhrase: "Всё получится! Шаг за шагом мы освоим русский язык вместе. (Vai dar tudo certo! Passo a passo dominaremos o russo juntos.)",
   },
   {

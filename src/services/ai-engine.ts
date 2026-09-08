@@ -668,19 +668,25 @@ export function isPortugueseText(text: string, targetLang: SupportedLanguage): b
   const trimmed = text.trim();
   if (!trimmed) return false;
 
-  // Se o idioma alvo usa alfabetos não-latinos e o texto possui esses caracteres, não é português
+  // Se o idioma alvo usa alfabetos não-latinos e o texto possui esses caracteres nativos, não é português
   if (targetLang === "ru" && /[а-яА-ЯёЁ]/.test(trimmed)) return false;
   if (targetLang === "el-koine" && /[α-ωΑ-Ω]/.test(trimmed)) return false;
   if (targetLang === "ja" && /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(trimmed)) return false;
 
+  // Se o idioma alvo usa alfabeto não-latino e o texto possui caracteres latinos (A-Z),
+  // com certeza é texto do aluno para ser traduzido (não é cirílico, grego ou japonês)
+  if ((targetLang === "ru" || targetLang === "el-koine" || targetLang === "ja") && /[a-zA-Z]/.test(trimmed)) {
+    return true;
+  }
+
   const lower = trimmed.toLowerCase();
 
-  // Caracteres distintivos da ortografia do português brasileiro
-  if (/[ãõçâêôà]/i.test(lower)) return true;
+  // Caracteres distintivos da ortografia do português brasileiro (com todos os acentos e cedilha)
+  if (/[áàâãéêíóôõúüç]/i.test(lower)) return true;
 
-  // Frases / expressões comuns inequívocas
+  // Frases / expressões comuns inequívocas em português
   if (
-    /(qual o hor[aá]rio|a que horas|que horas|onde fica|como chego|quanto custa|gostaria de|eu quero|o que voc[eê]|como voc[eê]|tudo bem|bom dia|boa tarde|boa noite|muito obrigad|estou muito|estou cansado|estou cansada|estou feliz|fim de semana|meu prato|recomenda para|para comer|para o jantar|voc[eê] gosta|de onde voc[eê]|onde voc[eê] mora)/i.test(lower)
+    /(qual o hor[aá]rio|a que horas|que horas|onde fica|como chego|quanto custa|gostaria de|eu quero|o que voc[eê]|como voc[eê]|como est[aá]|como vai|tudo bem|bom dia|boa tarde|boa noite|muito obrigad|estou muito|estou cansad|estou feliz|fim de semana|meu prato|recomenda para|para comer|para o jantar|voc[eê] gosta|de onde voc[eê]|onde voc[eê] mora|clima hoje|tempo hoje|na r[uú]ssia)/i.test(lower)
   ) {
     return true;
   }
@@ -692,7 +698,8 @@ export function isPortugueseText(text: string, targetLang: SupportedLanguage): b
     "qual", "quais", "quanto", "quanta", "quantos", "quantas", "onde", "quando", "porque",
     "horario", "estacao", "aeroporto", "museu", "restaurante", "almoco", "jantar",
     "cansado", "cansada", "obrigado", "obrigada", "ajuda", "gostaria", "favor", "cafe",
-    "certeza", "conta", "metro", "trem", "passagem", "tempo", "clima"
+    "certeza", "conta", "metro", "trem", "passagem", "tempo", "clima", "como", "esta", "hoje",
+    "russia", "cidade", "pais", "mundo", "dia", "noite", "tarde", "muito", "pouco", "amigo", "amiga"
   ];
 
   const norm = lower
@@ -710,7 +717,10 @@ export function isPortugueseText(text: string, targetLang: SupportedLanguage): b
     }
   }
 
-  const strongPtWords = ["horario", "estacao", "estou", "gostaria", "voce", "obrigado", "obrigada", "museu", "jantar", "almoco"];
+  const strongPtWords = [
+    "horario", "estacao", "estou", "gostaria", "voce", "obrigado", "obrigada",
+    "museu", "jantar", "almoco", "clima", "tempo", "hoje", "como", "esta"
+  ];
   for (const w of norm) {
     if (strongPtWords.includes(w)) return true;
   }
@@ -905,9 +915,24 @@ const PORTUGUESE_TRANSLATION_RULES: TranslationRule[] = [
       "el-koine": { text: "Καθ' ἡμέραν μανθάνω καὶ ἀσκῶ τὴν γλῶσσάν σου. (Kath' hemeran manthano kai asko ten glossan sou.)", phonetic: "kat i-mé-ran man-tá-no ke as-kó tin glóss-san su" },
     },
   },
-  // 13. Clima
+  // 13a. Clima na Rússia / País / Cidade específica
   {
-    pattern: /(como esta o (tempo|clima)( ai hoje)?|esta chovendo ai|esta frio ai|esta calor ai)/i,
+    pattern: /(como esta o (clima|tempo).*russia|clima na russia|tempo na russia|esta frio na russia)/i,
+    pt: "Como está o clima hoje na Rússia?",
+    translations: {
+      en: { text: "How is the weather in Russia today?", phonetic: "ráo íz dã ué-dêr in rô-sha tu-dêi" },
+      es: { text: "¿Cómo está el clima hoy en Rusia?", phonetic: "có-mo es-tá el clí-ma ói en rrú-sia" },
+      de: { text: "Wie ist das Wetter heute in Russland?", phonetic: "vi ist das vét-têr rói-te in rús-lant" },
+      fr: { text: "Quel temps fait-il en Russie aujourd'hui ?", phonetic: "kel tãn fe-til ãn ry-sí o-jur-dui" },
+      it: { text: "Com'è il tempo in Russia oggi?", phonetic: "co-mè il têm-po in rús-sia ód-dji" },
+      ru: { text: "Какая сегодня погода в России?", phonetic: "ka-ká-ya se-vód-nya pa-gó-da v ras-sí-i" },
+      ja: { text: "今日のロシアの天気はどうですか？ (Kyou no Roshia no tenki wa dou desu ka?)", phonetic: "kiô no ro-shí-a no tên-ki uá do des-ka" },
+      "el-koine": { text: "Ποῖός ἐστιν ὁ καιρὸς ἐν τῇ Ῥωσσίᾳ σήμερον; (Poios estin ho kairos en te Rhossia semeron?)", phonetic: "pí-os és-tin ro ke-rós en ti ros-sí-a sí-me-ron" },
+    },
+  },
+  // 13b. Clima geral
+  {
+    pattern: /(como esta o (tempo|clima)|qual e a previsao do tempo|esta chovendo|esta frio|esta calor)/i,
     pt: "Como está o clima na sua cidade hoje?",
     translations: {
       en: { text: "How is the weather in your city today?", phonetic: "ráo íz dã ué-dêr in iór sí-ti tu-dêi" },
@@ -1042,6 +1067,19 @@ export function translatePortugueseOffline(
     comida: { en: "food", es: "comida", de: "Essen", fr: "nourriture", it: "cibo", ru: "еда", ja: "食べ物 (tabemono)", "el-koine": "τροφή" },
     obrigado: { en: "thank you", es: "gracias", de: "danke", fr: "merci", it: "grazie", ru: "спасибо", ja: "ありがとう (arigatou)", "el-koine": "χάρις" },
     ajuda: { en: "help", es: "ayuda", de: "Hilfe", fr: "aide", it: "aiuto", ru: "помощь", ja: "助け (tasuke)", "el-koine": "βοήθεια" },
+    clima: { en: "weather", es: "clima", de: "Wetter", fr: "météo", it: "meteo", ru: "погода", ja: "天気 (tenki)", "el-koine": "καιρός" },
+    tempo: { en: "weather", es: "tiempo", de: "Wetter", fr: "temps", it: "tempo", ru: "погода", ja: "天気 (tenki)", "el-koine": "καιρός" },
+    hoje: { en: "today", es: "hoy", de: "heute", fr: "aujourd'hui", it: "oggi", ru: "сегодня", ja: "今日 (kyou)", "el-koine": "σήμερον" },
+    russia: { en: "Russia", es: "Rusia", de: "Russland", fr: "Russie", it: "Russia", ru: "Россия", ja: "ロシア (Roshia)", "el-koine": "Ῥωσσία" },
+    esta: { en: "is", es: "está", de: "ist", fr: "est", it: "è", ru: "сейчас", ja: "は", "el-koine": "ἐστίν" },
+    frio: { en: "cold", es: "frío", de: "kalt", fr: "froid", it: "freddo", ru: "холодно", ja: "寒い (samui)", "el-koine": "ψυχρόν" },
+    calor: { en: "hot", es: "calor", de: "warm", fr: "chaud", it: "caldo", ru: "жарко", ja: "暑い (atsui)", "el-koine": "θερμόν" },
+    bom: { en: "good", es: "bueno", de: "gut", fr: "bon", it: "buono", ru: "хорошо", ja: "良い (ii)", "el-koine": "ἀγαθόν" },
+    cidade: { en: "city", es: "ciudad", de: "Stadt", fr: "ville", it: "città", ru: "город", ja: "街 (machi)", "el-koine": "πόλις" },
+    dia: { en: "day", es: "día", de: "Tag", fr: "jour", it: "giorno", ru: "день", ja: "日 (hi)", "el-koine": "ἡμέρα" },
+    noite: { en: "night", es: "noche", de: "Nacht", fr: "nuit", it: "notte", ru: "ночь", ja: "夜 (yoru)", "el-koine": "νύξ" },
+    tudo: { en: "all", es: "todo", de: "alles", fr: "tout", it: "tutto", ru: "всё", ja: "全て (subete)", "el-koine": "πάντα" },
+    bem: { en: "well", es: "bien", de: "gut", fr: "bien", it: "bene", ru: "хорошо", ja: "良い (yoi)", "el-koine": "καλῶς" },
   };
 
   const words = norm.split(" ");
@@ -2361,10 +2399,11 @@ export async function tutorChat(
   history: ChatMessage[],
   apiKey?: string,
   tutorPersona?: TutorPersona,
-  learnerMemory?: LearnerProfileMemory
+  learnerMemory?: LearnerProfileMemory,
+  isPortugueseInput?: boolean
 ): Promise<TutorChatResponse> {
   const activeTutor = tutorPersona || DEFAULT_TUTOR;
-  const userIsPortuguese = isPortugueseText(userInput, activeTutor.language);
+  const userIsPortuguese = isPortugueseInput ?? isPortugueseText(userInput, activeTutor.language);
   const langNames: Record<string, string> = {
     en: "English",
     es: "Spanish (Español)",
@@ -2432,7 +2471,7 @@ Interaction Guidelines:
 5. KIND & GENTLE CORRECTION: If the student made any mistake (grammar, spelling, missing article, agreement), gently provide the corrected sentence and a clear 1-line explanation in Brazilian Portuguese in the "explanationPt" field.
 6. USER TRANSLATION & PHONETICS:${userIsPortuguese ? `
    - The student typed or spoke in Brazilian Portuguese: "${userInput}".
-   - "userTranslatedText": provide the accurate, natural, idiomatic translation into ${targetLangName}.
+   - "userTranslatedText": YOU MUST translate "${userInput}" into natural, communicative, authentic ${targetLangName}. NEVER leave it in Portuguese under any circumstance! For example, if teaching Russian and the user wrote "Como está o clima hoje na Rússia?", "userTranslatedText" MUST be in Cyrillic "Какая сегодня погода в России?".
    - "userPhonetic": friendly phonetic transcription of "userTranslatedText" using Brazilian Portuguese syllables (e.g. "[ uót táim dâz dã miu-zí-âm óupên ]") so the student knows exactly how to pronounce it!
    - "userTranslationPt": Brazilian Portuguese meaning ("${userInput}").
    - "wasTranslated": true.` : `
@@ -2500,8 +2539,18 @@ Respond in strictly valid JSON format matching that exact structure.`;
       const phonetic = parsed.phonetic || generatePhoneticGuide(replyText, activeTutor.language);
       const translationPt = parsed.translationPt || "Isso é ótimo! Me conte mais sobre isso, meu amigo.";
 
-      const userTranslatedText =
+      let userTranslatedText =
         parsed.userTranslatedText || (userIsPortuguese ? translatePortugueseOffline(userInput, activeTutor.language).translated : userInput);
+
+      if (
+        userIsPortuguese &&
+        (userTranslatedText.trim().toLowerCase() === userInput.trim().toLowerCase() ||
+          isPortugueseText(userTranslatedText, activeTutor.language))
+      ) {
+        const offlineTrans = translatePortugueseOffline(userInput, activeTutor.language);
+        userTranslatedText = offlineTrans.translated;
+      }
+
       const userOriginalPt = userIsPortuguese ? userInput : undefined;
       const userPhonetic =
         parsed.userPhonetic || generatePhoneticGuide(userTranslatedText, activeTutor.language);
