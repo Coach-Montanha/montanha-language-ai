@@ -5,6 +5,7 @@ import {
   generatePhoneticGuide,
   getPortugueseTranslation,
   getDynamicSuggestions,
+  isPortugueseText,
 } from "@/services/ai-engine";
 import {
   speakText,
@@ -37,6 +38,7 @@ import {
   Square,
   X,
   RotateCcw,
+  Languages,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -124,6 +126,23 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     const saved = localStorage.getItem("smart_language_autospeak");
     return saved !== null ? saved === "true" : true;
   });
+
+  // Modo de resposta: responder em português (com tradução automática e pronúncia nativa) vs falar direto no idioma
+  const [translateFromPt, setTranslateFromPt] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const saved = localStorage.getItem("smart_language_translate_pt");
+    return saved !== null ? saved === "true" : true;
+  });
+
+  const handleToggleTranslateFromPt = () => {
+    const next = !translateFromPt;
+    setTranslateFromPt(next);
+    try {
+      localStorage.setItem("smart_language_translate_pt", String(next));
+    } catch {
+      // ignora
+    }
+  };
 
   const recognizerRef = useRef<ReturnType<typeof createSpeechRecognizer>>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -249,13 +268,16 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     setPreviewSpeakingText(null);
 
     setInput("");
+    const isPt = translateFromPt || isPortugueseText(query, activeTutor.language);
     const userMsgId = `user-${Date.now()}`;
     const userMsg: ChatMessage = {
       id: userMsgId,
       sender: "user",
       text: query,
-      phonetic: generatePhoneticGuide(query, activeTutor.language),
-      translationPt: getPortugueseTranslation(query, activeTutor.language),
+      originalPt: isPt ? query : undefined,
+      wasTranslated: isPt,
+      phonetic: isPt ? undefined : generatePhoneticGuide(query, activeTutor.language),
+      translationPt: isPt ? query : getPortugueseTranslation(query, activeTutor.language),
       timestamp: Date.now(),
     };
 
@@ -267,6 +289,11 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     try {
       const response = await tutorChat(query, messages, progress.geminiApiKey, activeTutor);
 
+      if (response.userTranslatedText) {
+        userMsg.text = response.userTranslatedText;
+        userMsg.originalPt = response.userOriginalPt || query;
+        userMsg.wasTranslated = true;
+      }
       if (response.userPhonetic) {
         userMsg.phonetic = response.userPhonetic;
       }
@@ -334,6 +361,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         }
       }
 
+      const speechLang = translateFromPt ? "pt-BR" : activeLanguage.speechLangCode;
       const recognizer = createSpeechRecognizer(
         {
           onStart: () => {
@@ -359,7 +387,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         },
         undefined,
         undefined,
-        activeLanguage.speechLangCode
+        speechLang
       );
 
       if (recognizer) {
@@ -644,11 +672,15 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         <div className="flex items-center justify-between px-3 py-1.5 bg-red-500/15 border-b border-red-500/30 text-red-600 dark:text-red-400 text-xs animate-in fade-in">
           <div className="flex items-center gap-1.5 font-medium">
             <Radio className="h-3.5 w-3.5 animate-pulse" />
-            <span>Ouvindo sua voz... Fale em {activeLanguage.name}</span>
+            <span>
+              {translateFromPt
+                ? `Ouvindo em Português... Traduziremos automaticamente para ${activeLanguage.name}`
+                : `Ouvindo sua voz... Fale direto em ${activeLanguage.name}`}
+            </span>
           </div>
           <button
             onClick={handleStopRecording}
-            className="text-[11px] font-bold underline hover:opacity-80"
+            className="text-[11px] font-bold underline hover:opacity-80 cursor-pointer"
           >
             Concluir Fala
           </button>
@@ -703,6 +735,14 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                       : "bg-card border border-border text-foreground rounded-tl-xs"
                   }`}
                 >
+                  {/* Badge sutil quando a mensagem foi traduzida do português */}
+                  {isUser && msg.wasTranslated && (
+                    <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold bg-black/25 dark:bg-black/40 text-primary-foreground/95 px-2 py-0.5 rounded-md w-fit border border-primary-foreground/20">
+                      <span>🇧🇷</span>
+                      <span>Traduzido para {activeLanguage.name}</span>
+                    </div>
+                  )}
+
                   {/* Botão sutil para apagar esta mensagem individual */}
                   <button
                     type="button"
@@ -778,15 +818,15 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                     </div>
                   )}
 
-                  {/* 2. Elementos da Mensagem do Usuário: Ler Fonética, Ler Tradução e Ouvir Minha Resposta */}
-                  {isUser && (phoneticText || translationText) && (
+                  {/* 2. Elementos da Mensagem do Usuário: Ler Fonética, Ler Tradução / Original PT e Ouvir Minha Resposta */}
+                  {isUser && (phoneticText || translationText || msg.originalPt) && (
                     <div className="mt-2.5 pt-2 border-t border-primary-foreground/20 space-y-1.5 text-left">
                       {phoneticText && (
                         <div className="flex items-start gap-1.5 bg-black/20 dark:bg-black/30 rounded-lg px-2 py-1.5 border border-primary-foreground/15">
                           <span className="text-xs select-none">🗣️</span>
                           <div className="flex-1">
                             <span className="text-[9px] font-bold text-primary-foreground/90 block leading-none mb-0.5">
-                              Como Falar (Sua Pronúncia):
+                              Como Falar (Sua Pronúncia em {activeLanguage.name}):
                             </span>
                             <p className={`font-mono text-primary-foreground font-semibold tracking-wide leading-relaxed py-0.5 select-text ${fontConfig.phoneticClass}`}>
                               [{phoneticText}]
@@ -795,7 +835,20 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                         </div>
                       )}
 
-                      {translationText && (
+                      {/* Exibir o que o usuário falou/digitou originalmente em português */}
+                      {msg.originalPt ? (
+                        <div className="flex items-start gap-1.5 bg-black/15 dark:bg-black/25 rounded-lg px-2 py-1.5 border border-primary-foreground/10">
+                          <span className="text-xs select-none">🇧🇷</span>
+                          <div className="flex-1">
+                            <span className="text-[9px] font-bold text-primary-foreground/80 block leading-none mb-0.5">
+                              O que você falou / digitou em Português:
+                            </span>
+                            <p className={`text-primary-foreground font-medium leading-relaxed py-0.5 select-text ${fontConfig.translationClass}`}>
+                              "{msg.originalPt}"
+                            </p>
+                          </div>
+                        </div>
+                      ) : translationText ? (
                         <div className="flex items-start gap-1.5 bg-black/15 dark:bg-black/25 rounded-lg px-2 py-1.5 border border-primary-foreground/10">
                           <span className="text-xs select-none">🇧🇷</span>
                           <div className="flex-1">
@@ -807,19 +860,19 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                             </p>
                           </div>
                         </div>
-                      )}
+                      ) : null}
 
-                      {/* Botão de Ouvir Minha Resposta com Soundwave Animado */}
+                      {/* Botão de Ouvir Minha Resposta em Pronúncia Nativa com Soundwave Animado */}
                       <button
                         type="button"
                         onClick={() => handleSpeakMessage(msg.id, msg.text)}
-                        aria-label={isSpeakingThis ? "Pausar fala da sua resposta" : `Ouvir pronúncia da minha resposta (${speedDisplay})`}
+                        aria-label={isSpeakingThis ? "Pausar fala da sua resposta" : `Ouvir pronúncia da minha resposta em ${activeLanguage.name} (${speedDisplay})`}
                         className={`mt-1.5 flex items-center gap-2 text-[11px] font-semibold transition-all px-2.5 py-1.5 rounded-xl active:scale-95 min-h-[38px] cursor-pointer ${
                           isSpeakingThis
                             ? "bg-white/30 text-white font-bold"
                             : "bg-white/15 hover:bg-white/25 text-primary-foreground"
                         }`}
-                        title={isSpeakingThis ? "Pausar fala" : `Ouvir pronúncia da minha resposta (${speedDisplay})`}
+                        title={isSpeakingThis ? "Pausar fala" : `Ouvir pronúncia da minha resposta em ${activeLanguage.name} (${speedDisplay})`}
                       >
                         {isSpeakingThis ? (
                           <span className="flex items-center gap-0.5 h-3.5 px-0.5" aria-hidden="true">
@@ -831,7 +884,9 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                           <Volume2 className="h-4 w-4" />
                         )}
                         <span>
-                          {isSpeakingThis ? "Ouvindo sua resposta..." : `Ouvir minha resposta (${speedDisplay})`}
+                          {isSpeakingThis
+                            ? `Ouvindo sua resposta em ${activeLanguage.name}...`
+                            : `Ouvir minha resposta em ${activeLanguage.name} (${speedDisplay})`}
                         </span>
                       </button>
                     </div>
@@ -1004,6 +1059,58 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         </div>
       </div>
 
+      {/* Seletor de Modo de Resposta (Português com Tradução Automática vs Falar Direto no Idioma) */}
+      <div className="px-3 py-1.5 bg-muted/40 border-t border-border/70 flex items-center justify-between text-xs gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Languages className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-[11px] text-muted-foreground truncate">
+            {translateFromPt ? (
+              <>
+                <span className="font-semibold text-foreground">Modo Tradução Ativo:</span> responda em Português 🇧🇷
+              </>
+            ) : (
+              <>
+                <span className="font-semibold text-foreground">Modo Direto:</span> fale/digite direto em {activeLanguage.flag} {activeLanguage.name}
+              </>
+            )}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleToggleTranslateFromPt}
+          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all active:scale-95 shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs ${
+            translateFromPt
+              ? "bg-primary/15 text-primary border-primary/30 hover:bg-primary/20"
+              : "bg-background text-muted-foreground border-border hover:text-foreground"
+          }`}
+          title={
+            translateFromPt
+              ? `Clique para alternar: Falar/digitar direto em ${activeLanguage.name}`
+              : `Clique para alternar: Responder em Português com tradução automática para ${activeLanguage.name}`
+          }
+          aria-label={
+            translateFromPt
+              ? `Desativar tradução e falar direto em ${activeLanguage.name}`
+              : `Ativar tradução de Português para ${activeLanguage.name}`
+          }
+        >
+          {translateFromPt ? (
+            <>
+              <span>🇧🇷 ➔ {activeLanguage.flag}</span>
+              <span className="hidden sm:inline">Traduzir p/ {activeLanguage.name}</span>
+              <span className="sm:hidden">Traduzir</span>
+            </>
+          ) : (
+            <>
+              <span>{activeLanguage.flag}</span>
+              <span className="hidden sm:inline">Falar direto em {activeLanguage.name}</span>
+              <span className="sm:hidden">Direto</span>
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Barra de Entrada (Texto + Microfone) */}
       <form
         onSubmit={(e) => {
@@ -1029,10 +1136,22 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={isRecording ? "Ouvindo sua fala..." : `Converse em ${activeLanguage.name} com ${activeTutor.name}...`}
+          placeholder={
+            isRecording
+              ? translateFromPt
+                ? "Ouvindo sua fala em Português..."
+                : `Ouvindo sua fala em ${activeLanguage.name}...`
+              : translateFromPt
+              ? `Digite em Português ou em ${activeLanguage.name}...`
+              : `Converse em ${activeLanguage.name} com ${activeTutor.name}...`
+          }
           disabled={isLoading}
           className="flex-1 h-11 text-xs sm:text-sm rounded-2xl bg-background px-3 border-border/80"
-          aria-label={`Mensagem em ${activeLanguage.name}`}
+          aria-label={
+            translateFromPt
+              ? `Mensagem em Português para traduzir para ${activeLanguage.name}`
+              : `Mensagem em ${activeLanguage.name}`
+          }
         />
 
         <Button

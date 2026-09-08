@@ -652,11 +652,461 @@ export function getDynamicSuggestions(
   }
 }
 
+// ============================================================================
+// MOTOR DE TRADUÇÃO & DETECÇÃO DE PORTUGUÊS (PT-BR -> IDIOMA SELECIONADO)
+// Permite ao aluno responder em português, gerando tradução, pronúncia nativa e áudio
+// ============================================================================
+
+export interface OfflineTranslationResult {
+  translated: string;
+  phonetic: string;
+  translationPt: string;
+}
+
+export function isPortugueseText(text: string, targetLang: SupportedLanguage): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+
+  // Se o idioma alvo usa alfabetos não-latinos e o texto possui esses caracteres, não é português
+  if (targetLang === "ru" && /[а-яА-ЯёЁ]/.test(trimmed)) return false;
+  if (targetLang === "el-koine" && /[α-ωΑ-Ω]/.test(trimmed)) return false;
+  if (targetLang === "ja" && /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(trimmed)) return false;
+
+  const lower = trimmed.toLowerCase();
+
+  // Caracteres distintivos da ortografia do português brasileiro
+  if (/[ãõçâêôà]/i.test(lower)) return true;
+
+  // Frases / expressões comuns inequívocas
+  if (
+    /(qual o hor[aá]rio|a que horas|que horas|onde fica|como chego|quanto custa|gostaria de|eu quero|o que voc[eê]|como voc[eê]|tudo bem|bom dia|boa tarde|boa noite|muito obrigad|estou muito|estou cansado|estou cansada|estou feliz|fim de semana|meu prato|recomenda para|para comer|para o jantar|voc[eê] gosta|de onde voc[eê]|onde voc[eê] mora)/i.test(lower)
+  ) {
+    return true;
+  }
+
+  // Palavras funcionais com alta frequência exclusiva em português
+  const ptWords = [
+    "voce", "voces", "estou", "estamos", "estao", "tenho", "temos", "sou", "somos", "sao",
+    "meu", "minha", "meus", "minhas", "seu", "sua", "seus", "suas", "nosso", "nossa",
+    "qual", "quais", "quanto", "quanta", "quantos", "quantas", "onde", "quando", "porque",
+    "horario", "estacao", "aeroporto", "museu", "restaurante", "almoco", "jantar",
+    "cansado", "cansada", "obrigado", "obrigada", "ajuda", "gostaria", "favor", "cafe",
+    "certeza", "conta", "metro", "trem", "passagem", "tempo", "clima"
+  ];
+
+  const norm = lower
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[.,!?;:"'¿¡]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  let matchCount = 0;
+  for (const w of norm) {
+    if (ptWords.includes(w)) {
+      matchCount++;
+      if (matchCount >= 2) return true;
+    }
+  }
+
+  const strongPtWords = ["horario", "estacao", "estou", "gostaria", "voce", "obrigado", "obrigada", "museu", "jantar", "almoco"];
+  for (const w of norm) {
+    if (strongPtWords.includes(w)) return true;
+  }
+
+  return false;
+}
+
+interface TranslationRule {
+  pattern: RegExp;
+  pt: string;
+  translations: Record<SupportedLanguage, { text: string; phonetic: string }>;
+}
+
+const PORTUGUESE_TRANSLATION_RULES: TranslationRule[] = [
+  // 1. Horário do museu
+  {
+    pattern: /(qual (o )?horario (do|de funcionamento do) museu|a que horas (abre|fecha) o museu|horario do museu|que horas o museu abre)/i,
+    pt: "Qual o horário de funcionamento do museu?",
+    translations: {
+      en: { text: "What time does the museum open?", phonetic: "uót táim dâz dã miu-zí-âm óupên" },
+      es: { text: "¿A qué hora abre el museo?", phonetic: "a ke ó-ra á-bre el mu-sé-o" },
+      de: { text: "Wann öffnet das Museum?", phonetic: "van óf-nêt das mu-zê-um" },
+      fr: { text: "À quelle heure ouvre le musée ?", phonetic: "a kel ér ú-vrê lê my-zê" },
+      it: { text: "A che ora apre il museo?", phonetic: "a ke ó-ra á-pre il mu-zê-o" },
+      ru: { text: "Во сколько открывается музей?", phonetic: "va skól'-ka at-kry-vá-yet-sya mu-zêy" },
+      ja: { text: "博物館は何時に開きますか？ (Hakubutsukan wa nanji ni akimasu ka?)", phonetic: "ra-ku-bu-tsu-kan uá nan-dji ni a-ki-mas-ka" },
+      "el-koine": { text: "Πότε ἀνοίγει τὸ μουσεῖον; (Pote anoigei to mouseion?)", phonetic: "pó-te a-ní-gui to mu-sí-on" },
+    },
+  },
+  // 2. Preço da entrada / ingresso
+  {
+    pattern: /(quanto custa (a entrada|o ingresso|o bilhete)( do museu)?|quanto custa o ingresso|qual o valor da entrada|quanto e a entrada)/i,
+    pt: "Quanto custa o ingresso de entrada?",
+    translations: {
+      en: { text: "How much is the admission ticket?", phonetic: "ráo mâtch íz dhi êd-mí-shân tí-ket" },
+      es: { text: "¿Cuánto cuesta la entrada?", phonetic: "cuán-to cuês-ta la en-trá-da" },
+      de: { text: "Wie viel kostet der Eintritt?", phonetic: "ví fíl cós-tet dêr áin-trit" },
+      fr: { text: "Combien coûte l'entrée ?", phonetic: "cõ-biãn cut lã-trê" },
+      it: { text: "Quanto costa il biglietto d'ingresso?", phonetic: "cuán-to cós-ta il bi-lyét-to din-grés-so" },
+      ru: { text: "Сколько стоит входной билет?", phonetic: "skól'-ka stó-it vkhad-nóy bi-lêt" },
+      ja: { text: "入場券はいくらですか？ (Nyuujouken wa ikura desu ka?)", phonetic: "niu-djo-kên uá i-cu-ra des-ka" },
+      "el-koine": { text: "Πόσου ἐστὶν ἡ εἴσοδος; (Posou estin he eisodos?)", phonetic: "pó-su és-tin i í-so-dos" },
+    },
+  },
+  // 3. Onde fica a estação de trem / metrô
+  {
+    pattern: /(onde fica a estacao( de trem)?|onde fica o metro|onde fica a estacao ferroviaria)/i,
+    pt: "Onde fica a estação de trem / metrô?",
+    translations: {
+      en: { text: "Where is the train station?", phonetic: "uér íz dã trêin stêi-shân" },
+      es: { text: "¿Dónde está la estación de tren?", phonetic: "dón-de es-tá la es-ta-sión de tren" },
+      de: { text: "Wo ist der Bahnhof?", phonetic: "vo ist dêr bán-rouf" },
+      fr: { text: "Où se trouve la gare ?", phonetic: "u sê truv la gár" },
+      it: { text: "Dove si trova la stazione ferroviaria?", phonetic: "dó-ve si tró-va la sta-tsió-ne fer-ro-viá-ria" },
+      ru: { text: "Где находится вокзал?", phonetic: "gde na-kho-dit-sya vag-zál" },
+      ja: { text: "駅はどこにありますか？ (Eki wa doko ni arimasu ka?)", phonetic: "ê-ki uá do-ko ni a-ri-mas-ka" },
+      "el-koine": { text: "Ποῦ ἐστιν ὁ σταθμός; (Pou estin ho stathmos?)", phonetic: "pu és-tin ro sta-tmós" },
+    },
+  },
+  // 4. Onde fica o aeroporto / como chego
+  {
+    pattern: /(onde fica o aeroporto|como chego ao aeroporto|como ir para o aeroporto)/i,
+    pt: "Onde fica o aeroporto, por favor?",
+    translations: {
+      en: { text: "Where is the airport, please?", phonetic: "uér íz dhi ér-pôrt, plíz" },
+      es: { text: "¿Dónde está el aeropuerto, por favor?", phonetic: "dón-de es-tá el a-e-ro-puêr-to por fa-vór" },
+      de: { text: "Wo ist der Flughafen, bitte?", phonetic: "vo ist dêr flúk-rá-fen, bí-te" },
+      fr: { text: "Où se trouve l'aéroport, s'il vous plaît ?", phonetic: "u sê truv la-ê-ro-pôr sil vu plê" },
+      it: { text: "Dove si trova l'aeroporto, per favore?", phonetic: "dó-ve si tró-va la-e-ro-pôr-to per fa-vó-re" },
+      ru: { text: "Где находится аэропорт, пожалуйста?", phonetic: "gde na-kho-dit-sya a-e-ra-pórt, pa-zhá-luy-sta" },
+      ja: { text: "空港はどちらですか？ (Kuukou wa dochira desu ka?)", phonetic: "cu-co uá do-tchi-ra des-ka" },
+      "el-koine": { text: "Ποῦ ἐστιν ὁ λιμήν; (Pou estin ho limen?)", phonetic: "pu és-tin ro li-mín" },
+    },
+  },
+  // 5. Recomendação para jantar / comer
+  {
+    pattern: /(o que (voce )?recomenda para (o )?jantar|o que (voce )?recomenda para comer|qual comida voce recomenda|o que tem de bom para comer|onde jantar)/i,
+    pt: "O que você recomenda para o jantar hoje?",
+    translations: {
+      en: { text: "What do you recommend for dinner tonight?", phonetic: "uót du iú ré-co-mênd fór dín-nêr tu-náit" },
+      es: { text: "¿Qué me recomiendas para cenar hoy?", phonetic: "ke me re-co-miên-das pa-ra se-nár ói" },
+      de: { text: "Was empfiehlst du heute zum Abendessen?", phonetic: "vas em-pfílst du rói-te tsum á-bend-es-sen" },
+      fr: { text: "Que me recommandez-vous pour dîner ce soir ?", phonetic: "kê mê rê-co-mãn-dê vu pur di-nê sê suár" },
+      it: { text: "Cosa mi consigli per cena stasera?", phonetic: "có-za mi con-si-lyi per tchê-na sta-zê-ra" },
+      ru: { text: "Что ты порекомендуешь на ужин сегодня?", phonetic: "shto ty pa-re-ka-men-dú-yesh na ú-zhyn se-vód-nya" },
+      ja: { text: "今夜の夕食に何がおすすめですか？ (Konya no yuushoku ni nani ga osusume desu ka?)", phonetic: "kon-ia no iu-sho-ku ni na-ni ga o-su-su-mê des-ka" },
+      "el-koine": { text: "Τί συμβουλεύεις εἰς τὸ δεῖπνον σήμερον; (Ti symbouleueis eis to deipnon semeron?)", phonetic: "ti sim-vu-lév-is is to díp-non sí-me-ron" },
+    },
+  },
+  // 6. Pedir café / água
+  {
+    pattern: /(eu gostaria de (tomar |beber )?um cafe( com leite)?|gostaria de um cafe|um cafe por favor|quero um cafe)/i,
+    pt: "Eu gostaria de uma xícara de café com leite, por favor.",
+    translations: {
+      en: { text: "I would like a cup of coffee with milk, please.", phonetic: "ái uûd láik a câp âv có-fi uíd mílk, plíz" },
+      es: { text: "Me gustaría un café con leche, por favor.", phonetic: "me gus-ta-rí-a un ca-fé con lé-tche por fa-vór" },
+      de: { text: "Ich möchte bitte einen Kaffee mit Milch.", phonetic: "ikh mékh-te bí-te ái-nen cá-fe mit milkh" },
+      fr: { text: "Je voudrais un café au lait, s'il vous plaît.", phonetic: "jê vu-drê ãn ca-fê o lê sil vu plê" },
+      it: { text: "Vorrei un caffè macchiato, per favore.", phonetic: "vor-rêi un caf-fè ma-kiá-to per fa-vó-re" },
+      ru: { text: "Я хотел бы кофе с молоком, пожалуйста.", phonetic: "ya kha-têl by kó-fe s ma-la-kóm, pa-zhá-luy-sta" },
+      ja: { text: "カフェオレを一つお願いします。 (Kafe ore o hitotsu onegaishimasu.)", phonetic: "ca-fê o-re o ri-to-tsu o-ne-gái-shi-mas" },
+      "el-koine": { text: "Θέλω ποτήριον θερμοῦ ποτοῦ μετὰ γάλακτος. (Thelo poterion thermou potou meta galaktos.)", phonetic: "té-lo po-tí-ri-on ter-mú po-tú me-tá gá-lak-tos" },
+    },
+  },
+  // 7. Cansaço / Exaustão
+  {
+    pattern: /(estou muito cansado|estou cansado|estou exausto|tive um dia longo|estou com sono|muito cansada|estou cansada)/i,
+    pt: "Estou me sentindo muito cansado hoje após um longo dia.",
+    translations: {
+      en: { text: "I am feeling very tired after a long day today.", phonetic: "ái ém fí-ling vér-ri tái-êrd éf-têr a lóng dêi tu-dêi" },
+      es: { text: "Estoy muy cansado después de un largo día hoy.", phonetic: "es-tói múi can-sá-do des-pués de un lár-go dí-a ói" },
+      de: { text: "Ich bin heute nach einem langen Tag sehr müde.", phonetic: "ikh bin rói-te nakh ái-nem lán-guen tak zêr miú-de" },
+      fr: { text: "Je suis très fatigué après une longue journée aujourd'hui.", phonetic: "jê sui trê fa-ti-guê a-prê yn lõg jur-nê o-jur-dui" },
+      it: { text: "Sono molto stanco dopo una lunga giornata oggi.", phonetic: "só-no mól-to stán-co dó-po ú-na lún-ga djor-ná-ta ód-dji" },
+      ru: { text: "Я сегодня очень устал после долгого дня.", phonetic: "ya se-vód-nya ó-chen' us-tál pós-le dól-ga-va dnya" },
+      ja: { text: "今日は長い一日の後でとても疲れました。 (Kyou wa nagai ichinichi no ato de totemo tsukaremashita.)", phonetic: "kiô uá na-gái i-tchi-ni-tchi no a-to de to-te-mo tsu-ca-re-mash-ta" },
+      "el-koine": { text: "Πάνυ κέκμηκα μετὰ μακρὰν ἡμέραν σήμερον. (Panu kekmeka meta makran hemeran semeron.)", phonetic: "pá-ni kék-mi-ka me-tá ma-krán i-mé-ran sí-me-ron" },
+    },
+  },
+  // 8. Alegria / Ótimo humor
+  {
+    pattern: /(estou muito feliz|estou super feliz|estou animado|meu dia foi maravilhoso|estou de bom humor|estou animada)/i,
+    pt: "Estou me sentindo muito feliz e animado hoje!",
+    translations: {
+      en: { text: "I am feeling really happy and energized today!", phonetic: "ái ém fí-ling rí-li ré-pi énd é-ner-djáizd tu-dêi" },
+      es: { text: "¡Estoy muy feliz y lleno de energía hoy!", phonetic: "es-tói múi fe-líz i yé-no de e-ner-hí-a ói" },
+      de: { text: "Ich bin heute super glücklich und voller Energie!", phonetic: "ikh bin rói-te zú-per gliúk-likh unt fól-ler e-ner-guí" },
+      fr: { text: "Je suis très heureux et plein d'énergie aujourd'hui !", phonetic: "jê sui trê zé-rê e plãn dê-ner-jí o-jur-dui" },
+      it: { text: "Sono felicissimo e pieno di energia oggi!", phonetic: "só-no fe-li-tchís-si-mo e piê-no di e-ner-djí-a ód-dji" },
+      ru: { text: "Я сегодня очень счастлив и полон сил!", phonetic: "ya se-vód-nya ó-chen' shchást-lif i pó-lan sil" },
+      ja: { text: "今日はとても嬉しくて元気いっぱいです！ (Kyou wa totemo ureshikute genki ippai desu!)", phonetic: "kiô uá to-te-mo u-re-shí-cu-te guên-ki ip-pai des" },
+      "el-koine": { text: "Χαίρω σφόδρα καὶ ἰσχύω σήμερον! (Chairo sphodra kai ischyo semeron!)", phonetic: "ré-ro sfó-dra ke is-río sí-me-ron" },
+    },
+  },
+  // 9. Como vai você / tudo bem
+  {
+    pattern: /(como voce esta|tudo bem com voce|como vao as coisas|como vai voce|como tem passado)/i,
+    pt: "Como você está hoje, meu amigo?",
+    translations: {
+      en: { text: "How are you doing today, my friend?", phonetic: "ráo ar iú dú-ing tu-dêi, mái frênd" },
+      es: { text: "¿Cómo estás hoy, amigo?", phonetic: "có-mo es-tás ói, a-mí-go" },
+      de: { text: "Wie geht es dir heute, mein Freund?", phonetic: "vi guêt es dir rói-te, máin fróint" },
+      fr: { text: "Comment vas-tu aujourd'hui, mon ami ?", phonetic: "co-mãn va tü o-jur-dui, mõ na-mi" },
+      it: { text: "Come stai oggi, amico mio?", phonetic: "có-me stái ód-dji, a-mí-co mí-o" },
+      ru: { text: "Как твои дела сегодня, мой друг?", phonetic: "kak tva-í de-lá se-vód-nya, moy druk" },
+      ja: { text: "今日のご機嫌はいかがですか？ (Kyou no gokigen wa ikaga desu ka?)", phonetic: "kiô no go-ki-guên uá i-ca-ga des-ka" },
+      "el-koine": { text: "Πῶς ἔχεις σήμερον, ὦ φίλε; (Pos echeis semeron, o phile?)", phonetic: "pos é-his sí-me-ron, o fí-le" },
+    },
+  },
+  // 10. Origem / Cidade
+  {
+    pattern: /(de onde voce e|onde voce mora|qual (e a )?sua cidade|de que pais voce e)/i,
+    pt: "De onde você é e onde você mora?",
+    translations: {
+      en: { text: "Where are you from, and where do you live?", phonetic: "uér ar iú frâm, énd uér du iú liv" },
+      es: { text: "¿De dónde eres y dónde vives?", phonetic: "de dón-de é-res i dón-de ví-bes" },
+      de: { text: "Woher kommst du und wo lebst du?", phonetic: "vo-rêr cómst du unt vo lêpst du" },
+      fr: { text: "D'où viens-tu et où habites-tu ?", phonetic: "du viãn-tü e u a-bit-tü" },
+      it: { text: "Di dove sei e dove vivi?", phonetic: "di dó-ve sêi e dó-ve ví-vi" },
+      ru: { text: "Откуда ты и где ты живёшь?", phonetic: "at-kú-da ty i gde ty zhy-vyósh" },
+      ja: { text: "ご出身はどちらで、どこにお住まいですか？ (Goshusshin wa dochira de, doko ni osumai desu ka?)", phonetic: "go-shush-shin uá do-tchi-ra de, do-ko ni o-su-mai des-ka" },
+      "el-koine": { text: "Πόθεν εἶ καὶ ποῦ οἰκεῖς; (Pothen ei kai pou oikeis?)", phonetic: "pó-ten i ke pu i-kís" },
+    },
+  },
+  // 11. Fim de semana / Hobbies
+  {
+    pattern: /(o que voce (gosta de )?faz(er)? no fim de semana|o que voce faz no tempo livre|quais sao seus hobbies|o que voce costuma fazer)/i,
+    pt: "O que você gosta de fazer no fim de semana e no tempo livre?",
+    translations: {
+      en: { text: "What do you like to do on weekends and in your free time?", phonetic: "uót du iú láik tu du on uík-ênds énd in iór frí táim" },
+      es: { text: "¿Qué te gusta hacer los fines de semana y en tu tiempo libre?", phonetic: "ke te gus-ta a-sér los fí-nes de se-má-na i en tu tiêm-po lí-bre" },
+      de: { text: "Was machst du am Wochenende und in deiner Freizeit?", phonetic: "vas marhst du am vó-ren-en-de unt in dái-ner frái-tsait" },
+      fr: { text: "Qu'aimes-tu faire le week-end et pendant ton temps libre ?", phonetic: "kém-tü fêr lê ui-kênd e pãn-dãn tõ tãn lí-brê" },
+      it: { text: "Cosa ti piace fare nel fine settimana e nel tempo libero?", phonetic: "có-za ti piá-tche fá-re nel fí-ne set-ti-má-na e nel têm-po lí-be-ro" },
+      ru: { text: "Чем ты любишь заниматься на выходных и в свободное время?", phonetic: "chem ty lyú-bish za-ni-mát'-sya na vy-khad-nykh i v sva-bód-na-ye vrié-mya" },
+      ja: { text: "週末や空いた時間に何をするのが好きですか？ (Shuumatsu ya aita jikan ni nani o suru no ga suki desu ka?)", phonetic: "shu-mat-su ia ái-ta dji-can ni na-ni o su-ru no ga su-ki des-ka" },
+      "el-koine": { text: "Τί ποιεῖς ἐν τοῖς σαββάτοις καὶ ἐν τῇ ἀνέσει σου; (Ti poieis en tois sabbatois kai en te anesei sou?)", phonetic: "ti pi-ís en tis sav-vá-tis ke en ti a-né-si su" },
+    },
+  },
+  // 12. Aprendendo o idioma
+  {
+    pattern: /(estou aprendendo seu idioma|estou estudando seu idioma|quero praticar seu idioma|estou praticando)/i,
+    pt: "Estou aprendendo e praticando o seu idioma todos os dias.",
+    translations: {
+      en: { text: "I am learning and practicing your language every day.", phonetic: "ái ém lér-ning énd prék-ti-sing iór léng-guidj év-ri dêi" },
+      es: { text: "Estoy aprendiendo y practicando tu idioma todos los días.", phonetic: "es-tói a-pren-diên-do i prac-ti-cán-do tu i-dió-ma tó-dos los dí-as" },
+      de: { text: "Ich lerne und übe deine Sprache jeden Tag.", phonetic: "ikh lér-ne unt íu-be dái-ne shprá-khe iê-den tak" },
+      fr: { text: "J'apprends et je pratique ta langue chaque jour.", phonetic: "ja-prãn e jê pra-tik ta lãg shak jur" },
+      it: { text: "Sto imparando e praticando la tua lingua ogni giorno.", phonetic: "sto im-pa-rán-do e pra-ti-cán-do la tú-a lín-gua ón-nyi djor-no" },
+      ru: { text: "Я учу и практикую твой язык каждый день.", phonetic: "ya u-chú i prak-ti-kú-yu tvoy ya-zýk kázh-dyy dyen'" },
+      ja: { text: "毎日あなたの言語を一生懸命勉強しています。 (Mainichi anata no gengo o isshoukenmei benkyou shiteimasu.)", phonetic: "mái-ni-tchi a-na-ta no guên-go o is-sho-kên-mêi ben-kiô shi-te-i-mas" },
+      "el-koine": { text: "Καθ' ἡμέραν μανθάνω καὶ ἀσκῶ τὴν γλῶσσάν σου. (Kath' hemeran manthano kai asko ten glossan sou.)", phonetic: "kat i-mé-ran man-tá-no ke as-kó tin glóss-san su" },
+    },
+  },
+  // 13. Clima
+  {
+    pattern: /(como esta o (tempo|clima)( ai hoje)?|esta chovendo ai|esta frio ai|esta calor ai)/i,
+    pt: "Como está o clima na sua cidade hoje?",
+    translations: {
+      en: { text: "How is the weather in your city today?", phonetic: "ráo íz dã ué-dêr in iór sí-ti tu-dêi" },
+      es: { text: "¿Cómo está el clima en tu ciudad hoy?", phonetic: "có-mo es-tá el clí-ma en tu siu-dád ói" },
+      de: { text: "Wie ist das Wetter heute in deiner Stadt?", phonetic: "vi ist das vét-têr rói-te in dái-ner shtat" },
+      fr: { text: "Quel temps fait-il dans ta ville aujourd'hui ?", phonetic: "kel tãn fe-til dãn ta vil o-jur-dui" },
+      it: { text: "Com'è il tempo nella tua città oggi?", phonetic: "co-mè il têm-po nél-la tú-a tchit-tà ód-dji" },
+      ru: { text: "Какая сегодня погода в твоём городе?", phonetic: "ka-ká-ya se-vód-nya pa-gó-da v tva-yóm gó-ra-dye" },
+      ja: { text: "今日のあなたの街の天気はどうですか？ (Kyou no anata no machi no tenki wa dou desu ka?)", phonetic: "kiô no a-na-ta no ma-tchi no tên-ki uá do des-ka" },
+      "el-koine": { text: "Ποῖός ἐστιν ὁ καιρὸς ἐν τῇ πόλει σου; (Poios estin ho kairos en te polei sou?)", phonetic: "pí-os és-tin ro ke-rós en ti pó-li su" },
+    },
+  },
+  // 14. Agradecimento
+  {
+    pattern: /(muito obrigado( pela ajuda)?|obrigada pela ajuda|agradeco muito|muito agradecido)/i,
+    pt: "Muito obrigado pela sua ajuda!",
+    translations: {
+      en: { text: "Thank you so much for your help!", phonetic: "ténk iú sou mâtch fór iór rélp" },
+      es: { text: "¡Muchas gracias por tu ayuda!", phonetic: "mú-tchas grá-sias por tu a-yú-da" },
+      de: { text: "Vielen herzlichen Dank für deine Hilfe!", phonetic: "fí-len rêrts-likh-en danc fiúr dái-ne ríl-fe" },
+      fr: { text: "Merci beaucoup pour votre aide précieuse !", phonetic: "mer-sí bo-cú pur vo-tre êd prê-siéz" },
+      it: { text: "Grazie mille di cuore per il tuo aiuto!", phonetic: "grá-tsie míl-le di cuó-re per il tú-o a-yú-to" },
+      ru: { text: "Огромное спасибо за твою помощь!", phonetic: "ag-róm-na-ye spa-sí-ba za tva-yú pó-moshch'" },
+      ja: { text: "親切に教えてくれてどうもありがとうございます！ (Shinsetsu ni oshiete kurete doumo arigatou gozaimasu!)", phonetic: "shin-sê-tsu ni o-shí-e-te cu-re-te do-mo a-ri-ga-to go-zái-mas" },
+      "el-koine": { text: "Χάριν μεγίστην ἔχω σοι διὰ τὴν βοήθειάν σου. (Charin megisten echo soi dia ten boetheian sou.)", phonetic: "rá-rin me-gís-tin é-ro si di-á tin vo-í-ti-an su" },
+    },
+  },
+  // 15. Saudações
+  {
+    pattern: /(ola bom dia|ola boa tarde|ola boa noite|bom dia|boa tarde|boa noite|ola tudo bem)/i,
+    pt: "Olá, tenha um excelente dia!",
+    translations: {
+      en: { text: "Hello, have a wonderful day!", phonetic: "ré-lou, rév a uân-der-ful dêi" },
+      es: { text: "¡Hola, que tengas un día maravilloso!", phonetic: "ó-la, ke tén-gas un dí-a ma-ra-vi-yó-so" },
+      de: { text: "Hallo, einen wunderschönen Tag wünsche ich dir!", phonetic: "rá-lo, ái-nen vún-der-shê-nen tak viún-she ikh dir" },
+      fr: { text: "Bonjour, passez une merveilleuse journée !", phonetic: "bõ-jur, pa-sê yne mer-vê-yéz jur-nê" },
+      it: { text: "Ciao, ti auguro una splendida giornata!", phonetic: "tcháo, ti áu-gu-ro ú-na splên-di-da djor-ná-ta" },
+      ru: { text: "Здравствуйте, прекрасного и радостного вам дня!", phonetic: "zdrás-tvuy-tye, pri-krás-na-va i rá-dast-na-va vam dnya" },
+      ja: { text: "こんにちは、素晴らしい一日をお過ごしください！ (Konnichiwa, subarashii ichinichi o osugoshi kudasai!)", phonetic: "con-ni-tchi-uá, su-ba-ra-shí i-tchi-ni-tchi o o-su-go-shi cu-da-sái" },
+      "el-koine": { text: "Χαῖρε, ἀγαθὴ καὶ λαμπρὰ ἡμέρα ἔστω σοι! (Chaire, agathe kai lampra hemera esto soi!)", phonetic: "ré-re, a-ga-tí ke lam-prá i-mé-ra és-to si" },
+    },
+  },
+  // 16. Concordância
+  {
+    pattern: /(sim eu concordo( totalmente)?|com certeza|acho uma otima ideia|concordo plenamente)/i,
+    pt: "Sim, eu concordo totalmente com isso!",
+    translations: {
+      en: { text: "Yes, I completely agree with that!", phonetic: "iés, ái com-plít-li a-grí uíd dhét" },
+      es: { text: "¡Sí, estoy totalmente de acuerdo con eso!", phonetic: "sí, es-tói to-tal-mén-te de a-cuêr-do con é-so" },
+      de: { text: "Ja, da stimme ich dir vollkommen zu!", phonetic: "ia, da shtí-me ikh dir fol-kó-men tsu" },
+      fr: { text: "Oui, je suis tout à fait d'accord avec cela !", phonetic: "ui, jê sui tu-ta-fê da-côr a-vek sê-la" },
+      it: { text: "Sì, sono assolutamente d'accordo con te!", phonetic: "sì, só-no as-so-lu-ta-mén-te da-cór-do con te" },
+      ru: { text: "Да, я абсолютно согласен с этим!", phonetic: "da, ya ap-sa-lyút-na sa-glá-syen s é-tim" },
+      ja: { text: "はい、その通りだと思います！ (Hai, sono toori da to omoimasu!)", phonetic: "rái, so-no tô-ri da to o-mói-mas" },
+      "el-koine": { text: "Ναί, πάνυ συνευδοκῶ τούτῳ! (Nai, panu syneudoko toutoi!)", phonetic: "né, pá-ni sin-ev-do-kó tú-to" },
+    },
+  },
+  // 17. Conta no restaurante
+  {
+    pattern: /(a conta por favor|quanto deu a conta|pode trazer a conta)/i,
+    pt: "A conta, por favor!",
+    translations: {
+      en: { text: "Could I have the check, please?", phonetic: "cûd ái rév dã tchék, plíz" },
+      es: { text: "¿La cuenta, por favor?", phonetic: "la cuên-ta por fa-vór" },
+      de: { text: "Die Rechnung, bitte!", phonetic: "di rékh-nung, bí-te" },
+      fr: { text: "L'addition, s'il vous plaît !", phonetic: "la-di-siõ, sil vu plê" },
+      it: { text: "Il conto, per favore!", phonetic: "il cón-to, per fa-vó-re" },
+      ru: { text: "Счёт, пожалуйста!", phonetic: "shchot, pa-zhá-luy-sta" },
+      ja: { text: "お会計をお願いします。 (Okaikei o onegaishimasu.)", phonetic: "o-cái-kêi o o-ne-gái-shi-mas" },
+      "el-koine": { text: "Τὸν λόγον, παρακαλῶ. (Ton logon, parakalo.)", phonetic: "ton ló-gon, pa-ra-ka-ló" },
+    },
+  },
+  // 18. Nome do interlocutor
+  {
+    pattern: /(qual (e o )?seu nome|como voce se chama|quem e voce)/i,
+    pt: "Qual é o seu nome?",
+    translations: {
+      en: { text: "What is your name, my friend?", phonetic: "uót íz iór nêim, mái frênd" },
+      es: { text: "¿Cómo te llamas, amigo?", phonetic: "có-mo te yá-mas, a-mí-go" },
+      de: { text: "Wie heißt du, mein Freund?", phonetic: "vi ráist du, máin fróint" },
+      fr: { text: "Comment t'appelles-tu, mon ami ?", phonetic: "co-mãn ta-pel-tü, mõ na-mi" },
+      it: { text: "Come ti chiami, amico mio?", phonetic: "có-me ti kiá-mi, a-mí-co mí-o" },
+      ru: { text: "Как тебя зовут, мой друг?", phonetic: "kak ti-byá za-vút, moy druk" },
+      ja: { text: "お名前は何とおっしゃいますか？ (Onamae wa nan to osshaimasu ka?)", phonetic: "o-na-ma-e uá nan to osh-shái-mas-ka" },
+      "el-koine": { text: "Τί ἐστιν τὸ ὄνομά σου; (Ti estin to onoma sou?)", phonetic: "ti és-tin to ó-no-má su" },
+    },
+  },
+];
+
+export function translatePortugueseOffline(
+  text: string,
+  targetLang: SupportedLanguage
+): OfflineTranslationResult {
+  const norm = text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[.,!?;:"'¿¡]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // 1. Tentar casar com regras ricas pré-configuradas
+  for (const rule of PORTUGUESE_TRANSLATION_RULES) {
+    if (rule.pattern.test(norm)) {
+      const match = rule.translations[targetLang];
+      if (match) {
+        return {
+          translated: match.text,
+          phonetic: match.phonetic,
+          translationPt: rule.pt,
+        };
+      }
+    }
+  }
+
+  // 2. Fallback por substituição de termos essenciais
+  const PT_WORD_MAP: Record<string, Record<SupportedLanguage, string>> = {
+    eu: { en: "I", es: "yo", de: "ich", fr: "je", it: "io", ru: "я", ja: "私 (watashi)", "el-koine": "ἐγώ" },
+    voce: { en: "you", es: "tú", de: "du", fr: "tu", it: "tu", ru: "ты", ja: "あなた (anata)", "el-koine": "σύ" },
+    quero: { en: "I want", es: "quiero", de: "ich will", fr: "je veux", it: "voglio", ru: "я хочу", ja: "〜が欲しい (hoshii)", "el-koine": "θέλω" },
+    gostaria: { en: "I would like", es: "me gustaría", de: "ich möchte", fr: "je voudrais", it: "vorrei", ru: "я хотел бы", ja: "〜したいです (shitai desu)", "el-koine": "βούλομαι" },
+    preciso: { en: "I need", es: "necesito", de: "ich brauche", fr: "j'ai besoin de", it: "ho bisogno di", ru: "мне нужно", ja: "〜が必要です (hitsuyou desu)", "el-koine": "χρείαν ἔχω" },
+    onde: { en: "where is", es: "dónde está", de: "wo ist", fr: "où est", it: "dove si trova", ru: "где", ja: "どこ (doko)", "el-koine": "ποῦ" },
+    quando: { en: "when", es: "cuándo", de: "wann", fr: "quand", it: "quando", ru: "когда", ja: "いつ (itsu)", "el-koine": "πότε" },
+    como: { en: "how", es: "cómo", de: "wie", fr: "comment", it: "come", ru: "как", ja: "どのように (donoyouni)", "el-koine": "πῶς" },
+    quanto: { en: "how much is", es: "cuánto cuesta", de: "wie viel kostet", fr: "combien coûte", it: "quanto costa", ru: "сколько стоит", ja: "いくら (ikura)", "el-koine": "πόσου" },
+    museu: { en: "museum", es: "museo", de: "Museum", fr: "musée", it: "museo", ru: "музей", ja: "博物館 (hakubutsukan)", "el-koine": "μουσεῖον" },
+    estacao: { en: "station", es: "estación", de: "Bahnhof", fr: "gare", it: "stazione", ru: "вокзал", ja: "駅 (eki)", "el-koine": "σταθμός" },
+    hotel: { en: "hotel", es: "hotel", de: "Hotel", fr: "hôtel", it: "hotel", ru: "отель", ja: "ホテル (hoteru)", "el-koine": "πανδοχεῖον" },
+    cafe: { en: "coffee", es: "café", de: "Kaffee", fr: "café", it: "caffè", ru: "кофе", ja: "コーヒー (koohii)", "el-koine": "θερμὸν ποτόν" },
+    agua: { en: "water", es: "agua", de: "Wasser", fr: "eau", it: "acqua", ru: "вода", ja: "水 (mizu)", "el-koine": "ὕδωρ" },
+    comida: { en: "food", es: "comida", de: "Essen", fr: "nourriture", it: "cibo", ru: "еда", ja: "食べ物 (tabemono)", "el-koine": "τροφή" },
+    obrigado: { en: "thank you", es: "gracias", de: "danke", fr: "merci", it: "grazie", ru: "спасибо", ja: "ありがとう (arigatou)", "el-koine": "χάρις" },
+    ajuda: { en: "help", es: "ayuda", de: "Hilfe", fr: "aide", it: "aiuto", ru: "помощь", ja: "助け (tasuke)", "el-koine": "βοήθεια" },
+  };
+
+  const words = norm.split(" ");
+  const translatedWords = words.map((w) => PT_WORD_MAP[w]?.[targetLang] || w);
+  const translated = translatedWords.join(" ");
+  const phonetic = generatePhoneticGuide(translated, targetLang);
+
+  return {
+    translated,
+    phonetic,
+    translationPt: text,
+  };
+}
+
+export async function translatePortugueseToTargetLanguage(
+  text: string,
+  targetLang: SupportedLanguage,
+  apiKey?: string
+): Promise<OfflineTranslationResult> {
+  if (apiKey) {
+    try {
+      const langNames: Record<string, string> = {
+        en: "English",
+        es: "Spanish (Español)",
+        ja: "Japanese (日本語 - with Romaji & Kanji)",
+        "el-koine": "Biblical Koine Greek (Ancient Greek with transliteration)",
+        it: "Italian (Italiano)",
+        fr: "French (Français)",
+        de: "German (Deutsch)",
+        ru: "Russian (Русский - with Cyrillic script)",
+      };
+      const targetLangName = langNames[targetLang] || "English";
+
+      const prompt = `Translate this Brazilian Portuguese message into natural, communicative, everyday spoken ${targetLangName}: "${text}".
+Return ONLY a valid JSON object with this exact structure:
+{
+  "translated": "natural, native-sounding sentence in ${targetLangName}",
+  "phonetic": "friendly phonetic transcription in Brazilian Portuguese syllables for the translated sentence (e.g. '[ uót táim dâz dã miu-zí-âm óupên ]')",
+  "translationPt": "expressão clara em português brasileiro"
+}`;
+      const responseRaw = await callGeminiRaw(apiKey, prompt);
+      const cleaned = responseRaw.replace(/```json/g, "").replace(/```/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+      if (parsed && parsed.translated) {
+        return {
+          translated: parsed.translated,
+          phonetic: parsed.phonetic || generatePhoneticGuide(parsed.translated, targetLang),
+          translationPt: parsed.translationPt || text,
+        };
+      }
+    } catch (e) {
+      console.warn("Falha no Gemini para tradução rápida, usando tradutor local:", e);
+    }
+  }
+
+  return translatePortugueseOffline(text, targetLang);
+}
+
 export type UserIntentType =
   | "question_name"
   | "question_origin"
   | "question_how_are_you"
   | "question_taste"
+  | "question_museum_hours"
+  | "question_directions"
+  | "question_food_recommendation"
   | "feeling_tired"
   | "feeling_happy"
   | "feeling_sick"
@@ -665,6 +1115,7 @@ export type UserIntentType =
   | "topic_work"
   | "topic_weather"
   | "topic_learning"
+  | "topic_weekend"
   | "affirmation"
   | "negation"
   | "thanks"
@@ -673,6 +1124,38 @@ export type UserIntentType =
 
 export function classifyUserIntent(userInput: string, _tutorLanguage?: SupportedLanguage): UserIntentType {
   const lower = userInput.toLowerCase().trim();
+
+  // 0a. Horário do Museu / Abertura / Ingressos
+  if (
+    /(qual o hor[aá]rio do museu|a que horas abre o museu|a que horas fecha o museu|quanto custa a entrada do museu|hor[aá]rio do museu|hor[aá]rio de funcionamento do museu|what time does the museum|museum opening hours|museum hours|when does the museum|wann öffnet das museum|öffnungszeiten des museums|a qué hora abre el museo|horario del museo|a che ora apre il museo|orari del museo|à quelle heure ouvre le musée|horaires du musée|во сколько открывается музей|часы работы музея|hakubutsukan wa nanji|pote anoigei to mouseion)/i.test(lower) ||
+    (/\b(museu|museum|museo|musée|musei|музей|hakubutsukan)\b/i.test(lower) && /\b(hor[aá]rio|horas|hours|time|abertura|abre|fecha|open|opens|close|closes|öffnungszeiten|orari|horaires|во сколько|открывается|часы работы)\b/i.test(lower))
+  ) {
+    return "question_museum_hours";
+  }
+
+  // 0b. Direções / Estação de trem / Metrô / Aeroporto
+  if (
+    /(onde fica a esta[cç][aã]o|onde fica o metr[oô]|onde fica o aeroporto|como chego ao hotel|como chego na esta[cç][aã]o|where is the station|where is the train station|where is the subway|where is the airport|how do i get to|wo ist der bahnhof|wo ist der flughafen|dónde está la estación|dónde está el aeropuerto|dove si trova la stazione|dove si trova l'aeroporto|où est la gare|où se trouve la gare|где находится вокзал|где находится станция|где метро|где аэропорт|eki wa doko|pou estin ho stathmos)/i.test(lower) ||
+    (/\b(esta[cç][aã]o|station|estación|bahnhof|gare|stazione|станция|aeroporto|airport|aeropuerto|flughafen|aéroport|metr[oô]|subway|u-bahn)\b/i.test(lower) && /\b(onde|where|dónde|donde|wo|dove|où|ou|где|doko|pou|como chego|how do i get|como llegar)\b/i.test(lower))
+  ) {
+    return "question_directions";
+  }
+
+  // 0c. Recomendação de comida / Jantar
+  if (
+    /(o que voc[eê] recomenda para o jantar|o que voc[eê] recomenda para comer|o que tem de bom para comer|qual prato voc[eê] recomenda|qual o seu prato favorito|qual sua comida favorita|what do you recommend for dinner|what do you recommend to eat|what is your favorite dish|what's your favorite food|was empfiehlst du zum abendessen|was ist dein lieblingsgericht|qué recomiendas para cenar|qué me recomiendas comer|cuál es tu plato favorito|cosa consigli per cena|qual è il tuo piatto preferito|que recommandez-vous pour le dîner|quel est votre plat préféré|что ты порекомендуешь на ужин|какое твоё любимое блюдо|yuushoku ni nani ga osusume|ti symbouleueis eis to deipnon)/i.test(lower) ||
+    (/\b(recomenda|recommend|empfiehlst|recomiendas|consigli|recommandez|порекомендуешь)\b/i.test(lower) && /\b(jantar|almoço|comer|comida|prato|dinner|lunch|food|dish|abendessen|essen|gericht|cenar|comer|plato|cena|pranzo|piatto|dîner|plat|ужин|блюдо)\b/i.test(lower))
+  ) {
+    return "question_food_recommendation";
+  }
+
+  // 0d. Fim de semana / Hobbies
+  if (
+    /(o que voc[eê] faz no fim de semana|o que voc[eê] gosta de fazer no tempo livre|quais s[aã]o seus hobbies|o que voc[eê] costuma fazer no s[aá]bado|what do you do on weekends|what do you do in your free time|what are your hobbies|was machst du am wochenende|was machst du in deiner freizeit|qué haces los fines de semana|qué te gusta hacer en tu tiempo libre|cosa fai nel fine settimana|cosa fai nel tempo libero|que fais-tu le week-end|qu'aimes-tu faire pendant ton temps libre|чем ты занимаешься на выходных|чем любишь заниматься в свободное время|shuumatsu wa nani|ti poieis en tois sabbatois)/i.test(lower) ||
+    /\b(fim de semana|finais de semana|tempo livre|weekend|weekends|free time|wochenende|freizeit|fin de semana|fines de semana|tiempo libre|fine settimana|tempo libero|week-end|temps libre|выходные|выходных|свободное время)\b/i.test(lower)
+  ) {
+    return "topic_weekend";
+  }
 
   // 1. Pergunta sobre o nome do tutor
   if (
@@ -834,6 +1317,26 @@ export function generateLocalTutorReply(
           replyText: `Я очень люблю горячий чай с лимоном, классическую музыку и долгие прогулки по красивым местам! А чем больше всего любишь заниматься ты?`,
           translationPt: `Eu amo muito chá quente com limão, música clássica e longas caminhadas por belos lugares! E do que você mais gosta de fazer?`,
         };
+      case "question_museum_hours":
+        return {
+          replyText: `Главные музеи и Эрмитаж в ${activeTutor.city} обычно открыты с 11:00 до 18:00 (по средам и пятницам до 20:00)! Какая экспозиция тебя больше интересует: шедевры живописи или залы античности?`,
+          translationPt: `Os principais museus e o Hermitage em ${activeTutor.city} costumam abrir das 11h às 18h (às quartas e sextas até as 20h)! Qual exposição te interessa mais: obras-primas da pintura ou salas da antiguidade?`,
+        };
+      case "question_directions":
+        return {
+          replyText: `Главный вокзал и станция метро находятся совсем рядом, буквально в пяти минутах ходьбы от центральной площади! Куда именно ты держишь путь сегодня?`,
+          translationPt: `A estação principal e a estação de metrô ficam bem próximas, a literalmente cinco minutos a pé da praça central! Para onde exatamente você está a caminho hoje?`,
+        };
+      case "question_food_recommendation":
+        return {
+          replyText: `На ужин я от всей души рекомендую горячий борщ со сметаной, сочные сибирские пельмени и румяные пирожки! Ты любишь сытную согревающую кухню?`,
+          translationPt: `Para o jantar recomendo de todo o coração um borsch quentinho com creme azedo, pelmenis siberianos suculentos e piroshkis douradinhos! Você gosta de culinária reforçada e reconfortante?`,
+        };
+      case "topic_weekend":
+        return {
+          replyText: `На выходных я обожаю гулять вдоль набережных, заглядывать в уютные книжные лавки и встречаться с друзьями за чаем. А как ты предпочитаешь проводить свободное время?`,
+          translationPt: `Nos fins de semana adoro passear ao longo das margens, visitar pequenas livrarias e encontrar amigos para um chá. E como você prefere passar o tempo livre?`,
+        };
       case "feeling_tired":
         return {
           replyText: `После насыщенного дня отдых просто необходим! Завари себе тёплый чай, и давай побеседуем спокойно и без малейшей спешки. Что помогло бы тебе расслабиться?`,
@@ -953,6 +1456,26 @@ export function generateLocalTutorReply(
         return {
           replyText: `Ich liebe einen guten Filterkaffee am Morgen, Spaziergänge an der frischen Luft und spannende Bücher! Und was machst du am liebsten in deiner Freizeit?`,
           translationPt: `Eu amo um bom café passado pela manhã, caminhadas ao ar livre e livros empolgantes! E o que você mais gosta de fazer no seu tempo livre?`,
+        };
+      case "question_museum_hours":
+        return {
+          replyText: `Die Museen hier in ${activeTutor.city} öffnen meistens von 10:00 bis 18:00 Uhr (donnerstags oft bis 20:00 Uhr)! Interessierst du dich eher für historische Exponate oder moderne Kunst?`,
+          translationPt: `Os museus aqui em ${activeTutor.city} abrem na maioria das 10h às 18h (às quintas frequentemente até às 20h)! Você se interessa mais por peças históricas ou arte moderna?`,
+        };
+      case "question_directions":
+        return {
+          replyText: `Der Hauptbahnhof und die nächste U-Bahn-Station liegen ganz zentral, nur wenige Gehminuten entfernt! Wo möchtest du heute genau hin?`,
+          translationPt: `A estação central e a próxima estação de metrô ficam bem no centro, a poucos minutos a pé de distância! Para onde exatamente você quer ir hoje?`,
+        };
+      case "question_food_recommendation":
+        return {
+          replyText: `Für heute Abend empfehle ich dir ein knuspriges Schnitzel mit Bratkartoffeln oder eine feine Spätzle-Pfanne, dazu ein erfrischendes Getränk! Magst du herzhaftes Essen?`,
+          translationPt: `Para esta noite recomendo um schnitzel crocante com batatas assadas ou uma frigideira saborosa de Spätzle, acompanhado de uma bebida refrescante! Você gosta de comida saborosa e encorpada?`,
+        };
+      case "topic_weekend":
+        return {
+          replyText: `Am Wochenende mache ich gerne lange Radtouren durch die grünen Parks, trinke Kaffee und lese entspannt. Wie verbringst du deine freien Tage am liebsten?`,
+          translationPt: `No fim de semana gosto de fazer longos passeios de bicicleta pelos parques verdes, tomar café e ler relaxado. Como você prefere passar seus dias livres?`,
         };
       case "feeling_tired":
         return {
@@ -1074,6 +1597,26 @@ export function generateLocalTutorReply(
           replyText: `¡Me encantan las tapas al atardecer, un café con leche bien caliente y la buena música! ¿Y a ti, qué cosas te apasiona hacer cuando tienes tiempo libre?`,
           translationPt: `Eu amo umas tapas ao entardecer, um café com leite bem quentinho e boa música! E você, o que gosta de fazer quando tem tempo livre?`,
         };
+      case "question_museum_hours":
+        return {
+          replyText: `Los museos principales aquí en ${activeTutor.city} abren habitualmente de 10:00 a 20:00 (los domingos hasta las 19:00)! Además, las dos últimas horas suele haber entrada gratuita. ¿Prefieres la pintura clásica o las salas de arte moderno?`,
+          translationPt: `Os museus principais aqui em ${activeTutor.city} abrem habitualmente das 10h às 20h (aos domingos até as 19h)! Além disso, as duas últimas horas costumam ter entrada gratuita. Você prefere pintura clássica ou salas de arte moderna?`,
+        };
+      case "question_directions":
+        return {
+          replyText: `¡La estación principal y la boca de metro están a solo unos minutos a pie desde el centro! Tienes conexiones rápidas cada cinco minutos. ¿Hacia dónde te diriges hoy?`,
+          translationPt: `A estação principal e a entrada do metrô estão a apenas alguns minutos a pé do centro! Tem conexões rápidas a cada cinco minutos. Para onde você está indo hoje?`,
+        };
+      case "question_food_recommendation":
+        return {
+          replyText: `¡Sin dudarlo, te recomiendo unas tapas variadas: tortilla de patatas jugosa, jamón ibérico y croquetas caseras! Para el postre, unos churros con chocolate caliente. ¿Prefieres tapear o cenar sentado con calma?`,
+          translationPt: `Sem pensar duas vezes, te recomendo tapas variadas: tortilla de batatas suculenta, presunto ibérico e croquetes caseiros! De sobremesa, churros com chocolate quente. Você prefere petiscar ou jantar sentado com calma?`,
+        };
+      case "topic_weekend":
+        return {
+          replyText: `Los fines de semana me fascina pasear por las plazas históricas, tomar un café al sol en una terraza y charlar con amigos. ¿Qué sueles hacer tú en tus días libres?`,
+          translationPt: `Nos fins de semana me fascina passear pelas praças históricas, tomar um café ao sol numa varanda e bater papo com amigos. O que você costuma fazer nos seus dias livres?`,
+        };
       case "feeling_tired":
         return {
           replyText: `¡Te entiendo de maravilla! Hay días en los que el cuerpo solo pide sofá y desconexión. Vamos a charlar con calma y sin prisas. ¿Qué sueles hacer para recargar pilas?`,
@@ -1193,6 +1736,26 @@ export function generateLocalTutorReply(
         return {
           replyText: `Adoro un buon caffè espresso al banco, una pizza appena sfornata e le passeggiate per i vicoli storici! E a te, cosa piace di più nel tempo libero?`,
           translationPt: `Eu adoro um bom café espresso no balcão, uma pizza quentinha recém-saída do forno e passeios pelas ruelas históricas! E você, o que mais gosta de fazer no tempo livre?`,
+        };
+      case "question_museum_hours":
+        return {
+          replyText: `I musei principali qui a ${activeTutor.city} aprono normalmente dalle 08:30 alle 19:30 (chiusi il lunedì)! Ti affascinano di più i capolavori del Rinascimento o i reperti archeologici?`,
+          translationPt: `Os museus principais aqui em ${activeTutor.city} abrem normalmente das 08h30 às 19h30 (fechados às segundas-feiras)! Te fascinam mais as obras-primas do Renascimento ou os achados arqueológicos?`,
+        };
+      case "question_directions":
+        return {
+          replyText: `La stazione centrale e la fermata della metropolitana sono vicinissime al centro, raggiungibili a piedi in pochissimi minuti! Dove hai intenzione di andare oggi?`,
+          translationPt: `A estação central e o ponto de metrô são pertinho do centro, acessíveis a pé em pouquíssimos minutos! Onde você pretende ir hoje?`,
+        };
+      case "question_food_recommendation":
+        return {
+          replyText: `Per cena ti consiglio assolutamente un bel piatto di pasta fresca al dente, come una carbonara autentica o delle tagliatelle ai funghi, e per finire un tiramisù fatto in casa! Ti piace la cucina tipica italiana?`,
+          translationPt: `Para o jantar recomendo absolutamente um belo prato de massa fresca al dente, como uma carbonara autêntica ou tagliatelle com cogumelos, e para finalizar um tiramisù caseiro! Você gosta da comida típica italiana?`,
+        };
+      case "topic_weekend":
+        return {
+          replyText: `Nel fine settimana adoro passeggiare per le piazze, fermarmi al bar per un caffè e godermi l'arte e l'atmosfera all'aperto. Come trascorri di solito il tuo tempo libero?`,
+          translationPt: `No fim de semana adoro passear pelas praças, parar no bar para um café e curtir a arte e a atmosfera ao ar livre. Como você costuma passar seu tempo livre?`,
         };
       case "feeling_tired":
         return {
@@ -1314,6 +1877,26 @@ export function generateLocalTutorReply(
           replyText: `J'adore savourer un bon café avec un croissant chaud le matin, lire et me promener dans les musées ! Et vous, qu'aimez-vous faire de votre temps libre ?`,
           translationPt: `Eu adoro saborear um bom café com um croissant quentinho pela manhã, ler e passear em museus! E você, o que gosta de fazer no seu tempo livre?`,
         };
+      case "question_museum_hours":
+        return {
+          replyText: `Les musées renommés ici à ${activeTutor.city} ouvrent généralement de 09h00 à 18h00 (avec souvent des nocturnes jusqu'à 21h45) ! Préférez-vous admirer des sculptures classiques ou de l'art contemporain ?`,
+          translationPt: `Os museus renomados aqui em ${activeTutor.city} abrem geralmente das 09h às 18h (frequentemente com horário noturno até às 21h45)! Você prefere admirar esculturas clássicas ou arte contemporânea?`,
+        };
+      case "question_directions":
+        return {
+          replyText: `La gare principale et la station de métro se trouvent en plein centre, à quelques minutes à pied seulement ! Vers quelle destination vous dirigez-vous aujourd'hui ?`,
+          translationPt: `A estação principal e a estação de metrô ficam em pleno centro, a apenas alguns minutos a pé! Para qual destino você se dirige hoje?`,
+        };
+      case "question_food_recommendation":
+        return {
+          replyText: `Pour ce soir, je vous recommande vivement un délicieux bœuf bourguignon mijoté ou un confit de canard, avec une baguette fraîche et une mousse au chocolat ! Aimez-vous la cuisine traditionnelle française ?`,
+          translationPt: `Para esta noite, recomendo fortemente um delicioso bœuf bourguignon ensopado ou um confit de pato, com uma baguete fresca e mousse de chocolate! Você gosta da culinária tradicional francesa?`,
+        };
+      case "topic_weekend":
+        return {
+          replyText: `Le week-end, j'adore flâner le long des quais, feuilleter des livres anciens et m'installer à la terrasse d'un bistrot animé. Comment aimez-vous occuper vos journées de repos ?`,
+          translationPt: `No fim de semana, adoro passear pelas margens dos rios, folhear livros antigos e sentar na varanda de um bistrô animado. Como você gosta de ocupar seus dias de descanso?`,
+        };
       case "feeling_tired":
         return {
           replyText: `Je vous comprends tout à fait ! Après une longue journée, le repos est primordial. Prenons notre temps pour discuter en douceur. Qu'est-ce qui vous détend le plus ?`,
@@ -1434,6 +2017,26 @@ export function generateLocalTutorReply(
           replyText: `Watashi wa oishii ramen ya matcha o tanoshimitari, ongaku o kiku no ga daisuki desu! Anata wa donna koto ga suki desu ka?`,
           translationPt: `Eu adoro saborear um ramen gostoso ou chá verde matcha, e ouvir música! E você, do que gosta?`,
         };
+      case "question_museum_hours":
+        return {
+          replyText: `${activeTutor.city} no hakubutsukan wa tsuujou, asa 9-ji 30-fun kara yuugata 17-ji made aite imasu yo! Rekishi no tenji to gendai aato no dochira ga suki desu ka?`,
+          translationPt: `Os museus em ${activeTutor.city} normalmente abrem das 9h30 da manhã até as 17h da tarde! Você prefere exposições históricas ou arte moderna?`,
+        };
+      case "question_directions":
+        return {
+          replyText: `Chuuou eki to chikatetsu no eki wa koko kara aruite sugu, yaku 5-fun hodo no basho ni arimasu yo! Kyou wa doko e ikimasu ka?`,
+          translationPt: `A estação central e a estação de metrô ficam a poucos passos daqui, cerca de 5 minutos caminhando! Para onde você vai hoje?`,
+        };
+      case "question_food_recommendation":
+        return {
+          replyText: `Konya wa atatakai ramen ya shinsen na osushi, aruiwa atsuatsu no tempura ga osusume desu yo! Nihon ryouri wa osuki desu ka?`,
+          translationPt: `Para esta noite recomendo um ramen quentinho, sushi fresquinho ou tempurá bem crocante! Você gosta de comida japonesa?`,
+        };
+      case "topic_weekend":
+        return {
+          replyText: `Shuumatsu wa teien o sanpo shitari, ocha o nonde yukkuri hon o yomu no ga daisuki desu. Anata no shuumatsu wa donna kanji desu ka?`,
+          translationPt: `Nos fins de semana adoro passear por jardins, tomar um chá e ler livros com calma. Como costumam ser seus fins de semana?`,
+        };
       case "feeling_tired":
         return {
           replyText: `Kyou mo ichinichi otsukaresama deshita! Muri o shinaide, atatakai ocha de mo nonde yukkuri hanashimashou. Rirakkusu dekimashita ka?`,
@@ -1549,6 +2152,26 @@ export function generateLocalTutorReply(
           replyText: `Kálos eimi chári ti Theou! Eirênê kaì agápe plêthynthêie soi. Pôs écheis sêmeron?`,
           translationPt: `Estou bem pela graça de Deus! Que paz e amor te sejam multiplicados. Como estás hoje?`,
         };
+      case "question_museum_hours":
+        return {
+          replyText: `Tò mouseîon kaì he bibliothêke anoígousin apò horas trites heos enates (09:00 - 17:00)! Boúlei ideîn tà archaîa cheirógrapha;`,
+          translationPt: `O museu e a biblioteca abrem da terceira à nona hora (das 09h às 17h)! Desejas ver os manuscritos antigos?`,
+        };
+      case "question_directions":
+        return {
+          replyText: `Ho stathmòs kaì he agorà en mésôi tês póleós eisin, olíga bêmata mónon apéchei! Pou poreúesthai théleis sêmeron;`,
+          translationPt: `A estação e a praça central ficam no coração da cidade, a apenas alguns passos de distância! Para onde você deseja ir hoje?`,
+        };
+      case "question_food_recommendation":
+        return {
+          replyText: `Symbouleúo árton thermón, elaías agathàs kaì opóras glykeías metà ichthýos optou! Aréskei soi he litè trophê;`,
+          translationPt: `Recomendo pão quentinho, boas azeitonas, frutas doces e peixe assado! Agrada a você uma refeição simples e nutritiva?`,
+        };
+      case "topic_weekend":
+        return {
+          replyText: `En toîs sabbátois anapaúomai, meletô toùs lógous kaì peripatô metà tôn phílôn. Tí poieîs en taîs hemérais tês anapaúseós sou;`,
+          translationPt: `Nos dias de descanso eu repouso, medito nos ensinamentos e caminho com amigos. O que você faz nos seus dias de descanso?`,
+        };
       case "topic_learning":
         return {
           replyText: `Makários ho zêton tên sophían! Anaginóskomen kaì manthánomen toùs theíous lógous met' eunoías.`,
@@ -1614,6 +2237,26 @@ export function generateLocalTutorReply(
       return {
         replyText: `I'm a huge fan of freshly brewed coffee, live music, good books, and exploring new city corners! What about you: what are your absolute favorite hobbies?`,
         translationPt: `Eu sou um grande fã de um café passado na hora, música ao vivo, bons livros e explorar novos cantos da cidade! E você: quais são seus hobbies favoritos absolutos?`,
+      };
+    case "question_museum_hours":
+      return {
+        replyText: `The world-famous museums here in ${activeTutor.city} are generally open daily from 10:00 AM to 5:00 PM (and Thursdays until 8:00 PM)! Are you more drawn to classical paintings or modern interactive exhibits?`,
+        translationPt: `Os museus mundialmente famosos aqui em ${activeTutor.city} geralmente abrem diariamente das 10h às 17h (e às quintas até as 20h)! Você se sente mais atraído por pinturas clássicas ou exposições interativas modernas?`,
+      };
+    case "question_directions":
+      return {
+        replyText: `The main central train station and subway lines are right downtown, just a five-minute walk from the main plaza! Where are you heading off to today?`,
+        translationPt: `A estação central de trens principal e as linhas de metrô ficam bem no centro, a apenas cinco minutos de caminhada da praça principal! Para onde você está a caminho hoje?`,
+      };
+    case "question_food_recommendation":
+      return {
+        replyText: `For dinner tonight, you simply have to try our local specialties: slow-roasted savory meats, crispy street bites, and a warm apple pie or artisanal gelato for dessert! Do you prefer hearty comfort food or something lighter?`,
+        translationPt: `Para o jantar hoje você simplesmente precisa provar nossas especialidades locais: carnes assadas suculentas, petiscos crocantes de rua e uma torta de maçã quentinha ou gelato artesanal de sobremesa! Você prefere comida reconfortante e saborosa ou algo mais leve?`,
+      };
+    case "topic_weekend":
+      return {
+        replyText: `On weekends, I love biking down through city parks, grabbing an iced coffee, and catching some live music in the evening. How do you usually like to unwind on your days off?`,
+        translationPt: `Nos fins de semana adoro pedalar pelos parques da cidade, pegar um café gelado e curtir música ao vivo à noite. Como você costuma gostar de relaxar nos seus dias de folga?`,
       };
     case "feeling_tired":
       return {
@@ -1719,6 +2362,7 @@ export async function tutorChat(
   tutorPersona?: TutorPersona
 ): Promise<TutorChatResponse> {
   const activeTutor = tutorPersona || DEFAULT_TUTOR;
+  const userIsPortuguese = isPortugueseText(userInput, activeTutor.language);
   const langNames: Record<string, string> = {
     en: "English",
     es: "Spanish (Español)",
@@ -1742,16 +2386,23 @@ Your Persona & Conversational Style:
 - Bio: ${activeTutor.bioPt}
 - Goal: Make the dialogue feel GENUINELY ALIVE, NATURAL, ENGAGING, and HIGHLY INTERACTIVE — like two close friends enjoying coffee, NOT a robotic exam or rigid grammar textbook.
 - Interaction Guidelines:
-  1. ALWAYS DIRECTLY ANSWER QUESTIONS: If the student asks you anything about yourself ("Where are you from?", "What's your favorite food/book/movie?", "Do you like coffee?", "How are you?"), ANSWER IT FIRST with warmth and local details from ${activeTutor.city}, ${activeTutor.country}, before passing the question back!
+  1. ALWAYS DIRECTLY ANSWER QUESTIONS: If the student asks you anything (e.g. museum hours, directions to a station, your tastes, food recommendations, your city, your day), ANSWER IT FIRST with warmth, local details from ${activeTutor.city}, ${activeTutor.country}, before passing the question back!
   2. NEVER BE REPETITIVE OR ROBOTIC: Never just say "That sounds interesting, tell me more about that" or repeat identical questions. Connect directly to what the student just shared with genuine human empathy (if they are tired, sick, or stressed), enthusiasm (if they shared a win), or curious friendly debate.
   3. Speak in natural, modern, communicative ${targetLangName}. (For Japanese: include Kanji/Kana and Romaji. For Koine Greek: include Greek script with transliteration. For Russian: natural Cyrillic).
   4. Keep the dialogue dynamic: Share a brief thought, anecdote, or opinion from your life in ${activeTutor.city}, and then ask an open, engaging follow-up question.
-  5. KIND & GENTLE CORRECTION: If the student made any mistake (grammar, spelling, missing article, agreement), gently provide the corrected sentence and a clear 1-line explanation in Brazilian Portuguese in the "explanationPt" field. Keep your conversational response "replyText" focused on the flow of thoughts, never embarrassing the student.
-  6. USER READING & AUDIO ASSISTANCE:
-     - "userPhonetic": Friendly phonetic transcription of what the student said (or the corrected version) in Brazilian Portuguese syllables (e.g. "[ rá-lo, ví guêt es... ]").
-     - "userTranslationPt": Natural Brazilian Portuguese translation of what the student said.
+  5. KIND & GENTLE CORRECTION: If the student made any mistake (grammar, spelling, missing article, agreement), gently provide the corrected sentence and a clear 1-line explanation in Brazilian Portuguese in the "explanationPt" field.
+  6. USER TRANSLATION & PHONETICS:${userIsPortuguese ? `
+     - The student typed or spoke in Brazilian Portuguese: "${userInput}".
+     - "userTranslatedText": provide the accurate, natural, idiomatic translation into ${targetLangName}.
+     - "userPhonetic": friendly phonetic transcription of "userTranslatedText" using Brazilian Portuguese syllables (e.g. "[ uót táim dâz dã miu-zí-âm óupên ]") so the student knows exactly how to pronounce it!
+     - "userTranslationPt": Brazilian Portuguese meaning ("${userInput}").
+     - "wasTranslated": true.` : `
+     - The student spoke/typed directly in ${targetLangName}: "${userInput}".
+     - "userTranslatedText": keep what the student said (or corrected version).
+     - "userPhonetic": friendly phonetic transcription in Brazilian Portuguese syllables for what the student said.
+     - "userTranslationPt": Brazilian Portuguese translation of what the student said.`}
   7. EXPANDED DYNAMIC SUGGESTIONS (PROVIDE 5 TO 6 VARIED OPTIONS):
-     - Provide 5 to 6 varied, natural suggested replies in "suggestedReplies" that directly relate to what was just discussed or what you just asked!
+     - Provide 5 to 6 varied, natural suggested replies in "suggestedReplies" in ${targetLangName} that directly relate to what was just discussed or what you just asked!
      - Include diverse angles:
        * "agree": enthusiastic agreement / affirmation
        * "alternative": polite alternative preference or contrasting view
@@ -1765,11 +2416,12 @@ Respond in strictly valid JSON format:
   "hasError": boolean,
   "corrected": "corrected sentence in ${targetLangName} or empty string",
   "explanationPt": "Explicação amigável e direta em português em exatamente 1 linha (ou vazio se perfeito)",
-  "replyText": "${activeTutor.name}'s lively conversational response in ${targetLangName}",
-  "phonetic": "Friendly phonetic pronunciation transcription in Portuguese syllables",
-  "translationPt": "Tradução natural da resposta do tutor para o português brasileiro",
-  "userPhonetic": "Friendly phonetic transcription in Portuguese syllables for the user's sentence",
+  "userTranslatedText": "${userIsPortuguese ? `translated student sentence in ${targetLangName}` : userInput}",
+  "userPhonetic": "Friendly phonetic transcription in Brazilian Portuguese syllables for the student's sentence",
   "userTranslationPt": "Tradução da frase do usuário para o português brasileiro",
+  "replyText": "${activeTutor.name}'s lively conversational response in ${targetLangName} directly addressing the question/topic",
+  "phonetic": "Friendly phonetic pronunciation transcription in Portuguese syllables for tutor reply",
+  "translationPt": "Tradução natural da resposta do tutor para o português brasileiro",
   "suggestedReplies": [
     {
       "category": "agree",
@@ -1786,7 +2438,7 @@ Respond in strictly valid JSON format:
         .map((m) => `${m.sender === "user" ? "User" : activeTutor.name}: ${m.text}`)
         .join("\n");
 
-      const prompt = `Recent Conversation:\n${historyFormatted}\n\nUser said: "${userInput}"\n\nGenerate ${activeTutor.name}'s interactive response with 5-6 suggested replies:`;
+      const prompt = `Recent Conversation:\n${historyFormatted}\n\nUser ${userIsPortuguese ? "said in Portuguese" : "said"}: "${userInput}"\n\nGenerate ${activeTutor.name}'s interactive response with 5-6 suggested replies:`;
       const responseRaw = await callGeminiRaw(apiKey, prompt, systemPrompt);
 
       const cleaned = responseRaw.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -1807,10 +2459,13 @@ Respond in strictly valid JSON format:
       const phonetic = parsed.phonetic || generatePhoneticGuide(replyText, activeTutor.language);
       const translationPt = parsed.translationPt || "Isso é ótimo! Me conte mais sobre isso, meu amigo.";
 
+      const userTranslatedText =
+        parsed.userTranslatedText || (userIsPortuguese ? translatePortugueseOffline(userInput, activeTutor.language).translated : userInput);
+      const userOriginalPt = userIsPortuguese ? userInput : undefined;
       const userPhonetic =
-        parsed.userPhonetic || generatePhoneticGuide(userInput, activeTutor.language);
+        parsed.userPhonetic || generatePhoneticGuide(userTranslatedText, activeTutor.language);
       const userTranslationPt =
-        parsed.userTranslationPt || getPortugueseTranslation(userInput, activeTutor.language);
+        parsed.userTranslationPt || (userIsPortuguese ? userInput : getPortugueseTranslation(userInput, activeTutor.language));
 
       const rawSuggestions = Array.isArray(parsed.suggestedReplies) ? parsed.suggestedReplies : [];
       const suggestedReplies: ContextualSuggestion[] = rawSuggestions.length >= 3
@@ -1821,13 +2476,15 @@ Respond in strictly valid JSON format:
             phonetic: s.phonetic || generatePhoneticGuide(s.text || "", activeTutor.language),
             translationPt: s.translationPt || getPortugueseTranslation(s.text || "", activeTutor.language),
           }))
-        : getDynamicSuggestions(activeTutor.language, userInput, activeTutor);
+        : getDynamicSuggestions(activeTutor.language, userTranslatedText, activeTutor);
 
       return {
         replyText,
         phonetic,
         translationPt,
         correction,
+        userTranslatedText,
+        userOriginalPt,
         userPhonetic,
         userTranslationPt,
         suggestedReplies,
@@ -1841,6 +2498,30 @@ Respond in strictly valid JSON format:
   const localCorrection = checkGrammarLocal(userInput);
   const historyLen = history.length;
 
+  if (userIsPortuguese) {
+    const offlineTrans = translatePortugueseOffline(userInput, activeTutor.language);
+    const userTranslatedText = offlineTrans.translated;
+    const userOriginalPt = userInput;
+    const userPhonetic = offlineTrans.phonetic;
+    const userTranslationPt = offlineTrans.translationPt;
+
+    const { replyText, translationPt } = generateLocalTutorReply(userTranslatedText, activeTutor, historyLen);
+    const phonetic = generatePhoneticGuide(replyText, activeTutor.language);
+    const suggestedReplies = getDynamicSuggestions(activeTutor.language, userTranslatedText, activeTutor);
+
+    return {
+      replyText,
+      phonetic,
+      translationPt,
+      correction: localCorrection.hasError ? localCorrection : undefined,
+      userTranslatedText,
+      userOriginalPt,
+      userPhonetic,
+      userTranslationPt,
+      suggestedReplies,
+    };
+  }
+
   const { replyText, translationPt } = generateLocalTutorReply(userInput, activeTutor, historyLen);
 
   const phonetic = generatePhoneticGuide(replyText, activeTutor.language);
@@ -1853,6 +2534,8 @@ Respond in strictly valid JSON format:
     phonetic,
     translationPt,
     correction: localCorrection.hasError ? localCorrection : undefined,
+    userTranslatedText: userInput,
+    userOriginalPt: undefined,
     userPhonetic,
     userTranslationPt,
     suggestedReplies,

@@ -13,6 +13,8 @@ export interface ChatMessage {
   text: string;
   phonetic?: string | undefined;
   translationPt?: string | undefined;
+  originalPt?: string | undefined;
+  wasTranslated?: boolean | undefined;
   correction?: GrammarCorrection | undefined;
   timestamp: number;
 }
@@ -30,6 +32,8 @@ export interface TutorChatResponse {
   phonetic?: string | undefined;
   translationPt?: string | undefined;
   correction?: GrammarCorrection | undefined;
+  userTranslatedText?: string | undefined;
+  userOriginalPt?: string | undefined;
   userPhonetic?: string | undefined;
   userTranslationPt?: string | undefined;
   suggestedReplies?: ContextualSuggestion[] | undefined;
