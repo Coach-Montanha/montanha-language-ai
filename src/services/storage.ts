@@ -187,3 +187,158 @@ export function toggleTop200ReviewQueue(
   return updated;
 }
 
+// ================= MEMÓRIA CONVERSACIONAL DO ALUNO =================
+import {
+  LearnerProfileMemory,
+  GrammarCorrection,
+} from "@/types/language";
+
+export function getLearnerMemoryKey(language: SupportedLanguage): string {
+  return `smart_language_learner_memory_${language}_v1`;
+}
+
+export function createDefaultLearnerMemory(language: SupportedLanguage): LearnerProfileMemory {
+  return {
+    language,
+    topicsDiscussed: [],
+    grammarSlips: [],
+    favoriteVocabulary: [],
+    learnerInterests: [],
+    tutorNotes: {},
+    lastUpdated: Date.now(),
+  };
+}
+
+export function loadLearnerMemory(language: SupportedLanguage): LearnerProfileMemory {
+  if (typeof window === "undefined") return createDefaultLearnerMemory(language);
+  try {
+    const raw = localStorage.getItem(getLearnerMemoryKey(language));
+    if (!raw) return createDefaultLearnerMemory(language);
+    const parsed = JSON.parse(raw) as LearnerProfileMemory;
+    return {
+      language,
+      topicsDiscussed: Array.isArray(parsed.topicsDiscussed) ? parsed.topicsDiscussed : [],
+      grammarSlips: Array.isArray(parsed.grammarSlips) ? parsed.grammarSlips : [],
+      favoriteVocabulary: Array.isArray(parsed.favoriteVocabulary) ? parsed.favoriteVocabulary : [],
+      learnerInterests: Array.isArray(parsed.learnerInterests) ? parsed.learnerInterests : [],
+      tutorNotes: parsed.tutorNotes || {},
+      lastUpdated: parsed.lastUpdated || Date.now(),
+    };
+  } catch (e) {
+    console.error("Erro ao carregar memória do aluno:", e);
+    return createDefaultLearnerMemory(language);
+  }
+}
+
+export function saveLearnerMemory(
+  language: SupportedLanguage,
+  memory: LearnerProfileMemory
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(getLearnerMemoryKey(language), JSON.stringify(memory));
+  } catch (e) {
+    console.error("Erro ao salvar memória do aluno:", e);
+  }
+}
+
+export function clearLearnerMemory(language: SupportedLanguage): LearnerProfileMemory {
+  const fresh = createDefaultLearnerMemory(language);
+  saveLearnerMemory(language, fresh);
+  return fresh;
+}
+
+/**
+ * Atualiza organicamente a memória conversacional do aluno após cada turno de conversa.
+ */
+export function updateLearnerMemoryFromInteraction(
+  language: SupportedLanguage,
+  tutorId: string,
+  userText: string,
+  correction?: GrammarCorrection,
+  customTopic?: string
+): LearnerProfileMemory {
+  const current = loadLearnerMemory(language);
+  const now = Date.now();
+
+  // 1. Detecta tópico se não informado explicitamente
+  let detectedTopic = customTopic;
+  if (!detectedTopic) {
+    const lower = userText.toLowerCase();
+    if (lower.includes("coffee") || lower.includes("café") || lower.includes("kaffee") || lower.includes("chá") || lower.includes("tea")) {
+      detectedTopic = "Café e preferências matinais";
+    } else if (lower.includes("work") || lower.includes("trabalh") || lower.includes("arbeit") || lower.includes("job") || lower.includes("office")) {
+      detectedTopic = "Trabalho e rotina profissional";
+    } else if (lower.includes("travel") || lower.includes("viag") || lower.includes("reise") || lower.includes("hotel") || lower.includes("flight") || lower.includes("trem")) {
+      detectedTopic = "Viagens e transporte";
+    } else if (lower.includes("weekend") || lower.includes("fim de semana") || lower.includes("wochenende") || lower.includes("vacation") || lower.includes("férias")) {
+      detectedTopic = "Planos para fins de semana e lazer";
+    } else if (lower.includes("food") || lower.includes("comida") || lower.includes("essen") || lower.includes("pizza") || lower.includes("restaurant") || lower.includes("almoç")) {
+      detectedTopic = "Gastronomia e culinária";
+    } else if (lower.includes("weather") || lower.includes("tempo") || lower.includes("chuva") || lower.includes("sol") || lower.includes("wetter") || lower.includes("calor")) {
+      detectedTopic = "Clima e tempo";
+    } else if (lower.includes("study") || lower.includes("estud") || lower.includes("lernen") || lower.includes("idioma") || lower.includes("aprender")) {
+      detectedTopic = "Metas de aprendizado e estudo";
+    }
+  }
+
+  // Atualiza tópicos
+  const updatedTopics = [...current.topicsDiscussed];
+  if (detectedTopic) {
+    const topicIdx = updatedTopics.findIndex(
+      (t) => t.topic.toLowerCase() === detectedTopic!.toLowerCase()
+    );
+    if (topicIdx >= 0 && updatedTopics[topicIdx]) {
+      updatedTopics[topicIdx] = {
+        ...updatedTopics[topicIdx],
+        lastMentioned: now,
+        count: updatedTopics[topicIdx].count + 1,
+      };
+    } else {
+      updatedTopics.unshift({
+        topic: detectedTopic,
+        lastMentioned: now,
+        count: 1,
+      });
+    }
+  }
+
+  // 2. Registra eventuais deslizes gramaticais para reforço positivo contínuo
+  const updatedSlips = [...current.grammarSlips];
+  if (correction && correction.hasError && correction.explanationPt) {
+    const patternKey = correction.explanationPt.slice(0, 60);
+    const slipIdx = updatedSlips.findIndex((s) => s.explanationPt === correction.explanationPt);
+    if (slipIdx >= 0 && updatedSlips[slipIdx]) {
+      updatedSlips[slipIdx] = {
+        ...updatedSlips[slipIdx],
+        lastSeen: now,
+        count: updatedSlips[slipIdx].count + 1,
+      };
+    } else {
+      updatedSlips.unshift({
+        pattern: patternKey,
+        explanationPt: correction.explanationPt,
+        lastSeen: now,
+        count: 1,
+      });
+    }
+  }
+
+  // 3. Atualiza anotações do tutor específico
+  const updatedNotes = { ...current.tutorNotes };
+  if (detectedTopic) {
+    updatedNotes[tutorId] = `Conversou sobre "${detectedTopic}".`;
+  }
+
+  const updatedMemory: LearnerProfileMemory = {
+    ...current,
+    topicsDiscussed: updatedTopics.slice(0, 10), // guarda os 10 tópicos mais recentes
+    grammarSlips: updatedSlips.slice(0, 8),      // guarda os 8 deslizes mais recentes
+    tutorNotes: updatedNotes,
+    lastUpdated: now,
+  };
+
+  saveLearnerMemory(language, updatedMemory);
+  return updatedMemory;
+}
+

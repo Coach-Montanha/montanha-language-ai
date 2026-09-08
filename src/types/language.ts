@@ -178,3 +178,26 @@ export interface UserProgress {
   fontSize?: ("sm" | "md" | "lg" | "xl") | undefined;
   design?: ("classic" | "midnight" | "focus") | undefined;
 }
+
+export interface LearnerTopicMemory {
+  topic: string;
+  lastMentioned: number;
+  count: number;
+}
+
+export interface LearnerGrammarSlip {
+  pattern: string;
+  explanationPt: string;
+  lastSeen: number;
+  count: number;
+}
+
+export interface LearnerProfileMemory {
+  language: SupportedLanguage;
+  topicsDiscussed: LearnerTopicMemory[];
+  grammarSlips: LearnerGrammarSlip[];
+  favoriteVocabulary: string[];
+  learnerInterests: string[];
+  tutorNotes: Record<string, string>; // tutorId -> nota pedagógica contínua
+  lastUpdated: number;
+}

@@ -1,6 +1,26 @@
 import { SupportedLanguage } from "@/types/language";
 
+export interface MiniLessonKnowledgeCheckOption {
+  text: string;
+  correct: boolean;
+  explanationPt: string;
+}
+
+export interface PedagogicalMiniLesson {
+  objective: string;
+  concept: string;
+  goldTip: string;
+  examplePhrase: string;
+  examplePhonetic: string;
+  examplePt: string;
+  knowledgeCheck: {
+    question: string;
+    options: MiniLessonKnowledgeCheckOption[];
+  };
+}
+
 export interface DailySprintExercise {
+  miniLesson: PedagogicalMiniLesson;
   reading: {
     title: string;
     passage: string;
@@ -25,6 +45,34 @@ export interface DailySprintExercise {
 export const DAILY_SPRINT_BY_LANGUAGE: Record<SupportedLanguage, DailySprintExercise> = {
   // ================= 🇩🇪 ALEMÃO =================
   de: {
+    miniLesson: {
+      objective: "Dominar a estrutura de orações causais com a conjunção subordinativa 'weil'.",
+      concept: "Em alemão, conectivos subordinativos como 'weil' (porque/pois) deslocam o verbo conjugado para o final exato da oração subordinada.",
+      goldTip: "Regra de ouro: 'weil' chuta o verbo conjugado para o final da frase (...weil ich jeden Tag Deutsch lerne).",
+      examplePhrase: "Ich lerne jeden Tag Deutsch, weil ich in Berlin arbeiten möchte.",
+      examplePhonetic: "[ ikh lér-ne iê-den ták dóitsh, vail ikh in bêr-lín ár-bai-ten mêkh-te ]",
+      examplePt: "Estudo alemão todos os dias porque quero trabalhar em Berlim.",
+      knowledgeCheck: {
+        question: "Qual das opções abaixo segue a ordem correta das palavras após a conjunção 'weil'?",
+        options: [
+          {
+            text: "...weil ich trinke morgens gerne Kaffee",
+            correct: false,
+            explanationPt: "Incorreto: com a conjunção 'weil', o verbo conjugado não pode permanecer na segunda posição.",
+          },
+          {
+            text: "...weil ich morgens gerne Kaffee trinke",
+            correct: true,
+            explanationPt: "Perfeito! O verbo conjugado 'trinke' foi enviado com precisão para a última posição da oração subordinada.",
+          },
+          {
+            text: "...weil Kaffee morgens ich trinke gerne",
+            correct: false,
+            explanationPt: "Incorreto: o pronome sujeito 'ich' deve suceder imediatamente a conjunção subordinativa.",
+          },
+        ],
+      },
+    },
     reading: {
       title: "Morgenroutine in Berlin",
       passage:
@@ -58,6 +106,34 @@ export const DAILY_SPRINT_BY_LANGUAGE: Record<SupportedLanguage, DailySprintExer
 
   // ================= 🇪🇸 ESPANHOL =================
   es: {
+    miniLesson: {
+      objective: "Diferenciar com precisão e naturalidade o uso dos verbos 'ser' e 'estar'.",
+      concept: "O verbo 'ser' expressa essência, identidade, profissão e características permanentes. O verbo 'estar' expressa localização espacial, humor e estados temporários.",
+      goldTip: "Regra de ouro: Essência e traços permanentes = 'ser'. Estado passageiro ou localização = 'estar'.",
+      examplePhrase: "Soy de Brasil y trabajo mucho, pero hoy estoy muy tranquilo en Madrid.",
+      examplePhonetic: "[ sói de bra-síl i tra-bá-rho mú-tcho, pê-ro ói es-tói mui tran-quí-lo en ma-dríd ]",
+      examplePt: "Sou do Brasil e trabalho muito, mas hoje estou muito tranquilo em Madrid.",
+      knowledgeCheck: {
+        question: "Para dizer que alguém está temporariamente ocupado neste momento, qual é a opção correta?",
+        options: [
+          {
+            text: "Mi amigo es muy ocupado en este momento",
+            correct: false,
+            explanationPt: "Incorreto: 'ser ocupado' soaria como uma característica permanente e intrínseca da pessoa.",
+          },
+          {
+            text: "Mi amigo está muy ocupado en este momento",
+            correct: true,
+            explanationPt: "¡Excelente! O verbo 'estar' expressa com precisão o estado temporário no momento presente.",
+          },
+          {
+            text: "Mi amigo tiene muy ocupado en este momento",
+            correct: false,
+            explanationPt: "Incorreto: em espanhol não se utiliza o verbo 'tener' para estados momentâneos de ocupação.",
+          },
+        ],
+      },
+    },
     reading: {
       title: "Mañana soleada en Madrid",
       passage:
@@ -91,6 +167,34 @@ export const DAILY_SPRINT_BY_LANGUAGE: Record<SupportedLanguage, DailySprintExer
 
   // ================= 🇮🇹 ITALIANO =================
   it: {
+    miniLesson: {
+      objective: "Dominar a concordância do verbo 'piacere' com substantivos no singular e no plural.",
+      concept: "Em italiano, a estrutura do verbo 'piacere' funciona como 'agrada a mim'. Por isso, concorda com a coisa apreciada: 'mi piace' (singular) e 'mi piacciono' (plural).",
+      goldTip: "Regra de ouro: Se a coisa for uma só: 'mi piace'. Se forem duas ou mais: 'mi piacciono' (ex: 'mi piace la pasta' vs 'mi piacciono i musei')!",
+      examplePhrase: "Mi piace molto viaggiare in treno e mi piacciono le città storiche italiane.",
+      examplePhonetic: "[ mi piá-tche mól-to vi-a-djar in trê-no e mi piá-tchô-no le tchi-tá stó-ri-ke i-ta-liá-ne ]",
+      examplePt: "Eu gosto muito de viajar de trem e gosto das cidades históricas italianas.",
+      knowledgeCheck: {
+        question: "Como dizer 'Eu gosto dos cafés italianos' (cafés no plural) de forma correta?",
+        options: [
+          {
+            text: "Io piaccio molto i caffè italiani",
+            correct: false,
+            explanationPt: "Incorreto: não se conjuga 'piacere' com 'io' para expressar aquilo que você aprecia.",
+          },
+          {
+            text: "Mi piacciono molto i caffè italiani",
+            correct: true,
+            explanationPt: "Bravissimo! Como 'i caffè' é um elemento no plural, a forma correta é 'mi piacciono'.",
+          },
+          {
+            text: "Mi piace molto i caffè italiani",
+            correct: false,
+            explanationPt: "Incorreto: 'mi piace' é restrito exclusivamente a elementos no singular.",
+          },
+        ],
+      },
+    },
     reading: {
       title: "Mattina al bar a Roma",
       passage:
@@ -124,6 +228,34 @@ export const DAILY_SPRINT_BY_LANGUAGE: Record<SupportedLanguage, DailySprintExer
 
   // ================= 🇫🇷 FRANCÊS =================
   fr: {
+    miniLesson: {
+      objective: "Usar com precisão os artigos partitivos ('du', 'de la', 'de l'', 'des') ao falar de consumo.",
+      concept: "O francês sempre exige o artigo partitivo para expressar porções indeterminadas de alimentos e bebidas: 'du' (masculino), 'de la' (feminino), 'de l'' (antes de vogal) e 'des' (plural).",
+      goldTip: "Regra de ouro: Em francês nunca se diz 'comer pão' solto; diz-se 'manger du pain' (comer uma parte do pão)!",
+      examplePhrase: "Le matin, je prends du café chaud avec du lait et de la bonne brioche.",
+      examplePhonetic: "[ lê ma-tãn, jê prran diu ca-fê chô a-vék diu lé e dê la bón bri-ósh ]",
+      examplePt: "Pela manhã, tomo café quente com leite e um bom brioche.",
+      knowledgeCheck: {
+        question: "Como pedir 'água mineral' (eau é palavra feminina iniciada por vogal) de forma correta?",
+        options: [
+          {
+            text: "Je voudrais le eau minérale, s'il vous plaît",
+            correct: false,
+            explanationPt: "Incorreto: 'le' é masculino e causa choque fonético com 'eau'.",
+          },
+          {
+            text: "Je voudrais de l'eau minérale, s'il vous plaît",
+            correct: true,
+            explanationPt: "Parfait! O partitivo elidido 'de l'' é a forma correta antes de palavras iniciadas por vogal.",
+          },
+          {
+            text: "Je voudrais un de eau minérale, s'il vous plaît",
+            correct: false,
+            explanationPt: "Incorreto: essa estrutura sintática não existe na língua francesa.",
+          },
+        ],
+      },
+    },
     reading: {
       title: "Matinée parisienne à Montmartre",
       passage:
@@ -157,6 +289,34 @@ export const DAILY_SPRINT_BY_LANGUAGE: Record<SupportedLanguage, DailySprintExer
 
   // ================= 🇯🇵 JAPONÊS =================
   ja: {
+    miniLesson: {
+      objective: "Compreender o funcionamento das partículas fundamentais 'は' (wa - tópico) e 'を' (o - objeto).",
+      concept: "Em japonês, partículas pós-posicionais determinam a função gramatical: 'は' introduz o grande tópico do enunciado, enquanto 'を' marca o objeto direto que recebe a ação do verbo.",
+      goldTip: "Regra de ouro: A estrutura básica é sempre Tópico (wa) + Objeto (o) + Verbo conjugado no final da oração!",
+      examplePhrase: "わたしは まいにち 日本語を べんきょうします (Watashi wa mainichi Nihongo o benkyou shimasu).",
+      examplePhonetic: "[ ua-ta-shi ua mái-ni-tchi ni-rôn-go o ben-kiô chi-mass ]",
+      examplePt: "Eu estudo japonês todos os dias.",
+      knowledgeCheck: {
+        question: "Qual partícula conecta a palavra 'chá verde' (おちゃ - ocha) ao verbo 'beber' (のみます - nomimasu)?",
+        options: [
+          {
+            text: "おちゃ は のみます (Ocha wa nomimasu)",
+            correct: false,
+            explanationPt: "'は' marcaria o chá como tópico geral ('quanto ao chá...'), não como objeto direto que está sendo bebido.",
+          },
+          {
+            text: "おちゃ を のみます (Ocha o nomimasu)",
+            correct: true,
+            explanationPt: "Sugoi! A partícula 'を' (lida como 'o') indica especificamente o objeto que sofre a ação verbal de beber.",
+          },
+          {
+            text: "おちゃ に のみます (Ocha ni nomimasu)",
+            correct: false,
+            explanationPt: "'に' expressa direção, destino ou horário, não o objeto de consumo.",
+          },
+        ],
+      },
+    },
     reading: {
       title: "Tokyo no asa (Manhã em Tóquio)",
       passage:
@@ -190,6 +350,34 @@ export const DAILY_SPRINT_BY_LANGUAGE: Record<SupportedLanguage, DailySprintExer
 
   // ================= 🇬🇷 GREGO KOINÉ =================
   "el-koine": {
+    miniLesson: {
+      objective: "Identificar o Sujeito (Nominativo) e o Objeto Direto (Acusativo) pelas desinências casuais.",
+      concept: "No Grego do Novo Testamento, a ordem das palavras é livre porque o papel de cada vocábulo é determinado por sua desinência: terminação em '-ος' (sujeito) e '-ον' (objeto direto).",
+      goldTip: "Regra de ouro: Quem pratica a ação tem desinência nominativa (ὁ λόγος); quem sofre a ação tem desinência acusativa (τὸν λόγον)!",
+      examplePhrase: "ὁ μαθητὴς γινώσκει τὴν ἀλήθειαν (Ho mathetés ginóskei tèn alétheian).",
+      examplePhonetic: "[ ro ma-tê-tês gui-nós-kei tên a-lê-têi-an ]",
+      examplePt: "O discípulo conhece a verdade.",
+      knowledgeCheck: {
+        question: "Na oração 'ὁ ποιμὴν φυλάσσει τὸ ποίμνιον', quem está realizando a ação de guardar?",
+        options: [
+          {
+            text: "O rebanho (τὸ ποίμνιον)",
+            correct: false,
+            explanationPt: "O rebanho recebe a ação, figurando como objeto direto.",
+          },
+          {
+            text: "O pastor (ὁ ποιμὴν)",
+            correct: true,
+            explanationPt: "Exato! 'ὁ ποιμὴν' está no caso nominativo (artigo 'ὁ'), sendo o sujeito ativo que protege e guarda.",
+          },
+          {
+            text: "Os lobos da floresta",
+            correct: false,
+            explanationPt: "A oração não cita lobos; o sujeito expresso é o pastor.",
+          },
+        ],
+      },
+    },
     reading: {
       title: "O Prólogo do Evangelho de João",
       passage:
@@ -223,6 +411,34 @@ export const DAILY_SPRINT_BY_LANGUAGE: Record<SupportedLanguage, DailySprintExer
 
   // ================= 🇺🇸 INGLÊS =================
   en: {
+    miniLesson: {
+      objective: "Dominar o contraste entre Present Simple (fatos/hábitos) e Present Continuous (ações neste instante).",
+      concept: "Use o Present Simple para hábitos e fatos constantes ('I work', 'I drink coffee'). Use o Present Continuous para ações que estão em andamento no exato momento da fala ('I am practicing right now').",
+      goldTip: "Regra de ouro: Ação no instante presente sempre usa 'to be' + verbo terminado em '-ing' (am/is/are + -ing)!",
+      examplePhrase: "I usually study at night, but right now I am practicing with my native tutor.",
+      examplePhonetic: "[ ai iú-ju-a-li stâ-di ét náit, bât ráit náu ai ém prék-ti-sing uíd mai nêi-tiv tiú-tor ]",
+      examplePt: "Eu costumo estudar à noite, mas agora estou praticando com meu tutor nativo.",
+      knowledgeCheck: {
+        question: "Qual das frases expressa com perfeição o que você está realizando neste exato momento?",
+        options: [
+          {
+            text: "I study new vocabulary words every single morning",
+            correct: false,
+            explanationPt: "Esta frase descreve sua rotina habitual das manhãs, não a ação em andamento agora.",
+          },
+          {
+            text: "I am learning English with my private tutor right now",
+            correct: true,
+            explanationPt: "Spot on! 'Am learning' combina o verbo auxiliar to be com '-ing' indicando a ação no instante presente.",
+          },
+          {
+            text: "I am learn English with my private tutor right now",
+            correct: false,
+            explanationPt: "Incorreto: após 'am', o verbo principal deve obrigatoriamente levar o sufixo '-ing' ('learning').",
+          },
+        ],
+      },
+    },
     reading: {
       title: "Morning Routine in Chicago",
       passage:
@@ -256,6 +472,34 @@ export const DAILY_SPRINT_BY_LANGUAGE: Record<SupportedLanguage, DailySprintExer
 
   // ================= 🇷🇺 RUSSO =================
   ru: {
+    miniLesson: {
+      objective: "Usar o caso Preposicional (местный падеж) para indicar localização em cidades e edifícios.",
+      concept: "Para responder à pergunta 'Onde?' (Где?), substantivos russos recebem a preposição 'в' (dentro de) ou 'на' (na superfície/evento) e a terminação '-е'.",
+      goldTip: "Regra de ouro: Para dizer 'em um lugar': preposição 'в' + trocar a terminação por '-е' (Москва -> в Москве, театр -> в театре)!",
+      examplePhrase: "Я сейчас нахожусь в уютном кафе в центре Санкт-Петербурга.",
+      examplePhonetic: "[ ya sei-tchás na-kha-jús' v u-yút-nam ka-fê v tsên-tryê sankt-pi-tir-búr-ga ]",
+      examplePt: "Eu estou agora em um café aconchegante no centro de São Petersburgo.",
+      knowledgeCheck: {
+        question: "Como se diz corretamente 'no museu' (museu = музей) em russo?",
+        options: [
+          {
+            text: "в музей (v muzey)",
+            correct: false,
+            explanationPt: "Incorreto: esta forma é acusativo de movimento ('para o museu'), não localização estática.",
+          },
+          {
+            text: "в музее (v muzeye)",
+            correct: true,
+            explanationPt: "Отлично! A terminação final muda para '-e' no caso preposicional de localização estática.",
+          },
+          {
+            text: "на музей (na muzey)",
+            correct: false,
+            explanationPt: "Incorreto: museu é um edifício fechado, exigindo a preposição 'в' com a terminação '-е'.",
+          },
+        ],
+      },
+    },
     reading: {
       title: "Утренний чай в Санкт-Петербурге",
       passage:

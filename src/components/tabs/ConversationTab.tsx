@@ -1,5 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChatMessage, UserProgress, TutorPersona, ContextualSuggestion } from "@/types/language";
+import {
+  ChatMessage,
+  UserProgress,
+  TutorPersona,
+  ContextualSuggestion,
+  LearnerProfileMemory,
+} from "@/types/language";
 import {
   tutorChat,
   generatePhoneticGuide,
@@ -10,16 +16,39 @@ import {
 import {
   speakText,
   stopSpeaking,
+  bargeInInterrupt,
+  registerBargeInListener,
   createSpeechRecognizer,
   isSpeechRecognitionSupported,
   isSpeechSynthesisSupported,
 } from "@/services/speech";
-import { saveChatHistory, loadChatHistory, addXP } from "@/services/storage";
+import {
+  saveChatHistory,
+  loadChatHistory,
+  addXP,
+  loadLearnerMemory,
+  updateLearnerMemoryFromInteraction,
+  clearLearnerMemory,
+} from "@/services/storage";
+import {
+  playMessageSentSound,
+  playOptionSelectSound,
+  playSuccessSound,
+  playCorrectionChime,
+  playMicStartSound,
+  playMicStopSound,
+} from "@/services/audio-effects";
 import { getTutorById } from "@/data/tutors";
 import { getLanguageById } from "@/data/languages";
 import { TutorSelectorModal } from "@/components/TutorSelectorModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Send,
   Mic,
@@ -39,6 +68,8 @@ import {
   X,
   RotateCcw,
   Languages,
+  Brain,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -134,6 +165,25 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     return saved !== null ? saved === "true" : true;
   });
 
+  // Memória Conversacional Tiered do Aluno
+  const [learnerMemory, setLearnerMemory] = useState<LearnerProfileMemory>(() =>
+    loadLearnerMemory(activeTutor.language)
+  );
+  const [showMemoryModal, setShowMemoryModal] = useState(false);
+
+  useEffect(() => {
+    setLearnerMemory(loadLearnerMemory(activeTutor.language));
+  }, [activeTutor.language]);
+
+  // Registro do Listener de Barge-In (interrupção imediata de fala)
+  useEffect(() => {
+    const unregister = registerBargeInListener(() => {
+      setSpeakingMessageId(null);
+      setPreviewSpeakingText(null);
+    });
+    return unregister;
+  }, []);
+
   const handleToggleTranslateFromPt = () => {
     const next = !translateFromPt;
     setTranslateFromPt(next);
@@ -220,16 +270,18 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
       translationPt: tutor.initialGreetingPt,
       timestamp: Date.now(),
     };
-    const newHistory = [...messages, tutorMsg];
-    setMessages(newHistory);
-    saveChatHistory(newHistory);
+    const newMsgs = [...messages, tutorMsg];
+    setMessages(newMsgs);
+    saveChatHistory(newMsgs);
 
     if (autoSpeak && isSpeechSynthesisSupported()) {
-      handleSpeakMessage(tutorMsg.id, tutor.initialGreeting, progress.audioSpeed || 0.85, tutor);
+      handleSpeakMessage(tutorMsg.id, tutor.initialGreeting, progress.audioSpeed, tutor);
     }
+
+    toast.success(`Tutor alterado para ${tutor.name} (${tutor.city})!`);
   };
 
-  // Reproduz áudio de uma mensagem específica
+  // Ouvir mensagem individual
   const handleSpeakMessage = (
     msgId: string,
     text: string,
@@ -237,7 +289,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     overrideTutor?: TutorPersona
   ) => {
     if (speakingMessageId === msgId) {
-      stopSpeaking();
+      bargeInInterrupt();
       setSpeakingMessageId(null);
       return;
     }
@@ -258,14 +310,15 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     });
   };
 
-  // Envio de mensagem
+  // Envio de mensagem com gravação de som procedural e injeção de memória
   const handleSend = async (textToSend?: string) => {
     const query = (textToSend || input).trim();
     if (!query || isLoading) return;
 
-    stopSpeaking();
+    bargeInInterrupt();
     setSpeakingMessageId(null);
     setPreviewSpeakingText(null);
+    playMessageSentSound();
 
     setInput("");
     const isPt = translateFromPt || isPortugueseText(query, activeTutor.language);
@@ -287,7 +340,13 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await tutorChat(query, messages, progress.geminiApiKey, activeTutor);
+      const response = await tutorChat(
+        query,
+        messages,
+        progress.geminiApiKey,
+        activeTutor,
+        learnerMemory
+      );
 
       if (response.userTranslatedText) {
         userMsg.text = response.userTranslatedText;
@@ -302,6 +361,19 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
       }
       if (response.suggestedReplies && response.suggestedReplies.length > 0) {
         setCurrentSuggestions(response.suggestedReplies);
+      }
+
+      // Atualiza a memória conversacional orgânica do aluno
+      const updatedMem = updateLearnerMemoryFromInteraction(
+        activeTutor.language,
+        activeTutor.id,
+        query,
+        response.correction
+      );
+      setLearnerMemory(updatedMem);
+
+      if (response.correction?.hasError) {
+        playCorrectionChime();
       }
 
       const tutorMsgId = `tutor-${Date.now()}`;
@@ -340,7 +412,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     }
   };
 
-  // Entrada por voz (STT)
+  // Entrada por voz (STT) com Barge-In instantâneo e feedback sonoro
   const handleStartRecording = () => {
     if (!isSpeechRecognitionSupported()) {
       toast.error(
@@ -349,8 +421,9 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
       return;
     }
 
-    stopSpeaking();
+    bargeInInterrupt(); // Barge-in imediato
     setSpeakingMessageId(null);
+    playMicStartSound();
 
     try {
       if (recognizerRef.current) {
@@ -373,16 +446,19 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
           onFinal: (finalText) => {
             setInput(finalText);
             setIsRecording(false);
+            playMicStopSound();
             if (finalText.trim()) {
               handleSend(finalText.trim());
             }
           },
           onError: (err) => {
             setIsRecording(false);
+            playMicStopSound();
             toast.error(err);
           },
           onEnd: () => {
             setIsRecording(false);
+            playMicStopSound();
           },
         },
         undefined,
@@ -397,11 +473,13 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     } catch (e) {
       console.error(e);
       setIsRecording(false);
+      playMicStopSound();
       toast.error("Não foi possível iniciar o microfone.");
     }
   };
 
   const handleStopRecording = () => {
+    playMicStopSound();
     if (recognizerRef.current) {
       try {
         recognizerRef.current.stop();
@@ -565,6 +643,22 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
         {/* Controles de Leitura, Áudio e Limpeza */}
         <div className="flex items-center gap-1 shrink-0">
+          {/* BOTÃO DE MEMÓRIA CONVERSACIONAL DO ALUNO */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowMemoryModal(true)}
+            className="h-8 min-h-[40px] px-2 text-[10px] gap-1 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary font-medium active:scale-95 cursor-pointer"
+            title="Ver tópicos e memória conversacional acompanhados pelo tutor"
+            aria-label="Ver memória conversacional do aluno"
+          >
+            <Brain className="h-3.5 w-3.5 text-primary" />
+            <span className="hidden xs:inline">Memória</span>
+            <span className="text-[9px] bg-primary/20 px-1 rounded-full font-bold">
+              {learnerMemory.topicsDiscussed.length}
+            </span>
+          </Button>
+
           {/* 1. CONTROLE DIRETO DE VELOCIDADE (0.7x, 0.85x, 1.0x, 1.2x) */}
           <Button
             variant="outline"
@@ -1111,6 +1205,50 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         </button>
       </div>
 
+      {/* Indicador Ativo de Turnos e Barge-In (Voice AI Engine) */}
+      {(isRecording || speakingMessageId || isLoading) && (
+        <div className="px-3 py-1.5 bg-background/95 border-t border-border/80 flex items-center justify-between text-[11px] animate-in fade-in transition-all">
+          {isRecording ? (
+            <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+              </span>
+              <span>
+                Sua vez: Gravando sua voz em {translateFromPt ? "Português 🇧🇷" : activeLanguage.name}...
+              </span>
+            </div>
+          ) : speakingMessageId ? (
+            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold">
+              <Volume2 className="h-3.5 w-3.5 animate-pulse" />
+              <span>
+                {activeTutor.name} falando • Toque no mic para interromper (Barge-In)
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-semibold">
+              <Sparkles className="h-3.5 w-3.5 animate-spin" />
+              <span>{activeTutor.name} pensando na resposta personalizada...</span>
+            </div>
+          )}
+
+          {speakingMessageId && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                bargeInInterrupt();
+                setSpeakingMessageId(null);
+              }}
+              className="h-6 text-[10px] text-muted-foreground hover:text-foreground px-2"
+            >
+              Parar fala
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Barra de Entrada (Texto + Microfone) */}
       <form
         onSubmit={(e) => {
@@ -1175,6 +1313,117 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         onSelectTutor={handleSelectTutor}
         currentLanguage={activeLanguage.id}
       />
+
+      {/* Modal de Memória Conversacional do Aluno */}
+      <Dialog open={showMemoryModal} onOpenChange={setShowMemoryModal}>
+        <DialogContent className="max-w-md w-[92vw] rounded-2xl p-5 sm:p-6 max-h-[85vh] overflow-y-auto">
+          <DialogHeader className="text-left">
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <Brain className="h-5 w-5 text-primary" />
+              <span>Memória do Aluno • {activeLanguage.flag} {activeLanguage.name}</span>
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              Tópicos e histórico pedagógico contínuo lembrados por {activeTutor.name} entre sessões.
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Tópicos Conversados */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <span>💬 Tópicos Visitados</span>
+                <span className="text-[10px] bg-primary/15 text-primary px-1.5 rounded-full font-bold">
+                  {learnerMemory.topicsDiscussed.length}
+                </span>
+              </span>
+              {learnerMemory.topicsDiscussed.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic bg-muted/40 p-2.5 rounded-xl">
+                  Nenhum tópico registrado ainda. Converse com {activeTutor.name} para construir sua memória!
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {learnerMemory.topicsDiscussed.map((t, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2 rounded-lg bg-card border border-border/60 text-xs"
+                    >
+                      <span className="font-medium text-foreground">{t.topic}</span>
+                      <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                        {t.count}x discutido
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Pontos Gramaticais Sob Fixação */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <span>🎯 Reforço Positivo & Gramática</span>
+                <span className="text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 px-1.5 rounded-full font-bold">
+                  {learnerMemory.grammarSlips.length}
+                </span>
+              </span>
+              {learnerMemory.grammarSlips.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic bg-muted/40 p-2.5 rounded-xl">
+                  Sem deslizes gramaticais recentes. Parabéns pelo desempenho!
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {learnerMemory.grammarSlips.map((s, idx) => (
+                    <div
+                      key={idx}
+                      className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs space-y-0.5"
+                    >
+                      <p className="font-medium text-foreground">{s.explanationPt}</p>
+                      <span className="text-[10px] text-muted-foreground">
+                        Identificado {s.count}x durante as conversas
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Anotação do Tutor */}
+            {learnerMemory.tutorNotes[activeTutor.id] && (
+              <div className="p-2.5 rounded-xl bg-primary/5 border border-primary/20 space-y-1">
+                <span className="text-[11px] font-bold text-primary flex items-center gap-1">
+                  <span>📝 Nota de {activeTutor.name}:</span>
+                </span>
+                <p className="text-xs text-foreground">
+                  {learnerMemory.tutorNotes[activeTutor.id]}
+                </p>
+              </div>
+            )}
+
+            {/* Ação de Limpeza */}
+            <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const fresh = clearLearnerMemory(activeTutor.language);
+                  setLearnerMemory(fresh);
+                  toast.info("Memória do aluno reiniciada.");
+                }}
+                className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                Limpar memória
+              </Button>
+
+              <Button
+                size="sm"
+                onClick={() => setShowMemoryModal(false)}
+                className="text-xs font-bold"
+              >
+                Concluir
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -14,6 +14,11 @@ import {
   toggleTop200ReviewQueue,
 } from "@/services/storage";
 import { getTop200Words, TopWordCard, Top200Progress } from "@/data/top200";
+import {
+  playCardFlipSound,
+  playSuccessSound,
+  playOptionSelectSound,
+} from "@/services/audio-effects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +73,14 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [showCategoryChart, setShowCategoryChart] = useState<boolean>(false);
 
+  // Estado compartilhado de virada do card
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  const toggleFlip = () => {
+    playCardFlipSound();
+    setIsFlipped((prev) => !prev);
+  };
+
   // ================= ESTADOS DE TEMAS & IA =================
   const [themeInput, setThemeInput] = useState("");
   const [currentTheme, setCurrentTheme] = useState("Viagem");
@@ -77,9 +90,6 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   });
   const [customIndex, setCustomIndex] = useState(0);
   const [isLoadingTheme, setIsLoadingTheme] = useState(false);
-
-  // Estado compartilhado de virada do card
-  const [isFlipped, setIsFlipped] = useState(false);
 
   // Sincronização ao trocar idioma
   useEffect(() => {
@@ -150,6 +160,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
 
   // ================= NAVEGAÇÃO E REPETIÇÃO DO TOP 200 =================
   const advanceTopSequence = (baseProgress?: Top200Progress, nextTargetIndex?: number) => {
+    playCardFlipSound();
     setIsFlipped(false);
     const activeProg = baseProgress || topProgress;
 
@@ -191,6 +202,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   };
 
   const handlePrevTop = () => {
+    playCardFlipSound();
     setIsFlipped(false);
     setIsReviewCard(false);
     const prevIdx = topIndex > 0 ? topIndex - 1 : top200List.length - 1;
@@ -205,6 +217,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
 
   const handleToggleReviewQueue = () => {
     if (!currentTopWord) return;
+    playOptionSelectSound();
     const updated = toggleTop200ReviewQueue(activeLang, currentTopWord.id);
     setTopProgress(updated);
     if (updated.reviewQueue.includes(currentTopWord.id)) {
@@ -218,6 +231,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
 
   const handleMarkTopMastered = () => {
     if (!currentTopWord) return;
+    playSuccessSound();
     const isAlready = topProgress.masteredIds.includes(currentTopWord.id);
     const updated = markTop200WordMastered(activeLang, currentTopWord.id);
     setTopProgress(updated);
@@ -274,6 +288,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   };
 
   const handleCustomNext = () => {
+    playCardFlipSound();
     setIsFlipped(false);
     if (customIndex < customCards.length - 1) {
       setCustomIndex(customIndex + 1);
@@ -283,6 +298,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   };
 
   const handleCustomPrev = () => {
+    playCardFlipSound();
     setIsFlipped(false);
     if (customIndex > 0) {
       setCustomIndex(customIndex - 1);
@@ -294,6 +310,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   const handleCustomMastered = () => {
     const c = customCards[customIndex];
     if (!c) return;
+    playSuccessSound();
     const updated = addXP(15);
     onUpdateProgress({
       ...updated,
@@ -445,11 +462,11 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
             <div
               role="button"
               tabIndex={0}
-              onClick={() => setIsFlipped(!isFlipped)}
+              onClick={toggleFlip}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  setIsFlipped(!isFlipped);
+                  toggleFlip();
                 }
               }}
               aria-label="Virar cartão de estudo. Toque ou pressione Enter para alternar entre palavra e tradução."
@@ -701,11 +718,11 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
             <div
               role="button"
               tabIndex={0}
-              onClick={() => setIsFlipped(!isFlipped)}
+              onClick={toggleFlip}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  setIsFlipped(!isFlipped);
+                  toggleFlip();
                 }
               }}
               aria-label="Virar cartão de estudo. Toque ou pressione Enter para ver a tradução."
@@ -801,7 +818,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsFlipped(!isFlipped)}
+              onClick={toggleFlip}
               className="flex-1 text-xs h-11 min-h-[44px] rounded-2xl gap-1.5 active:scale-95 cursor-pointer"
               aria-label="Alternar entre frente e verso do cartão"
             >

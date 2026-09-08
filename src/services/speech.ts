@@ -167,6 +167,26 @@ export function speakText(text: string, options: SpeakOptions = {}): void {
   }
 }
 
+export function isSpeaking(): boolean {
+  if (!isSpeechSynthesisSupported()) return false;
+  try {
+    return window.speechSynthesis.speaking || window.speechSynthesis.pending;
+  } catch {
+    return false;
+  }
+}
+
+// Listeners de interrupção (Barge-in)
+type BargeInListener = () => void;
+const bargeInListeners: Set<BargeInListener> = new Set();
+
+export function registerBargeInListener(listener: BargeInListener): () => void {
+  bargeInListeners.add(listener);
+  return () => {
+    bargeInListeners.delete(listener);
+  };
+}
+
 export function stopSpeaking(): void {
   if (!isSpeechSynthesisSupported()) return;
   try {
@@ -174,6 +194,21 @@ export function stopSpeaking(): void {
   } catch (e) {
     console.error("Erro ao interromper áudio:", e);
   }
+}
+
+/**
+ * Interrupção de fala com Barge-in limpo:
+ * Cancela imediatamente o TTS e avisa componentes que o usuário assumiu o turno da conversa.
+ */
+export function bargeInInterrupt(): void {
+  stopSpeaking();
+  bargeInListeners.forEach((listener) => {
+    try {
+      listener();
+    } catch {
+      // ignora
+    }
+  });
 }
 
 export interface SpeechRecognizerHandlers {
