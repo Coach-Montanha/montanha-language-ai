@@ -30,7 +30,10 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
   const activeLang: SupportedLanguage = progress.selectedLanguage || "en";
   const langDef = getLanguageById(activeLang);
   const activeTutors = getTutorsForLanguage(activeLang);
-  const activeTutor = activeTutors[0] || { name: "Tutor", gender: "male" };
+  const activeTutor =
+    (progress.selectedTutorId ? activeTutors.find((t) => t.id === progress.selectedTutorId) : null) ||
+    activeTutors[0] ||
+    { name: "Tutor", gender: "male" as const, speechPitch: 1.0 };
 
   const samplePhrases = getBreakdownPhrasesForLanguage(activeLang);
   const [inputSentence, setInputSentence] = useState(samplePhrases[0] || "");
@@ -77,6 +80,7 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
       rate,
       lang: langDef.speechLangCode,
       gender: activeTutor.gender,
+      pitch: activeTutor.speechPitch,
     });
   };
 

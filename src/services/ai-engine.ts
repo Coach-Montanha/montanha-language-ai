@@ -3571,6 +3571,83 @@ const POS_LEXICON: Record<
   parle: { pos: "Verbo (3ª pessoa)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "fala" },
   très: { pos: "Advérbio de Intensidade", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "muito" },
   gare: { pos: "Substantivo Feminino", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "estação ferroviária" },
+
+  // --- 🇷🇺 RUSSO ---
+  я: { pos: "Pronome Pessoal (1ª pess.)", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Eu" },
+  ты: { pos: "Pronome Pessoal (2ª pess.)", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Você / Tu" },
+  он: { pos: "Pronome Pessoal (3ª pess. masc.)", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Ele" },
+  она: { pos: "Pronome Pessoal (3ª pess. fem.)", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Ela" },
+  оно: { pos: "Pronome Pessoal (3ª pess. neutro)", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Ele / Ela (neutro)" },
+  мы: { pos: "Pronome Pessoal (1ª pess. pl.)", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Nós" },
+  вы: { pos: "Pronome Pessoal (formal / plural)", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Vocês / O Senhor" },
+  они: { pos: "Pronome Pessoal (3ª pess. pl.)", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "Eles / Elas" },
+  изучаю: { pos: "Verbo no Presente (1ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "estudo / aprendo" },
+  изучает: { pos: "Verbo no Presente (3ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "estuda / aprende" },
+  изучать: { pos: "Verbo no Infinitivo", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "estudar / aprender" },
+  говорит: { pos: "Verbo no Presente (3ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "fala" },
+  говорю: { pos: "Verbo no Presente (1ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "falo" },
+  читает: { pos: "Verbo no Presente (3ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "lê" },
+  работаем: { pos: "Verbo no Presente (1ª pess. pl.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "trabalhamos" },
+  хочу: { pos: "Verbo no Presente (1ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "quero" },
+  заказать: { pos: "Verbo no Infinitivo (Perfectivo)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "pedir / encomendar" },
+  находится: { pos: "Verbo Reflexivo (3ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "fica / localiza-se" },
+  скажите: { pos: "Verbo no Modo Imperativo", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "diga / me diga" },
+  верь: { pos: "Verbo no Modo Imperativo", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "acredite" },
+  иди: { pos: "Verbo no Modo Imperativo", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "vá / siga" },
+  стараюсь: { pos: "Verbo Reflexivo (1ª pess.)", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "tento / esforço-me" },
+  практиковать: { pos: "Verbo no Infinitivo", badge: "Verbo", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800", trans: "praticar" },
+  русский: { pos: "Adjetivo Masculino", badge: "Adjetivo", color: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800", trans: "russo" },
+  язык: { pos: "Substantivo Masculino", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "língua / idioma" },
+  каждый: { pos: "Pronome Adjetivo", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "cada / todo" },
+  день: { pos: "Substantivo Masculino (Tempo)", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "dia" },
+  с: { pos: "Preposição (rege Instrumental)", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "com / desde" },
+  со: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "com" },
+  интересом: { pos: "Substantivo (Caso Instrumental)", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "interesse" },
+  очень: { pos: "Advérbio de Intensidade", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "muito" },
+  красиво: { pos: "Advérbio de Modo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "bonito / lindamente" },
+  потому: { pos: "Parte de Conjunção Composta", badge: "Conjunção", color: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800", trans: "por isso" },
+  что: { pos: "Conjunção Subordinativa", badge: "Conjunção", color: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800", trans: "que / porque" },
+  много: { pos: "Advérbio de Quantidade", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "muito / bastante" },
+  пожалуйста: { pos: "Expressão de Cortesia", badge: "Cortesia", color: "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800", trans: "por favor" },
+  где: { pos: "Advérbio Interrogativo", badge: "Interrogativo", color: "bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800", trans: "onde" },
+  станция: { pos: "Substantivo Feminino", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "estação" },
+  метро: { pos: "Substantivo Neutro Invariável", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "metrô" },
+  над: { pos: "Preposição (rege Instrumental)", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "em / sobre" },
+  этим: { pos: "Pronome Demonstrativo (Instrumental)", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "este" },
+  проектом: { pos: "Substantivo Masculino (Instrumental)", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "projeto" },
+  самого: { pos: "Pronome Definidor (Genitivo)", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "próprio / mesmo" },
+  утра: { pos: "Substantivo Neutro (Genitivo de 'утро')", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "manhã" },
+  горячий: { pos: "Adjetivo Masculino", badge: "Adjetivo", color: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800", trans: "quente" },
+  чёрный: { pos: "Adjetivo Masculino", badge: "Adjetivo", color: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800", trans: "preto" },
+  чай: { pos: "Substantivo Masculino", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "chá" },
+  лимоном: { pos: "Substantivo Masculino (Instrumental)", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "limão" },
+  всегда: { pos: "Advérbio de Tempo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "sempre" },
+  свои: { pos: "Pronome Possessivo Reflexivo", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "suas próprias" },
+  силы: { pos: "Substantivo Feminino Plural", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "forças" },
+  и: { pos: "Conjunção Aditiva", badge: "Conjunção", color: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800", trans: "e" },
+  уверенно: { pos: "Advérbio de Modo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "com confiança" },
+  вперёд: { pos: "Advérbio de Direção", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "em frente" },
+  понемногу: { pos: "Advérbio de Modo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "aos poucos" },
+  увлекательное: { pos: "Adjetivo Neutro", badge: "Adjetivo", color: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800", trans: "fascinante" },
+  путешествие: { pos: "Substantivo Neutro", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "viagem / jornada" },
+  это: { pos: "Partícula / Pronome", badge: "Pronome", color: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800", trans: "é / isso" },
+  в: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "em / para" },
+  на: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "em / sobre" },
+  к: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "para" },
+  по: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "por / em" },
+  из: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "de / desde" },
+  у: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "junto a / tem" },
+  о: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "sobre" },
+  об: { pos: "Preposição", badge: "Preposição", color: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800", trans: "sobre" },
+  как: { pos: "Advérbio / Conjunção", badge: "Interrogativo", color: "bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800", trans: "como" },
+  дела: { pos: "Substantivo Neutro Plural", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "coisas / assuntos" },
+  привет: { pos: "Saudação Informal", badge: "Saudação", color: "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800", trans: "olá / oi" },
+  здравствуйте: { pos: "Saudação Formal", badge: "Saudação", color: "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800", trans: "olá / tenha saúde" },
+  спасибо: { pos: "Expressão de Gratidão", badge: "Cortesia", color: "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800", trans: "obrigado(a)" },
+  хорошо: { pos: "Advérbio / Predicativo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "bom / bem" },
+  отлично: { pos: "Advérbio de Modo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "excelente / ótimo" },
+  погода: { pos: "Substantivo Feminino", badge: "Substantivo", color: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800", trans: "clima / tempo" },
+  сегодня: { pos: "Advérbio de Tempo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "hoje" },
 };
 
 export async function breakdownSentence(
@@ -3585,6 +3662,7 @@ export async function breakdownSentence(
     es: "Spanish (Español)",
     it: "Italian (Italiano)",
     fr: "French (Français)",
+    ru: "Russian (Русский - with Cyrillic script)",
     ja: "Japanese (日本語)",
     "el-koine": "Biblical Koine Greek",
   };
@@ -3646,10 +3724,10 @@ Return ONLY a valid JSON object with this exact structure:
     }
   }
 
-  // Motor Léxico Local Multilíngue
-  const words = clean.match(/[\w'-]+|[.,!?;]/g) || [clean];
+  // Motor Léxico Local Multilíngue (Unicode-aware para cirílico, grego, acentos e kanji)
+  const words = clean.match(/[\p{L}\p{N}'-]+|[.,!?;:«»"—"()¿¡]/gu) || clean.split(/\s+/).filter(Boolean);
   const tokens: WordToken[] = words.map((w) => {
-    const isPunctuation = /^[.,!?;]$/.test(w);
+    const isPunctuation = /^[.,!?;:«»"—"()¿¡]$/.test(w);
     if (isPunctuation) {
       return {
         word: w,
@@ -3685,8 +3763,26 @@ Return ONLY a valid JSON object with this exact structure:
   let naturalTranslation = "Tradução compreensiva em português.";
   const lowerSentence = clean.toLowerCase();
 
+  // Russo (Русский)
+  if (lowerSentence.includes("я изучаю русский язык")) {
+    naturalTranslation = "Eu estudo a língua russa todos os dias com interesse.";
+  } else if (lowerSentence.includes("она говорит очень красиво")) {
+    naturalTranslation = "Ela fala muito bonito, porque lê bastante.";
+  } else if (lowerSentence.includes("где находится станция метро") || lowerSentence.includes("станция метро")) {
+    naturalTranslation = "Diga-me, por favor, onde fica a estação de metrô?";
+  } else if (lowerSentence.includes("мы работаем над этим проектом")) {
+    naturalTranslation = "Estamos trabalhando neste projeto desde a manhã.";
+  } else if (lowerSentence.includes("горячий чёрный чай") || lowerSentence.includes("заказать горячий")) {
+    naturalTranslation = "Eu quero pedir um chá preto quente com limão.";
+  } else if (lowerSentence.includes("всегда верь в свои силы") || lowerSentence.includes("иди вперёд")) {
+    naturalTranslation = "Acredite sempre nas suas forças e siga em frente com confiança.";
+  } else if (lowerSentence.includes("практиковать русский язык")) {
+    naturalTranslation = "Tento praticar a língua russa todos os dias aos poucos.";
+  } else if (lowerSentence.includes("увлекательное путешествие")) {
+    naturalTranslation = "Estudar a língua russa é uma jornada fascinante!";
+  }
   // Alemão
-  if (lowerSentence.includes("ich lerne heute deutsch mit smart language")) {
+  else if (lowerSentence.includes("ich lerne heute deutsch mit smart language")) {
     naturalTranslation = "Estou aprendendo alemão com o Smart Language hoje.";
   } else if (lowerSentence.includes("sie spricht sehr gut, weil sie jeden tag übt")) {
     naturalTranslation = "Ela fala muito bem porque pratica todos os dias.";
@@ -3717,6 +3813,32 @@ Return ONLY a valid JSON object with this exact structure:
   } else if (lowerSentence.includes("où se trouve la gare")) {
     naturalTranslation = "Você poderia me dizer onde fica a estação, por favor?";
   }
+  // Japonês (Rōmaji)
+  else if (lowerSentence.includes("watashi wa kyou smart language")) {
+    naturalTranslation = "Hoje estou aprendendo japonês com o Smart Language.";
+  } else if (lowerSentence.includes("kanojo wa mainichi renshuu")) {
+    naturalTranslation = "Ela fala muito bem porque pratica todos os dias.";
+  } else if (lowerSentence.includes("eki wa doko desu ka")) {
+    naturalTranslation = "Com licença, onde fica a estação?";
+  } else if (lowerSentence.includes("asa kara kono purojekuto")) {
+    naturalTranslation = "Estamos trabalhando neste projeto desde a manhã.";
+  } else if (lowerSentence.includes("atatakai koohii to miruku")) {
+    naturalTranslation = "Gostaria de um café quente com leite, por favor.";
+  } else if (lowerSentence.includes("jibun o shinjite")) {
+    naturalTranslation = "Acreditar em si mesmo e seguir em frente com determinação é o caminho.";
+  }
+  // Grego Koiné
+  else if (lowerSentence.includes("ἐν ἀρχῇ ἦν ὁ λόγος")) {
+    naturalTranslation = "No princípio era a Palavra (o Verbo), e a Palavra estava com Deus, e a Palavra era Deus.";
+  } else if (lowerSentence.includes("τὸ φῶς τοῦ κόσμου")) {
+    naturalTranslation = "Eu sou a luz do mundo; quem me segue de modo algum andará na escuridão.";
+  } else if (lowerSentence.includes("πάντα δι' αὐτοῦ ἐγένετο")) {
+    naturalTranslation = "Todas as coisas foram feitas por meio dele, e sem ele nada do que foi feito se fez.";
+  } else if (lowerSentence.includes("χάρις ὑμῖν καὶ εἰρήνη")) {
+    naturalTranslation = "Graça e paz a vós da parte de Deus nosso Pai e do Senhor Jesus Cristo.";
+  } else if (lowerSentence.includes("μακάριοι οἱ καθαροὶ")) {
+    naturalTranslation = "Bem-aventurados os puros de coração, porque eles contemplarão a Deus.";
+  }
   // Inglês
   else if (lowerSentence.includes("i am learning english with smart language today")) {
     naturalTranslation = "Estou aprendendo inglês com o Smart Language hoje.";
@@ -3734,7 +3856,9 @@ Return ONLY a valid JSON object with this exact structure:
   }
 
   let explanation = `Análise morfológica de cada vocábulo em ${targetLangName}.`;
-  if (language === "de") {
+  if (language === "ru") {
+    explanation = "No russo, as palavras se flexionam através de 6 casos gramaticais que definem a função sintática (sujeito, objeto, posse, instrumento etc.). A ordem das palavras é flexível e o idioma não possui artigos.";
+  } else if (language === "de") {
     explanation = "Em alemão, a estrutura básica coloca os verbos em posições fixas (posição 2 em orações principais, e no final em orações com conjunções como 'weil').";
   } else if (language === "es") {
     explanation = "Em espanhol, a ordem é Sujeito + Verbo + Objeto, com grande flexibilidade e rica conjugação verbal.";
@@ -3742,6 +3866,10 @@ Return ONLY a valid JSON object with this exact structure:
     explanation = "Em italiano, a estrutura segue a musicalidade do idioma, com artigos definidos e contrações preposicionais expressivas.";
   } else if (language === "fr") {
     explanation = "Em francês, a clareza e elegância estrutural regem a união entre artigos, pronomes e verbos conjugados.";
+  } else if (language === "ja") {
+    explanation = "No japonês, a ordem usual das frases é SOV (Sujeito-Objeto-Verbo), com o auxílio de partículas que definem o papel gramatical das palavras.";
+  } else if (language === "el-koine") {
+    explanation = "No Grego Koiné, as declinações nominais e formas verbais ricas determinam a função sintática independentemente da ordem das palavras.";
   }
 
   return {
