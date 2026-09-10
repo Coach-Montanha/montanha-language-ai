@@ -42,7 +42,9 @@ import {
   BarChart3,
   ChevronDown,
   ChevronUp,
+  BookOpen,
 } from "lucide-react";
+import { PillFilter } from "@/components/ui/pill-filter";
 import { toast } from "sonner";
 
 interface FlashcardsTabProps {
@@ -693,24 +695,12 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
               </Button>
             </form>
 
-            {/* Atalhos Rápidos */}
-            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-              {quickThemes.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => handleGenerateTheme(t.key)}
-                  aria-label={`Carregar tema ${t.label}`}
-                  className={`shrink-0 px-3 py-1.5 min-h-[38px] rounded-full text-[11px] font-medium border transition-all duration-200 active:scale-95 cursor-pointer ${
-                    currentTheme.toLowerCase().includes(t.key)
-                      ? "border-primary bg-primary/10 text-primary font-bold"
-                      : "border-border bg-card hover:bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+            {/* Atalhos Rápidos com ReUI PillFilter */}
+            <PillFilter
+              options={quickThemes.map((t) => ({ id: t.key, label: t.label }))}
+              selectedId={quickThemes.find((t) => currentTheme.toLowerCase().includes(t.key))?.key || ""}
+              onSelect={(key) => handleGenerateTheme(key)}
+            />
           </div>
 
           {/* Cartão de Tema */}

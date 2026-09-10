@@ -11,6 +11,7 @@ import {
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { LoginScreen } from "@/components/LoginScreen";
+import { ActivityTimelineModal } from "@/components/ActivityTimelineModal";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { ConversationTab } from "@/components/tabs/ConversationTab";
 import { ScenarioTab } from "@/components/tabs/ScenarioTab";
@@ -42,6 +43,7 @@ function SmartLanguageApp() {
   const [isDailySprintOpen, setIsDailySprintOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
+  const [isTimelineOpen, setIsTimelineOpen] = useState(false);
 
   const handleSelectLanguage = (lang: LanguageDefinition) => {
     const defaultTutor = getDefaultTutorForLanguage(lang.id);
@@ -162,6 +164,7 @@ function SmartLanguageApp() {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onLogout={handleLogout}
         onOpenLanguageSelector={() => setIsLanguageModalOpen(true)}
+        onOpenTimeline={() => setIsTimelineOpen(true)}
       />
 
       {/* Conteúdo Principal com as 5 Abas */}
@@ -224,12 +227,19 @@ function SmartLanguageApp() {
         onUpdateProgress={handleUpdateProgress}
       />
 
-      {/* Modal: Escolha do Idioma de Estudo (Inglês, Espanhol, Japonês, Grego, Italiano, Francês) */}
+      {/* Modal: Escolha do Idioma de Estudo */}
       <LanguageSelectorModal
         open={isLanguageModalOpen}
         onOpenChange={setIsLanguageModalOpen}
         selectedLanguageId={progress.selectedLanguage || "en"}
         onSelectLanguage={handleSelectLanguage}
+      />
+
+      {/* Modal: Linha do Tempo de Aprendizado (ReUI Timeline) */}
+      <ActivityTimelineModal
+        open={isTimelineOpen}
+        onOpenChange={setIsTimelineOpen}
+        progress={progress}
       />
 
       {/* Banner / Prompt de Instalação PWA para Celular */}

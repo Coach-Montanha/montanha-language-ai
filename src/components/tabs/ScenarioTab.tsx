@@ -54,6 +54,8 @@ import {
   Layers,
   Sparkle,
 } from "lucide-react";
+import { Stepper, StepItem } from "@/components/ui/stepper";
+import { Rating } from "@/components/ui/rating";
 import { toast } from "sonner";
 
 interface ScenarioTabProps {
@@ -138,6 +140,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customTitle, setCustomTitle] = useState("");
   const [customRole, setCustomRole] = useState("");
+  const [scenarioRating, setScenarioRating] = useState<number>(5);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -381,6 +384,21 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
     activeMission.id
   );
 
+  const scenarioSteps: StepItem[] = [
+    { label: "Abertura" },
+    { label: "Sua Resposta" },
+    { label: "Diálogo Ativo" },
+    { label: "Sobreviveu!" },
+  ];
+
+  const currentScenarioStep = isMissionCompleted
+    ? 4
+    : messages.length <= 1
+    ? 1
+    : messages.length === 2
+    ? 2
+    : 3;
+
   return (
     <div className="flex flex-col h-[calc(100vh-7.5rem)] max-w-lg mx-auto w-full">
       {/* 1. CABEÇALHO DA TRILHA DE SITUAÇÕES REAIS */}
@@ -496,7 +514,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
       </div>
 
       {/* 2. BRIEFING DA SITUAÇÃO (História, Objetivo e Dica do Tutor) */}
-      <div className="px-3 py-2 bg-muted/40 border-b border-border text-[11px] space-y-1.5">
+      <div className="px-3 py-2 bg-muted/40 border-b border-border text-[11px] space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 flex-wrap">
             <Badge variant="outline" className="text-[9px] bg-background font-semibold">
@@ -521,6 +539,37 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
             <span>{isMissionCompleted ? "Concluída!" : "Concluir Situação"}</span>
           </Button>
         </div>
+
+        {/* Indicador de Progresso da Situação com ReUI Stepper */}
+        <Stepper
+          steps={scenarioSteps}
+          currentStep={currentScenarioStep}
+          variant="compact"
+          className="pt-0.5"
+        />
+
+        {/* Avaliação ao Sobreviver com ReUI Rating */}
+        {isMissionCompleted && (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5 flex items-center justify-between animate-in fade-in">
+            <div>
+              <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 block">
+                🎉 Situação Sobrevivida!
+              </span>
+              <span className="text-[9px] text-muted-foreground">
+                Como foi seu domínio neste diálogo?
+              </span>
+            </div>
+            <Rating
+              variant="stars"
+              size="sm"
+              value={scenarioRating}
+              onValueChange={(val) => {
+                setScenarioRating(val);
+                toast.success("Feedback registrado! Prática consolidada.");
+              }}
+            />
+          </div>
+        )}
 
         {/* História e contexto realista */}
         <p className="text-[10px] text-muted-foreground leading-snug line-clamp-2">

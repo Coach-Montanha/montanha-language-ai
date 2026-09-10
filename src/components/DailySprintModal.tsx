@@ -41,6 +41,8 @@ import {
   Check,
   HelpCircle,
 } from "lucide-react";
+import { Stepper, StepItem } from "@/components/ui/stepper";
+import { Rating } from "@/components/ui/rating";
 import { toast } from "sonner";
 
 interface DailySprintModalProps {
@@ -64,6 +66,8 @@ export const DailySprintModal: React.FC<DailySprintModalProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
+  const [userRating, setUserRating] = useState<number>(5);
+
   const langDef = getLanguageById(language);
   const tutors = getTutorsForLanguage(language);
   const activeTutor = tutors[0] || { name: "Tutor", gender: "male" };
@@ -73,6 +77,14 @@ export const DailySprintModal: React.FC<DailySprintModalProps> = ({
   const readingExercise = exercise.reading;
   const listeningExercise = exercise.listening;
   const speakingExercise = exercise.speaking;
+
+  const SPRINT_STEPS: StepItem[] = [
+    { label: "Lição", icon: <BookOpen className="h-3 w-3" /> },
+    { label: "Leitura", icon: <GraduationCap className="h-3 w-3" /> },
+    { label: "Escuta", icon: <Headphones className="h-3 w-3" /> },
+    { label: "Fala", icon: <Mic className="h-3 w-3" /> },
+    { label: "Vitória", icon: <Trophy className="h-3 w-3 text-amber-500" /> },
+  ];
 
   const handleSelectOption = (idx: number, isRight: boolean, explanation?: string) => {
     playOptionSelectSound();
@@ -152,22 +164,17 @@ export const DailySprintModal: React.FC<DailySprintModalProps> = ({
     }
   };
 
-  const progressPercent = step === 5 ? 100 : ((step - 1) / 4) * 100;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md w-[92vw] rounded-2xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="text-left">
+        <DialogHeader className="text-left space-y-2">
           <div className="flex items-center justify-between pr-6">
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-amber-500" />
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-500" />
               <span>Treino 5 Minutos • {langDef.flag} {langDef.name}</span>
             </DialogTitle>
-            <span className="text-xs font-semibold text-primary">
-              {step <= 4 ? `Etapa ${step} de 4` : "Concluído!"}
-            </span>
           </div>
-          <Progress value={progressPercent} className="h-2 mt-2" />
+          <Stepper steps={SPRINT_STEPS} currentStep={step} className="pt-1 pb-1" />
         </DialogHeader>
 
         {/* ETAPA 1: MINI-LIÇÃO PEDAGÓGICA & KNOWLEDGE CHECK */}
@@ -493,6 +500,21 @@ export const DailySprintModal: React.FC<DailySprintModalProps> = ({
 
             <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
               🎉 +50 XP conquistados & Streak diário mantido!
+            </div>
+
+            {/* Avaliação Interativa de Desempenho com ReUI Rating */}
+            <div className="rounded-2xl border border-border bg-card/60 p-3.5 space-y-2">
+              <span className="text-[11px] font-bold text-foreground block">
+                Como você avalia sua pronúncia e confiança hoje?
+              </span>
+              <Rating
+                variant="emojis"
+                value={userRating}
+                onValueChange={(val) => {
+                  setUserRating(val);
+                  toast.success("Obrigado pelo feedback de prática!");
+                }}
+              />
             </div>
 
             <Button

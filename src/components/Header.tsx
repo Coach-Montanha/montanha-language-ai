@@ -13,6 +13,7 @@ interface HeaderProps {
   onLogout?: () => void;
   onCycleFontSize?: () => void;
   onOpenLanguageSelector?: () => void;
+  onOpenTimeline?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   onCycleFontSize,
   onOpenLanguageSelector,
+  onOpenTimeline,
 }) => {
   const currentLang = getLanguageById(progress.selectedLanguage || "en");
 
@@ -64,8 +66,11 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Streak de dias */}
           <Badge
             variant="outline"
-            className="flex items-center gap-1 border-amber-300/40 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400"
-            title="Dias seguidos praticando"
+            onClick={onOpenTimeline}
+            className={`flex items-center gap-1 border-amber-300/40 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400 ${
+              onOpenTimeline ? "cursor-pointer hover:bg-amber-500/20 active:scale-95 transition-all" : ""
+            }`}
+            title="Ver linha do tempo de conquistas"
           >
             <Flame className="h-3.5 w-3.5 fill-amber-500 text-amber-500 animate-pulse" />
             <span>{progress.streakDays}d</span>
@@ -74,8 +79,11 @@ export const Header: React.FC<HeaderProps> = ({
           {/* XP */}
           <Badge
             variant="outline"
-            className="flex items-center gap-1 border-violet-300/40 bg-violet-500/10 px-2 py-1 text-xs font-semibold text-violet-600 dark:text-violet-400"
-            title="Pontos de experiência"
+            onClick={onOpenTimeline}
+            className={`flex items-center gap-1 border-violet-300/40 bg-violet-500/10 px-2 py-1 text-xs font-semibold text-violet-600 dark:text-violet-400 ${
+              onOpenTimeline ? "cursor-pointer hover:bg-violet-500/20 active:scale-95 transition-all" : ""
+            }`}
+            title="Ver linha do tempo de aprendizado"
           >
             <Zap className="h-3.5 w-3.5 fill-violet-500 text-violet-500" />
             <span>{progress.xp} XP</span>

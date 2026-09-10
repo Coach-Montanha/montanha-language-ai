@@ -13,6 +13,8 @@ import { TUTORS, getTutorById } from "@/data/tutors";
 import { SUPPORTED_LANGUAGES, getLanguageById } from "@/data/languages";
 import { speakText, stopSpeaking } from "@/services/speech";
 import { Volume2, Check, Sparkles, HeartHandshake, Globe } from "lucide-react";
+import { PillFilter } from "@/components/ui/pill-filter";
+import { IconTile } from "@/components/ui/icon-tile";
 import { toast } from "sonner";
 
 interface TutorSelectorModalProps {
@@ -78,116 +80,54 @@ export const TutorSelectorModal: React.FC<TutorSelectorModalProps> = ({
           </div>
         </DialogHeader>
 
-        {/* Filtro por Idioma */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 no-scrollbar">
-          <button
-            type="button"
-            onClick={() => setFilterLang("all")}
-            className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-              filterLang === "all"
-                ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                : "bg-muted/70 text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Todos ({TUTORS.length})
-          </button>
-          {SUPPORTED_LANGUAGES.map((lang) => (
-            <button
-              key={lang.id}
-              type="button"
-              onClick={() => setFilterLang(lang.id)}
-              className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1 ${
-                filterLang === lang.id
-                  ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                  : "bg-muted/70 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <span>{lang.flag}</span>
-              <span>{lang.name}</span>
-            </button>
-          ))}
-        </div>
+        {/* Filtro por Idioma com ReUI PillFilter */}
+        <PillFilter
+          options={[
+            { id: "all", label: `Todos (${TUTORS.length})` },
+            ...SUPPORTED_LANGUAGES.map((lang) => ({
+              id: lang.id,
+              label: `${lang.flag} ${lang.name}`,
+            })),
+          ]}
+          selectedId={filterLang}
+          onSelect={(id) => setFilterLang(id)}
+        />
 
         {/* Regra de Ouro Compartilhada */}
-        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2.5 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
+        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
           <HeartHandshake className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
-          <p className="leading-snug">
-            <strong>Padrão de Qualidade:</strong> Todos os tutores corrigem até o menor dos erros na hora com explicação carinhosa em 1 linha em português.
+          <p className="leading-snug text-[11px]">
+            <strong>Padrão de Qualidade:</strong> Correção instantânea com explicação carinhosa em 1 linha em português.
           </p>
         </div>
 
-        {/* Grade de Tutores */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+        {/* Grade de Tutores com ReUI IconTile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
           {filteredTutors.map((tutor) => {
             const isSelected = tutor.id === currentTutor.id;
 
             return (
-              <div
+              <IconTile
                 key={tutor.id}
+                icon={<span className="text-2xl p-1">{tutor.avatar}</span>}
+                title={`${tutor.name} ${tutor.flag}`}
+                subtitle={`${tutor.city} • ${tutor.styleTitle}`}
+                selected={isSelected}
                 onClick={() => handleChoose(tutor)}
-                className={`relative rounded-2xl border p-3.5 flex flex-col justify-between text-left transition-all cursor-pointer select-none ${
-                  isSelected
-                    ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20"
-                    : "border-border/80 bg-card hover:border-primary/50 hover:bg-muted/30"
-                }`}
-              >
-                <div className="space-y-2">
-                  {/* Topo do Card do Tutor */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{tutor.avatar}</span>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <h4 className="text-sm font-bold text-foreground">{tutor.name}</h4>
-                          <span className="text-xs">{tutor.flag}</span>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground font-medium">
-                          {tutor.city} &bull; {tutor.gender === "female" ? "Tutora" : "Tutor"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {isSelected ? (
-                      <Badge className="h-5 px-1.5 text-[9px] bg-primary text-primary-foreground gap-0.5">
-                        <Check className="h-3 w-3" /> Ativo
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="h-5 px-1.5 text-[9px] text-muted-foreground">
-                        Selecionar
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Título de Estilo e Descrição */}
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-semibold text-primary leading-tight">
-                      {tutor.styleTitle}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
-                      {tutor.bioPt}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Rodapé com botão de ouvir voz de exemplo */}
-                <div className="pt-3 mt-2 border-t border-border/50 flex items-center justify-between">
+                actionSlot={
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={(e) => handleTestVoice(e, tutor)}
-                    className="h-7 text-[10px] px-2 text-primary hover:bg-primary/10 gap-1 rounded-lg"
+                    className="h-7 text-[10px] px-2 text-primary hover:bg-primary/10 gap-1 rounded-lg shrink-0"
                     title="Ouvir voz e pronúncia"
                   >
                     <Volume2 className="h-3 w-3" />
-                    <span>Ouvir Voz</span>
+                    <span>Ouvir</span>
                   </Button>
-
-                  <span className="text-[10px] text-muted-foreground font-mono">
-                    {audioSpeed}x
-                  </span>
-                </div>
-              </div>
+                }
+              />
             );
           })}
         </div>
