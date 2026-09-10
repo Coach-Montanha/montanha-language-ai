@@ -22,6 +22,9 @@ import { DailySprintModal } from "@/components/DailySprintModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
 import { VoiceCallModal } from "@/components/VoiceCallModal";
+import { TravelPackModal } from "@/components/TravelPackModal";
+import { StreetTalkModal } from "@/components/StreetTalkModal";
+import { PlacementTestModal } from "@/components/PlacementTestModal";
 import { getDefaultTutorForLanguage } from "@/data/tutors";
 import { LanguageDefinition } from "@/types/language";
 import { Toaster } from "@/components/ui/sonner";
@@ -46,6 +49,9 @@ function SmartLanguageApp() {
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const [isVoiceCallOpen, setIsVoiceCallOpen] = useState(false);
+  const [isTravelPackOpen, setIsTravelPackOpen] = useState(false);
+  const [isStreetTalkOpen, setIsStreetTalkOpen] = useState(false);
+  const [isPlacementTestOpen, setIsPlacementTestOpen] = useState(false);
 
   const handleSelectLanguage = (lang: LanguageDefinition) => {
     const defaultTutor = getDefaultTutorForLanguage(lang.id);
@@ -168,6 +174,8 @@ function SmartLanguageApp() {
         onOpenLanguageSelector={() => setIsLanguageModalOpen(true)}
         onOpenTimeline={() => setIsTimelineOpen(true)}
         onOpenVoiceCall={() => setIsVoiceCallOpen(true)}
+        onOpenTravelPack={() => setIsTravelPackOpen(true)}
+        onOpenPlacementTest={() => setIsPlacementTestOpen(true)}
       />
 
       {/* Conteúdo Principal com as 5 Abas */}
@@ -177,6 +185,7 @@ function SmartLanguageApp() {
             progress={progress}
             onUpdateProgress={handleUpdateProgress}
             onOpenVoiceCall={() => setIsVoiceCallOpen(true)}
+            onOpenStreetTalk={() => setIsStreetTalkOpen(true)}
           />
         )}
         {activeTab === "cenario" && (
@@ -184,6 +193,7 @@ function SmartLanguageApp() {
             progress={progress}
             onUpdateProgress={handleUpdateProgress}
             selectedMission={selectedMission}
+            onOpenTravelPack={() => setIsTravelPackOpen(true)}
           />
         )}
         {activeTab === "alfabeto" && (
@@ -252,6 +262,40 @@ function SmartLanguageApp() {
         onOpenChange={setIsVoiceCallOpen}
         progress={progress}
         onUpdateProgress={handleUpdateProgress}
+      />
+
+      {/* Modal: Pacote de Sobrevivência para Viagem Offline */}
+      <TravelPackModal
+        open={isTravelPackOpen}
+        onOpenChange={setIsTravelPackOpen}
+        language={progress.selectedLanguage || "en"}
+      />
+
+      {/* Modal: Street Talk & Gírias do Cotidiano */}
+      <StreetTalkModal
+        open={isStreetTalkOpen}
+        onOpenChange={setIsStreetTalkOpen}
+        language={progress.selectedLanguage || "en"}
+        onRewardXp={(amount: number) => {
+          const updated = addXP(amount);
+          handleUpdateProgress(updated);
+        }}
+      />
+
+      {/* Modal: Simulado Relâmpago de Nivelamento CEFR */}
+      <PlacementTestModal
+        open={isPlacementTestOpen}
+        onOpenChange={setIsPlacementTestOpen}
+        language={progress.selectedLanguage || "en"}
+        currentCefrLevel={progress.cefrLevel}
+        onCompletePlacement={(level: string, earnedXp: number) => {
+          const updated = addXP(earnedXp);
+          const withCefr: UserProgress = {
+            ...updated,
+            cefrLevel: level,
+          };
+          handleUpdateProgress(withCefr);
+        }}
       />
 
       {/* Banner / Prompt de Instalação PWA para Celular */}

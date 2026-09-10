@@ -55,6 +55,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { exportToAnkiCsv, exportToMarkdown } from "@/services/export-vocabulary";
+import { recordSrsReview, getDueSrsCards, SrsRating } from "@/services/srs-algorithm";
 import { toast } from "sonner";
 
 interface FlashcardsTabProps {
@@ -129,6 +130,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   const masteredCount = topProgress.masteredIds.length;
   const reviewQueueCount = topProgress.reviewQueue.length;
   const masteredPercent = Math.min(Math.round((masteredCount / 200) * 100), 100);
+  const srsDueData = useMemo(() => getDueSrsCards(top200List, activeLang), [top200List, activeLang, topProgress]);
 
   // Estatísticas e progresso por categoria das 200 palavras
   const categoryStats = useMemo(() => {
@@ -263,6 +265,27 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
     }
 
     advanceTopSequence(updated);
+  };
+
+  const handleSrsAnswer = (rating: SrsRating) => {
+    if (!currentTopWord) return;
+    const nextItem = recordSrsReview(activeLang, currentTopWord.id, rating);
+    const xpGain = rating === "again" ? 5 : rating === "hard" ? 10 : rating === "good" ? 15 : 20;
+    const updated = addXP(xpGain);
+    onUpdateProgress({
+      ...updated,
+      cardsMasteredCount: rating !== "again" ? progress.cardsMasteredCount + 1 : progress.cardsMasteredCount,
+    });
+
+    const daysText = nextItem.intervalDays === 1 ? "amanhã" : `em ${nextItem.intervalDays} dias`;
+    if (rating === "again") {
+      toast.info(`Palavra #${currentTopWord.rank}: revisão agendada para ${daysText}`);
+    } else {
+      playSuccessSound();
+      toast.success(`Excelente! Próxima repetição espaçada ${daysText} (+${xpGain} XP)`);
+    }
+
+    advanceTopSequence();
   };
 
   // ================= TEMA & IA (MODO LEGADO / EXPANSÃO) =================
@@ -440,7 +463,16 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                   200 Mais Usadas em {langDef.name}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {srsDueData.dueCount > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
+                    title={`${srsDueData.dueCount} palavras prontas para repetição espaçada hoje`}
+                  >
+                    🔥 {srsDueData.dueCount} no SRS
+                  </Badge>
+                )}
                 {reviewQueueCount > 0 && (
                   <Badge
                     variant="secondary"
@@ -655,62 +687,105 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
             </div>
           )}
 
-          {/* Barra de Controles e Treino */}
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handlePrevTop}
-              className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-2xl shrink-0 active:scale-95 cursor-pointer"
-              title="Palavra anterior"
-              aria-label="Palavra anterior na sequência"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+          {/* Barra de Controles e Treino / SRS SM-2 */}
+          <div className="pt-1">
+            {isFlipped ? (
+              <div className="space-y-1.5 animate-in fade-in">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block text-center">
+                  Avalie sua retenção (Algoritmo SM-2):
+                </span>
+                <div className="grid grid-cols-4 gap-1.5 w-full">
+                  <button
+                    type="button"
+                    onClick={() => handleSrsAnswer("again")}
+                    className="py-2.5 px-1 rounded-xl text-xs font-bold bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25 active:scale-95 transition-all cursor-pointer flex flex-col items-center justify-center leading-tight"
+                    title="Errei a palavra (Revisar amanhã)"
+                  >
+                    <span>Errei</span>
+                    <span className="text-[10px] opacity-75 font-mono">1d</span>
+                  </button>
 
-            {/* Botão Repetir para Fixar */}
-            <Button
-              variant={isInReviewQueue ? "secondary" : "outline"}
-              size="sm"
-              onClick={handleToggleReviewQueue}
-              className={`flex-1 text-xs h-11 min-h-[44px] rounded-2xl gap-1.5 active:scale-95 cursor-pointer ${
-                isInReviewQueue
-                  ? "bg-amber-500/15 border border-amber-500/40 text-amber-700 dark:text-amber-300 font-bold"
-                  : ""
-              }`}
-              title="Adicionar esta palavra à fila de repetição periódica para fixação da pronúncia"
-              aria-label="Adicionar esta palavra à fila de repetição periódica para fixação da pronúncia"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span>{isInReviewQueue ? "Na Repetição" : "Repetir p/ Fixar"}</span>
-            </Button>
+                  <button
+                    type="button"
+                    onClick={() => handleSrsAnswer("hard")}
+                    className="py-2.5 px-1 rounded-xl text-xs font-bold bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25 active:scale-95 transition-all cursor-pointer flex flex-col items-center justify-center leading-tight"
+                    title="Achei difícil (Revisar em 3 dias)"
+                  >
+                    <span>Difícil</span>
+                    <span className="text-[10px] opacity-75 font-mono">3d</span>
+                  </button>
 
-            {/* Botão Já Dominei */}
-            <Button
-              size="sm"
-              onClick={handleMarkTopMastered}
-              className={`flex-1 text-xs h-11 min-h-[44px] rounded-2xl gap-1.5 font-bold shadow-xs active:scale-95 cursor-pointer transition-colors ${
-                isMastered
-                  ? "bg-emerald-700 hover:bg-emerald-800 text-white"
-                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
-              }`}
-              title={isMastered ? "Palavra já dominada! Clique para avançar" : "Marcar como dominada e ganhar +15 XP"}
-              aria-label={isMastered ? "Palavra já dominada! Clique para avançar" : "Marcar como dominada e ganhar +15 XP"}
-            >
-              <Check className="h-4 w-4" />
-              <span>{isMastered ? "✓ Dominada" : "Já Dominei"}</span>
-            </Button>
+                  <button
+                    type="button"
+                    onClick={() => handleSrsAnswer("good")}
+                    className="py-2.5 px-1 rounded-xl text-xs font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25 active:scale-95 transition-all cursor-pointer flex flex-col items-center justify-center leading-tight"
+                    title="Lembrei bem (Revisar em 6 dias)"
+                  >
+                    <span>Bom</span>
+                    <span className="text-[10px] opacity-75 font-mono">6d</span>
+                  </button>
 
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => advanceTopSequence()}
-              className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-2xl shrink-0 active:scale-95 cursor-pointer"
-              title="Próxima palavra na sequência"
-              aria-label="Próxima palavra na sequência"
-            >
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+                  <button
+                    type="button"
+                    onClick={() => handleSrsAnswer("easy")}
+                    className="py-2.5 px-1 rounded-xl text-xs font-bold bg-sky-500/15 border border-sky-500/30 text-sky-700 dark:text-sky-300 hover:bg-sky-500/25 active:scale-95 transition-all cursor-pointer flex flex-col items-center justify-center leading-tight"
+                    title="Fácil demais (Revisar em 14 dias)"
+                  >
+                    <span>Fácil</span>
+                    <span className="text-[10px] opacity-75 font-mono">14d</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePrevTop}
+                  className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-2xl shrink-0 active:scale-95 cursor-pointer"
+                  title="Palavra anterior"
+                  aria-label="Palavra anterior na sequência"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  variant={isInReviewQueue ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={handleToggleReviewQueue}
+                  className={`flex-1 text-xs h-11 min-h-[44px] rounded-2xl gap-1.5 active:scale-95 cursor-pointer ${
+                    isInReviewQueue
+                      ? "bg-amber-500/15 border border-amber-500/40 text-amber-700 dark:text-amber-300 font-bold"
+                      : ""
+                  }`}
+                  title="Adicionar esta palavra à fila de repetição periódica"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span>{isInReviewQueue ? "Na Fila" : "Repetir"}</span>
+                </Button>
+
+                <Button
+                  size="sm"
+                  onClick={toggleFlip}
+                  className="flex-1 text-xs h-11 min-h-[44px] rounded-2xl gap-1.5 font-bold shadow-xs active:scale-95 cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground"
+                  title="Virar cartão para ver a tradução e avaliar no SRS"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span>Virar Cartão</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => advanceTopSequence()}
+                  className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-2xl shrink-0 active:scale-95 cursor-pointer"
+                  title="Próxima palavra na sequência"
+                  aria-label="Próxima palavra na sequência"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}

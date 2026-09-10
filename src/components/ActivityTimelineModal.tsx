@@ -24,7 +24,11 @@ import {
   Calendar,
   Lock,
   Award,
+  Activity,
+  Volume2,
 } from "lucide-react";
+import { getPhonemeDiagnostics } from "@/services/phoneme-diagnostics";
+import { speakText } from "@/services/speech";
 
 interface ActivityTimelineModalProps {
   open: boolean;
@@ -51,7 +55,8 @@ export const ActivityTimelineModal: React.FC<ActivityTimelineModalProps> = ({
     100
   );
 
-  const [activeModalTab, setActiveModalTab] = useState<"timeline" | "badges">("timeline");
+  const [activeModalTab, setActiveModalTab] = useState<"timeline" | "badges" | "phonemes">("timeline");
+  const phonemeDiagnostics = getPhonemeDiagnostics(progress.selectedLanguage || "en");
   const { unlockedList } = checkAchievements(progress);
   const unlockedIds = new Set(unlockedList.map((a) => a.id));
 
@@ -140,32 +145,45 @@ export const ActivityTimelineModal: React.FC<ActivityTimelineModalProps> = ({
           </p>
         </div>
 
-        {/* Seletor de visualização: Linha do Tempo vs Medalhas */}
-        <div className="flex items-center gap-1.5 p-1 bg-muted/50 rounded-xl mt-1">
+        {/* Seletor de visualização: Linha do Tempo vs Medalhas vs Fonemas */}
+        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-xl mt-1">
           <button
             type="button"
             onClick={() => setActiveModalTab("timeline")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeModalTab === "timeline"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Calendar className="h-3.5 w-3.5" />
-            <span>Linha do Tempo</span>
+            <span>Linha</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveModalTab("badges")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeModalTab === "badges"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Award className="h-3.5 w-3.5 text-amber-500" />
-            <span>Medalhas ({unlockedList.length}/{ACHIEVEMENTS_LIST.length})</span>
+            <span>Medalhas</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveModalTab("phonemes")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeModalTab === "phonemes"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Activity className="h-3.5 w-3.5 text-primary" />
+            <span>Fonemas</span>
           </button>
         </div>
 
@@ -177,7 +195,7 @@ export const ActivityTimelineModal: React.FC<ActivityTimelineModalProps> = ({
             </span>
             <Timeline items={timelineItems} />
           </div>
-        ) : (
+        ) : activeModalTab === "badges" ? (
           /* Galeria de Conquistas & Medalhas */
           <div className="pt-3 pb-1 space-y-2.5">
             <div className="flex items-center justify-between px-1">
@@ -243,6 +261,89 @@ export const ActivityTimelineModal: React.FC<ActivityTimelineModalProps> = ({
                           )}
                         </div>
                       </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* Radar de Fonemas Desafiadores */
+          <div className="pt-3 pb-1 space-y-3">
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary shrink-0" />
+                <h4 className="text-xs font-bold text-foreground">
+                  Radar de Sons Críticos em {currentLang.name}
+                </h4>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+                Estes são os fonemas mais desafiadores para falantes nativos de português. Pratique a posição da língua e lábios para soar natural.
+              </p>
+            </div>
+
+            <div className="space-y-2.5">
+              {phonemeDiagnostics.map((diag) => {
+                const statusBadge =
+                  diag.status === "mastered"
+                    ? { text: "Dominado", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" }
+                    : diag.status === "improving"
+                    ? { text: "Ajustando", color: "bg-amber-500/10 text-amber-600 border-amber-500/30" }
+                    : { text: "Treinar", color: "bg-rose-500/10 text-rose-600 border-rose-500/30" };
+
+                return (
+                  <div
+                    key={diag.family.id}
+                    className="rounded-xl border border-border bg-card p-3 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="h-8 w-8 rounded-lg bg-primary/10 text-primary font-mono font-black text-sm flex items-center justify-center">
+                          {diag.family.symbol}
+                        </span>
+                        <div>
+                          <h5 className="text-xs font-bold text-foreground">
+                            {diag.family.namePt}
+                          </h5>
+                          <span className="text-[10px] text-muted-foreground">
+                            {diag.totalAttempts} treinos • Precisão estimada: {diag.accuracyPercent}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <Badge variant="outline" className={`text-[10px] ${statusBadge.color}`}>
+                        {statusBadge.text}
+                      </Badge>
+                    </div>
+
+                    {/* Dica de Articulação na Boca */}
+                    <div className="text-[11px] text-foreground/90 bg-muted/40 rounded-lg p-2 leading-snug">
+                      🗣️ <strong className="text-primary font-semibold">Como produzir:</strong>{" "}
+                      {diag.family.descriptionPt}
+                    </div>
+
+                    {/* Palavras de Exemplo com Áudio */}
+                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                      <span className="text-[10px] font-semibold text-muted-foreground mr-1">
+                        Exemplos:
+                      </span>
+                      {diag.family.sampleWords.map((word: string) => (
+                        <button
+                          key={word}
+                          type="button"
+                          onClick={() =>
+                            speakText(word, {
+                              lang: currentLang.speechLangCode,
+                              rate: 0.8,
+                            })
+                          }
+                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md bg-background border border-border hover:border-primary/50 text-foreground transition-all cursor-pointer active:scale-95"
+                          title={`Ouvir pronúncia de "${word}"`}
+                        >
+                          <Volume2 className="h-3 w-3 text-primary" />
+                          <span>{word}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 );

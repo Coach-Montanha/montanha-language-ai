@@ -180,6 +180,7 @@ export interface UserProgress {
   unlockedAchievementIds?: string[] | undefined;
   voiceCallsCount?: number | undefined;
   bestPronunciationScore?: number | undefined;
+  cefrLevel?: string | undefined;
 }
 
 export interface LearnerTopicMemory {

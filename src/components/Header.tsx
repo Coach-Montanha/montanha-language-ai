@@ -1,5 +1,15 @@
 import React from "react";
-import { Flame, Zap, Settings, Sparkles, LogOut, ChevronDown, PhoneCall } from "lucide-react";
+import {
+  Flame,
+  Zap,
+  Settings,
+  Sparkles,
+  LogOut,
+  ChevronDown,
+  PhoneCall,
+  Luggage,
+  GraduationCap,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserProgress } from "@/types/language";
@@ -15,6 +25,8 @@ interface HeaderProps {
   onOpenLanguageSelector?: (() => void) | undefined;
   onOpenTimeline?: (() => void) | undefined;
   onOpenVoiceCall?: (() => void) | undefined;
+  onOpenTravelPack?: (() => void) | undefined;
+  onOpenPlacementTest?: (() => void) | undefined;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -27,6 +39,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenLanguageSelector,
   onOpenTimeline,
   onOpenVoiceCall,
+  onOpenTravelPack,
+  onOpenPlacementTest,
 }) => {
   const currentLang = getLanguageById(progress.selectedLanguage || "en");
 
@@ -104,6 +118,39 @@ export const Header: React.FC<HeaderProps> = ({
               <PhoneCall className="h-4 w-4" />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500" />
+            </Button>
+          )}
+
+          {/* Botão de Simulado Relâmpago CEFR */}
+          {onOpenPlacementTest && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="relative h-8 w-8 text-primary hover:bg-primary/10 active:scale-95 transition-transform"
+              onClick={onOpenPlacementTest}
+              title={`Simulado Relâmpago de Nivelamento CEFR (Nível: ${progress.cefrLevel || "Fazer Teste"})`}
+              aria-label="Fazer teste de nivelamento CEFR"
+            >
+              <GraduationCap className="h-4 w-4" />
+              {progress.cefrLevel && (
+                <span className="absolute -bottom-1 -right-0.5 text-[8px] font-black bg-primary text-primary-foreground px-1 py-0.2 rounded-full leading-none shadow-xs">
+                  {progress.cefrLevel}
+                </span>
+              )}
+            </Button>
+          )}
+
+          {/* Botão de Pacote de Viagem Offline */}
+          {onOpenTravelPack && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 active:scale-95 transition-transform"
+              onClick={onOpenTravelPack}
+              title="Pacote de Sobrevivência para Viagem Offline"
+              aria-label="Abrir guia de viagem offline"
+            >
+              <Luggage className="h-4 w-4" />
             </Button>
           )}
 

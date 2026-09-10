@@ -53,15 +53,19 @@ import {
   Play,
   Layers,
   Sparkle,
+  Headphones,
+  Luggage,
 } from "lucide-react";
 import { Stepper, StepItem } from "@/components/ui/stepper";
 import { Rating } from "@/components/ui/rating";
 import { toast } from "sonner";
+import { soundscape, SoundscapeType } from "@/services/soundscape-audio";
 
 interface ScenarioTabProps {
   progress: UserProgress;
   onUpdateProgress: (updated: UserProgress) => void;
   selectedMission?: WeeklyMission | null;
+  onOpenTravelPack?: (() => void) | undefined;
 }
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -82,11 +86,38 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
   progress,
   onUpdateProgress,
   selectedMission,
+  onOpenTravelPack,
 }) => {
   const currentLanguage: SupportedLanguage = progress.selectedLanguage || "en";
   const langDef = getLanguageById(currentLanguage);
   const tutors = getTutorsForLanguage(currentLanguage);
   const activeTutor = tutors[0] || { name: "Tutor", gender: "male" };
+
+  const [activeSoundscape, setActiveSoundscape] = useState<SoundscapeType | null>(null);
+
+  useEffect(() => {
+    return () => {
+      soundscape.stop();
+    };
+  }, []);
+
+  const handleToggleSoundscape = (type: SoundscapeType) => {
+    if (activeSoundscape === type) {
+      soundscape.stop();
+      setActiveSoundscape(null);
+      toast.info("Áudio ambiente desativado");
+    } else {
+      soundscape.start(type, 0.2);
+      setActiveSoundscape(type);
+      const names: Record<SoundscapeType, string> = {
+        cafe: "Café movimentado ☕",
+        airport: "Aeroporto internacional ✈️",
+        rain: "Chuva na janela 🌧️",
+        office: "Escritório & Coworking 💼",
+      };
+      toast.success(`Áudio imersivo ativado: ${names[type]}`);
+    }
+  };
 
   const availableWeeks = getAvailableWeeksForLanguage(
     currentLanguage,
@@ -441,6 +472,67 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
               </button>
             )}
           </div>
+        </div>
+
+        {/* Barra Imersiva: Áudio Ambiente e Guia de Viagem */}
+        <div className="flex items-center justify-between gap-1.5 px-1 py-1 bg-background/50 rounded-lg border border-border/50">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 text-[10px] min-w-0">
+            <span className="font-semibold text-muted-foreground flex items-center gap-1 shrink-0">
+              <Headphones className={`h-3 w-3 ${activeSoundscape ? "text-primary animate-pulse" : "text-muted-foreground"}`} />
+              <span className="hidden xs:inline">Ambiente:</span>
+            </span>
+            {(
+              [
+                { type: "cafe" as const, label: "Café ☕" },
+                { type: "airport" as const, label: "Aeroporto ✈️" },
+                { type: "rain" as const, label: "Chuva 🌧️" },
+                { type: "office" as const, label: "Escritório 💼" },
+              ]
+            ).map((item) => {
+              const isActive = activeSoundscape === item.type;
+              return (
+                <button
+                  key={item.type}
+                  type="button"
+                  onClick={() => handleToggleSoundscape(item.type)}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all cursor-pointer shrink-0 ${
+                    isActive
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-background hover:bg-muted/70 text-muted-foreground border-border/80"
+                  }`}
+                  title={`Ativar som imersivo de ${item.label}`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+            {activeSoundscape && (
+              <button
+                type="button"
+                onClick={() => {
+                  soundscape.stop();
+                  setActiveSoundscape(null);
+                }}
+                className="text-[10px] text-destructive hover:underline font-bold px-1 shrink-0"
+                title="Desligar som ambiente"
+              >
+                ✕ Parar
+              </button>
+            )}
+          </div>
+
+          {onOpenTravelPack && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onOpenTravelPack}
+              className="h-6 text-[10px] px-2 gap-1 rounded-md font-bold border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 shrink-0"
+              title="Abrir Pacote de Sobrevivência para Viagem Offline"
+            >
+              <Luggage className="h-3 w-3" />
+              <span>Viagem</span>
+            </Button>
+          )}
         </div>
 
         {/* Seletor Dinâmico de Semanas (Rolagem horizontal para semanas infinitas) */}

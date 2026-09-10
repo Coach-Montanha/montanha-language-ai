@@ -87,6 +87,7 @@ interface ConversationTabProps {
   progress: UserProgress;
   onUpdateProgress: (updated: UserProgress) => void;
   onOpenVoiceCall?: (() => void) | undefined;
+  onOpenStreetTalk?: (() => void) | undefined;
 }
 
 // Configurações dos tamanhos de fonte sincronizadas com a acessibilidade global
@@ -131,6 +132,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   progress,
   onUpdateProgress,
   onOpenVoiceCall,
+  onOpenStreetTalk,
 }) => {
   const activeTutor = getTutorById(progress.selectedTutorId);
   const activeLanguage = getLanguageById(activeTutor.language);
@@ -759,6 +761,19 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold">Chamada de Voz</div>
                     <div className="text-[10px] opacity-80 truncate">Prática oral hands-free</div>
+                  </div>
+                </DropdownMenuItem>
+              )}
+
+              {onOpenStreetTalk && (
+                <DropdownMenuItem
+                  onClick={onOpenStreetTalk}
+                  className="flex items-center gap-2.5 cursor-pointer py-2 text-xs text-amber-600 dark:text-amber-400 font-medium"
+                >
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold">Street Talk & Gírias</div>
+                    <div className="text-[10px] opacity-80 truncate">Como nativos falam vs livros</div>
                   </div>
                 </DropdownMenuItem>
               )}
