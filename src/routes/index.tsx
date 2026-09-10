@@ -21,6 +21,7 @@ import { BreakdownTab } from "@/components/tabs/BreakdownTab";
 import { DailySprintModal } from "@/components/DailySprintModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
+import { VoiceCallModal } from "@/components/VoiceCallModal";
 import { getDefaultTutorForLanguage } from "@/data/tutors";
 import { LanguageDefinition } from "@/types/language";
 import { Toaster } from "@/components/ui/sonner";
@@ -44,6 +45,7 @@ function SmartLanguageApp() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
+  const [isVoiceCallOpen, setIsVoiceCallOpen] = useState(false);
 
   const handleSelectLanguage = (lang: LanguageDefinition) => {
     const defaultTutor = getDefaultTutorForLanguage(lang.id);
@@ -165,6 +167,7 @@ function SmartLanguageApp() {
         onLogout={handleLogout}
         onOpenLanguageSelector={() => setIsLanguageModalOpen(true)}
         onOpenTimeline={() => setIsTimelineOpen(true)}
+        onOpenVoiceCall={() => setIsVoiceCallOpen(true)}
       />
 
       {/* Conteúdo Principal com as 5 Abas */}
@@ -173,6 +176,7 @@ function SmartLanguageApp() {
           <ConversationTab
             progress={progress}
             onUpdateProgress={handleUpdateProgress}
+            onOpenVoiceCall={() => setIsVoiceCallOpen(true)}
           />
         )}
         {activeTab === "cenario" && (
@@ -240,6 +244,14 @@ function SmartLanguageApp() {
         open={isTimelineOpen}
         onOpenChange={setIsTimelineOpen}
         progress={progress}
+      />
+
+      {/* Modal: Chamada de Voz com Tutor (Hands-free AI Call) */}
+      <VoiceCallModal
+        open={isVoiceCallOpen}
+        onOpenChange={setIsVoiceCallOpen}
+        progress={progress}
+        onUpdateProgress={handleUpdateProgress}
       />
 
       {/* Banner / Prompt de Instalação PWA para Celular */}

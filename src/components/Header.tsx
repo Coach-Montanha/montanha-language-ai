@@ -1,5 +1,5 @@
 import React from "react";
-import { Flame, Zap, Settings, Sparkles, LogOut, ChevronDown } from "lucide-react";
+import { Flame, Zap, Settings, Sparkles, LogOut, ChevronDown, PhoneCall } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserProgress } from "@/types/language";
@@ -7,13 +7,14 @@ import { getLanguageById } from "@/data/languages";
 
 interface HeaderProps {
   progress: UserProgress;
-  userName?: string;
-  onOpenDailySprint?: () => void;
+  userName?: string | undefined;
+  onOpenDailySprint?: (() => void) | undefined;
   onOpenSettings: () => void;
-  onLogout?: () => void;
-  onCycleFontSize?: () => void;
-  onOpenLanguageSelector?: () => void;
-  onOpenTimeline?: () => void;
+  onLogout?: (() => void) | undefined;
+  onCycleFontSize?: (() => void) | undefined;
+  onOpenLanguageSelector?: (() => void) | undefined;
+  onOpenTimeline?: (() => void) | undefined;
+  onOpenVoiceCall?: (() => void) | undefined;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   onCycleFontSize,
   onOpenLanguageSelector,
   onOpenTimeline,
+  onOpenVoiceCall,
 }) => {
   const currentLang = getLanguageById(progress.selectedLanguage || "en");
 
@@ -88,6 +90,22 @@ export const Header: React.FC<HeaderProps> = ({
             <Zap className="h-3.5 w-3.5 fill-violet-500 text-violet-500" />
             <span>{progress.xp} XP</span>
           </Badge>
+
+          {/* Botão de Chamada de Voz com Tutor */}
+          {onOpenVoiceCall && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="relative h-8 w-8 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 active:scale-95 transition-transform"
+              onClick={onOpenVoiceCall}
+              title="Iniciar Chamada de Voz com o Tutor (Hands-free)"
+              aria-label="Iniciar chamada de voz"
+            >
+              <PhoneCall className="h-4 w-4" />
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500" />
+            </Button>
+          )}
 
           {/* Botão de Configurações */}
           <Button

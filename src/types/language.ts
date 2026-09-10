@@ -177,6 +177,9 @@ export interface UserProgress {
   selectedLanguage?: SupportedLanguage | undefined;
   fontSize?: ("sm" | "md" | "lg" | "xl") | undefined;
   design?: ("classic" | "midnight" | "focus") | undefined;
+  unlockedAchievementIds?: string[] | undefined;
+  voiceCallsCount?: number | undefined;
+  bestPronunciationScore?: number | undefined;
 }
 
 export interface LearnerTopicMemory {

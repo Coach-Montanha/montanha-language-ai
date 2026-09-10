@@ -365,10 +365,10 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
     }
   };
 
-  const handlePlaySound = (e: React.MouseEvent, text: string) => {
+  const handlePlaySound = (e: React.MouseEvent, text: string, speedOverride?: number) => {
     e.stopPropagation();
     speakText(text, {
-      rate: progress.audioSpeed,
+      rate: speedOverride ?? progress.audioSpeed,
       lang: langDef.speechLangCode,
       gender: activeTutor.gender,
     });
@@ -610,14 +610,24 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-medium text-xs sm:text-sm">{msg.text}</p>
                   {!isUser && (
-                    <button
-                      type="button"
-                      onClick={(e) => handlePlaySound(e, msg.text)}
-                      className="text-muted-foreground hover:text-primary transition-colors p-0.5 shrink-0"
-                      title="Ouvir pronúncia"
-                    >
-                      <Volume2 className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => handlePlaySound(e, msg.text)}
+                        className="text-muted-foreground hover:text-primary transition-colors p-0.5"
+                        title="Ouvir pronúncia"
+                      >
+                        <Volume2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handlePlaySound(e, msg.text, 0.75)}
+                        className="text-[9.5px] font-semibold text-muted-foreground hover:text-primary px-1 py-0.5 rounded bg-muted/50 border border-border/40 transition-colors"
+                        title="Ouvir em velocidade pausada (0.75x)"
+                      >
+                        0.75x
+                      </button>
+                    </div>
                   )}
                 </div>
 

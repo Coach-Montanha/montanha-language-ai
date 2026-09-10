@@ -26,6 +26,8 @@ import { SupportedLanguage } from "@/types/language";
 import { getDailySprintForLanguage } from "@/data/daily-tasks";
 import { getLanguageById } from "@/data/languages";
 import { getTutorsForLanguage } from "@/data/tutors";
+import { evaluatePronunciation, PronunciationEvaluation } from "@/services/pronunciation-scorer";
+import { PronunciationScore } from "@/components/ui/pronunciation-score";
 import {
   BookOpen,
   Headphones,
@@ -65,12 +67,13 @@ export const DailySprintModal: React.FC<DailySprintModalProps> = ({
   const [speakingText, setSpeakingText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [pronunciationEval, setPronunciationEval] = useState<PronunciationEvaluation | null>(null);
 
   const [userRating, setUserRating] = useState<number>(5);
 
   const langDef = getLanguageById(language);
   const tutors = getTutorsForLanguage(language);
-  const activeTutor = tutors[0] || { name: "Tutor", gender: "male" };
+  const activeTutor = tutors[0] || getTutorsForLanguage("en")[0]!;
 
   const exercise = getDailySprintForLanguage(language);
   const miniLesson = exercise.miniLesson;
@@ -108,6 +111,8 @@ export const DailySprintModal: React.FC<DailySprintModalProps> = ({
     stopSpeaking();
     setSelectedAnswer(null);
     setIsCorrect(null);
+    setPronunciationEval(null);
+    setSpeakingText("");
 
     if (step < 4) {
       setStep((step + 1) as 1 | 2 | 3 | 4 | 5);
@@ -142,9 +147,15 @@ export const DailySprintModal: React.FC<DailySprintModalProps> = ({
         playMicStopSound();
         setSpeakingText(result);
         setIsRecording(false);
-        playSuccessSound();
-        toast.success("Ótima pronúncia!");
-        setIsCorrect(true);
+        const evalResult = evaluatePronunciation(speakingExercise.phrase, result, language);
+        setPronunciationEval(evalResult);
+        if (evalResult.overallScore >= 50) {
+          playSuccessSound();
+          toast.success(`${evalResult.gradeLabelPt} (${evalResult.overallScore}% de precisão)`);
+          setIsCorrect(true);
+        } else {
+          toast.info("Tente pronunciar com mais calma ou ouça o modelo em 0.75x.");
+        }
       },
       (err) => {
         console.error(err);
@@ -449,11 +460,26 @@ export const DailySprintModal: React.FC<DailySprintModalProps> = ({
                 <span className="text-[11px] text-muted-foreground mt-2">
                   {isRecording ? `Ouvindo pronúncia em ${langDef.name}...` : "Toque no microfone e fale"}
                 </span>
-                {speakingText && (
+                {pronunciationEval ? (
+                  <div className="w-full mt-3 text-left">
+                    <PronunciationScore
+                      evaluation={pronunciationEval}
+                      fullSentence={speakingExercise.phrase}
+                      langCode={langDef.speechLangCode}
+                      speechPitch={activeTutor.speechPitch}
+                      gender={activeTutor.gender}
+                      onRetry={() => {
+                        setPronunciationEval(null);
+                        setSpeakingText("");
+                        setIsCorrect(false);
+                      }}
+                    />
+                  </div>
+                ) : speakingText ? (
                   <p className="mt-2 text-xs font-medium text-primary text-center">
                     Você disse: &ldquo;{speakingText}&rdquo;
                   </p>
-                )}
+                ) : null}
               </div>
 
               {/* Opção de confirmação direta */}

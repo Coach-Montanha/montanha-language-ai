@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { UserProgress } from "@/types/language";
 import { getLanguageById } from "@/data/languages";
+import { ACHIEVEMENTS_LIST, checkAchievements } from "@/data/achievements";
 import { Timeline, TimelineItem } from "@/components/ui/timeline";
 import {
   Flame,
@@ -21,6 +22,8 @@ import {
   Sparkles,
   CheckCircle2,
   Calendar,
+  Lock,
+  Award,
 } from "lucide-react";
 
 interface ActivityTimelineModalProps {
@@ -47,6 +50,10 @@ export const ActivityTimelineModal: React.FC<ActivityTimelineModalProps> = ({
     ),
     100
   );
+
+  const [activeModalTab, setActiveModalTab] = useState<"timeline" | "badges">("timeline");
+  const { unlockedList } = checkAchievements(progress);
+  const unlockedIds = new Set(unlockedList.map((a) => a.id));
 
   const completedMissionsCount = progress.completedMissionIds?.length || 0;
 
@@ -133,13 +140,116 @@ export const ActivityTimelineModal: React.FC<ActivityTimelineModalProps> = ({
           </p>
         </div>
 
-        {/* ReUI Timeline */}
-        <div className="pt-3 pb-1">
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-3 px-1">
-            Marcos Conquistados
-          </span>
-          <Timeline items={timelineItems} />
+        {/* Seletor de visualização: Linha do Tempo vs Medalhas */}
+        <div className="flex items-center gap-1.5 p-1 bg-muted/50 rounded-xl mt-1">
+          <button
+            type="button"
+            onClick={() => setActiveModalTab("timeline")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeModalTab === "timeline"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Calendar className="h-3.5 w-3.5" />
+            <span>Linha do Tempo</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveModalTab("badges")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeModalTab === "badges"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Award className="h-3.5 w-3.5 text-amber-500" />
+            <span>Medalhas ({unlockedList.length}/{ACHIEVEMENTS_LIST.length})</span>
+          </button>
         </div>
+
+        {activeModalTab === "timeline" ? (
+          /* ReUI Timeline */
+          <div className="pt-3 pb-1">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-3 px-1">
+              Marcos Conquistados
+            </span>
+            <Timeline items={timelineItems} />
+          </div>
+        ) : (
+          /* Galeria de Conquistas & Medalhas */
+          <div className="pt-3 pb-1 space-y-2.5">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Todas as Conquistas
+              </span>
+              <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                {unlockedList.length} de {ACHIEVEMENTS_LIST.length} desbloqueadas
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {ACHIEVEMENTS_LIST.map((ach) => {
+                const isUnlocked = unlockedIds.has(ach.id);
+
+                return (
+                  <div
+                    key={ach.id}
+                    className={`rounded-xl p-3 border transition-all ${
+                      isUnlocked
+                        ? "bg-amber-500/5 border-amber-500/30 text-foreground shadow-xs"
+                        : "bg-muted/30 border-border/60 opacity-60"
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div
+                        className={`h-9 w-9 rounded-xl flex items-center justify-center text-lg shrink-0 ${
+                          isUnlocked
+                            ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                            : "bg-muted text-muted-foreground grayscale"
+                        }`}
+                      >
+                        {isUnlocked ? ach.icon : <Lock className="h-4 w-4" />}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <h5 className="text-xs font-bold truncate text-foreground">
+                            {ach.title}
+                          </h5>
+                          <span
+                            className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                              isUnlocked
+                                ? "bg-amber-500/20 text-amber-700 dark:text-amber-300"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            +{ach.xpReward} XP
+                          </span>
+                        </div>
+                        <p className="text-[10.5px] text-muted-foreground line-clamp-2 mt-0.5 leading-snug">
+                          {ach.description}
+                        </p>
+                        <div className="mt-1.5 flex items-center gap-1 text-[10px] font-semibold">
+                          {isUnlocked ? (
+                            <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3" /> Desbloqueada
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground flex items-center gap-1">
+                              <Lock className="h-2.5 w-2.5" /> Em progresso
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <Button
           variant="outline"

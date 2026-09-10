@@ -43,8 +43,18 @@ import {
   ChevronDown,
   ChevronUp,
   BookOpen,
+  Download,
+  FileSpreadsheet,
+  FileText,
 } from "lucide-react";
 import { PillFilter } from "@/components/ui/pill-filter";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { exportToAnkiCsv, exportToMarkdown } from "@/services/export-vocabulary";
 import { toast } from "sonner";
 
 interface FlashcardsTabProps {
@@ -322,43 +332,98 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
     handleCustomNext();
   };
 
+  const handleExportToAnki = () => {
+    if (activeMode === "top200") {
+      exportToAnkiCsv(top200List as unknown as Flashcard[], langDef.name, `top200-${activeLang}`);
+    } else {
+      exportToAnkiCsv(customCards, `${langDef.name}-${currentTheme}`, `vocab-${activeLang}`);
+    }
+  };
+
+  const handleExportToMarkdown = () => {
+    if (activeMode === "top200") {
+      exportToMarkdown(top200List as unknown as Flashcard[], langDef.name, `top200-${activeLang}`);
+    } else {
+      exportToMarkdown(customCards, `${langDef.name} - ${currentTheme}`, `vocab-${activeLang}`);
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-8.5rem)] max-w-lg mx-auto w-full p-3 space-y-3">
-      {/* SELETOR DE MODO: TOP 200 vs TEMAS & IA */}
-      <div className="flex items-center justify-between gap-1.5 p-1 bg-muted/70 rounded-2xl border border-border/80">
-        <button
-          type="button"
-          onClick={() => {
-            setActiveMode("top200");
-            setIsFlipped(false);
-          }}
-          aria-label="Modo Top 200 Palavras Mais Usadas"
-          className={`flex-1 py-2 px-3 min-h-[44px] rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeMode === "top200"
-              ? "bg-card text-foreground shadow-xs border border-border"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Flame className="h-4 w-4 text-orange-500 animate-pulse" />
-          <span>Top 200 Mais Usadas</span>
-        </button>
+      {/* SELETOR DE MODO: TOP 200 vs TEMAS & IA + EXPORTADOR ANKI */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 flex items-center justify-between gap-1.5 p-1 bg-muted/70 rounded-2xl border border-border/80">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveMode("top200");
+              setIsFlipped(false);
+            }}
+            aria-label="Modo Top 200 Palavras Mais Usadas"
+            className={`flex-1 py-2 px-3 min-h-[44px] rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeMode === "top200"
+                ? "bg-card text-foreground shadow-xs border border-border"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Flame className="h-4 w-4 text-orange-500 animate-pulse" />
+            <span className="truncate">Top 200</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setActiveMode("themes");
-            setIsFlipped(false);
-          }}
-          aria-label="Modo Temas e Vocabulário com Inteligência Artificial"
-          className={`flex-1 py-2 px-3 min-h-[44px] rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeMode === "themes"
-              ? "bg-card text-foreground shadow-xs border border-border"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Layers className="h-4 w-4 text-primary" />
-          <span>Temas & IA</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveMode("themes");
+              setIsFlipped(false);
+            }}
+            aria-label="Modo Temas e Vocabulário com Inteligência Artificial"
+            className={`flex-1 py-2 px-3 min-h-[44px] rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeMode === "themes"
+                ? "bg-card text-foreground shadow-xs border border-border"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Layers className="h-4 w-4 text-primary" />
+            <span className="truncate">Temas & IA</span>
+          </button>
+        </div>
+
+        {/* Dropdown Exportar para Anki / Markdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-11 w-11 rounded-2xl border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground active:scale-95 cursor-pointer shrink-0"
+              title="Exportar baralho para Anki (.csv) ou Guia (.md)"
+              aria-label="Exportar baralho"
+            >
+              <Download className="h-4 w-4 text-primary" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-xl">
+            <DropdownMenuItem
+              onClick={handleExportToAnki}
+              className="flex items-center gap-2.5 cursor-pointer py-2 text-xs"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-foreground">Exportar p/ Anki (.csv)</div>
+                <div className="text-[10px] text-muted-foreground">Deck com pronúncia & exemplos</div>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleExportToMarkdown}
+              className="flex items-center gap-2.5 cursor-pointer py-2 text-xs"
+            >
+              <FileText className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-foreground">Guia de Estudo (.md)</div>
+                <div className="text-[10px] text-muted-foreground">Apostila de revisão formatada</div>
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* ========================================================================= */}

@@ -79,12 +79,14 @@ import {
   Brain,
   CheckCircle2,
   MoreVertical,
+  PhoneCall,
 } from "lucide-react";
 import { toast } from "sonner";
 
 interface ConversationTabProps {
   progress: UserProgress;
   onUpdateProgress: (updated: UserProgress) => void;
+  onOpenVoiceCall?: (() => void) | undefined;
 }
 
 // Configurações dos tamanhos de fonte sincronizadas com a acessibilidade global
@@ -128,6 +130,7 @@ type FontKey = keyof typeof FONT_LEVELS;
 export const ConversationTab: React.FC<ConversationTabProps> = ({
   progress,
   onUpdateProgress,
+  onOpenVoiceCall,
 }) => {
   const activeTutor = getTutorById(progress.selectedTutorId);
   const activeLanguage = getLanguageById(activeTutor.language);
@@ -702,6 +705,21 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
         {/* Controles de Áudio e Menu Expandido */}
         <div className="flex items-center gap-1 shrink-0">
+          {/* Botão de Chamada Hands-Free */}
+          {onOpenVoiceCall && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onOpenVoiceCall}
+              className="h-9 w-9 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 active:scale-95 cursor-pointer flex items-center justify-center relative"
+              title="Iniciar Chamada de Voz com o Tutor (Hands-free)"
+              aria-label="Iniciar chamada de voz com o tutor"
+            >
+              <PhoneCall className="h-4 w-4" />
+              <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+            </Button>
+          )}
+
           {/* Botão Rápido de Auto-Voz */}
           <Button
             variant="ghost"
@@ -732,6 +750,19 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-xl">
+              {onOpenVoiceCall && (
+                <DropdownMenuItem
+                  onClick={onOpenVoiceCall}
+                  className="flex items-center gap-2.5 cursor-pointer py-2 text-xs text-emerald-600 dark:text-emerald-400 font-medium"
+                >
+                  <PhoneCall className="h-4 w-4" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold">Chamada de Voz</div>
+                    <div className="text-[10px] opacity-80 truncate">Prática oral hands-free</div>
+                  </div>
+                </DropdownMenuItem>
+              )}
+
               <DropdownMenuItem
                 onClick={() => setShowMemoryModal(true)}
                 className="flex items-center gap-2.5 cursor-pointer py-2 text-xs"
@@ -940,6 +971,18 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                             <Volume2 className="h-3.5 w-3.5" />
                           )}
                           <span>{isSpeakingThis ? "Falando..." : "Ouvir"}</span>
+                        </button>
+
+                        {/* Botão Rápido de 0.75x no Balão */}
+                        <button
+                          type="button"
+                          onClick={() => handleSpeakMessage(msg.id, msg.text, 0.75)}
+                          aria-label="Ouvir em velocidade lenta (0.75x)"
+                          className="flex items-center gap-1 text-[10.5px] font-medium px-2 py-0.5 rounded-lg transition-all active:scale-95 cursor-pointer bg-muted/40 text-muted-foreground border border-border/40 hover:text-foreground hover:bg-muted"
+                          title="Ouvir pronúncia pausada / lenta (0.75x)"
+                        >
+                          <span>🐢</span>
+                          <span>0.75x</span>
                         </button>
 
                         {phoneticText && (
