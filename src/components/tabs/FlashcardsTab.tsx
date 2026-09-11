@@ -22,7 +22,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import {
   Volume2,
   Sparkles,
@@ -127,32 +126,25 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   const isInReviewQueue = currentTopWord ? topProgress.reviewQueue.includes(currentTopWord.id) : false;
 
   // Estatísticas do Top 200
-  const masteredCount = topProgress.masteredIds.length;
   const reviewQueueCount = topProgress.reviewQueue.length;
-  const masteredPercent = Math.min(Math.round((masteredCount / 200) * 100), 100);
   const srsDueData = useMemo(() => getDueSrsCards(top200List, activeLang), [top200List, activeLang, topProgress]);
 
-  // Estatísticas e progresso por categoria das 200 palavras
+  // Estatísticas por categoria das 200 palavras (só total e posição inicial)
   const categoryStats = useMemo(() => {
-    const stats: Record<string, { total: number; mastered: number; firstIndex: number }> = {};
+    const stats: Record<string, { total: number; firstIndex: number }> = {};
     top200List.forEach((w, idx) => {
       const cat = w.category || "Comunicação";
       if (!stats[cat]) {
-        stats[cat] = { total: 0, mastered: 0, firstIndex: idx };
+        stats[cat] = { total: 0, firstIndex: idx };
       }
       stats[cat].total += 1;
-      if (topProgress.masteredIds.includes(w.id)) {
-        stats[cat].mastered += 1;
-      }
     });
     return Object.entries(stats).map(([cat, val]) => ({
       name: cat,
       total: val.total,
-      mastered: val.mastered,
       firstIndex: val.firstIndex,
-      percentage: Math.round((val.mastered / val.total) * 100),
     }));
-  }, [top200List, topProgress.masteredIds]);
+  }, [top200List]);
 
   const handlePlayAudio = (e: React.MouseEvent, text: string) => {
     e.stopPropagation();
@@ -481,14 +473,8 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                     🔄 {reviewQueueCount} p/ fixar
                   </Badge>
                 )}
-                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                  {masteredCount}/200 dominadas ({masteredPercent}%)
-                </span>
               </div>
             </div>
-
-            {/* Barra de Progresso */}
-            <Progress value={masteredPercent} className="h-2 rounded-full" />
 
             {/* Seletor rápido de posição / info da palavra / botão de categorias */}
             <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
@@ -526,18 +512,16 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                       }}
                       className="text-left p-2 rounded-xl border border-border/70 bg-card hover:border-primary/50 transition-all text-[10px] space-y-1 active:scale-95 cursor-pointer"
                       title={`Ir para ${c.name} (Começa na palavra #${c.firstIndex + 1})`}
-                      aria-label={`Categoria ${c.name}: ${c.mastered} de ${c.total} dominadas, ${c.percentage}% concluído`}
+                      aria-label={`Categoria ${c.name}: ${c.total} palavras`}
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-bold truncate text-foreground">{c.name}</span>
-                        <span className="text-[9px] font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-                          {c.percentage}%
+                        <span className="text-[9px] font-mono font-semibold text-primary">
+                          #{c.firstIndex + 1}
                         </span>
                       </div>
-                      <Progress value={c.percentage} className="h-1.5 rounded-full" />
-                      <div className="text-[8.5px] text-muted-foreground flex justify-between">
-                        <span>{c.mastered}/{c.total} dominadas</span>
-                        <span>#{c.firstIndex + 1}</span>
+                      <div className="text-[8.5px] text-muted-foreground">
+                        <span>{c.total} palavras</span>
                       </div>
                     </button>
                   ))}
