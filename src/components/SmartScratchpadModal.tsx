@@ -94,10 +94,12 @@ export const SmartScratchpadModal: React.FC<SmartScratchpadModalProps> = ({
   const handleSaveWordToSRS = (word: string, translation: string, badge: string) => {
     const card = {
       id: `scratchpad_${Date.now()}_${word}`,
-      front: word,
-      back: translation,
-      language: activeLang,
-      category: badge || "Palavra",
+      word,
+      phonetic: "",
+      translation,
+      exampleSentence: "",
+      exampleTranslation: "",
+      theme: badge || "Palavra",
     };
     saveCustomFlashcard(card);
     const updated = addXP(5);

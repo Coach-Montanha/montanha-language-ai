@@ -115,10 +115,12 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
   const handleSaveWordToSRS = (token: WordToken) => {
     const card = {
       id: `breakdown_${Date.now()}_${token.word}`,
-      front: token.word,
-      back: token.literalTranslation,
-      language: activeLang,
-      category: token.posBadge || "Palavra",
+      word: token.word,
+      phonetic: "",
+      translation: token.literalTranslation,
+      exampleSentence: "",
+      exampleTranslation: "",
+      theme: token.posBadge || "Palavra",
     };
     saveCustomFlashcard(card);
     const updated = addXP(5);
@@ -129,10 +131,12 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
   const handleSavePhraseToSRS = (phrase: string, translation: string) => {
     const card = {
       id: `breakdown_phrase_${Date.now()}`,
-      front: phrase,
-      back: translation,
-      language: activeLang,
-      category: "Frase",
+      word: phrase,
+      phonetic: "",
+      translation,
+      exampleSentence: "",
+      exampleTranslation: "",
+      theme: "Frase",
     };
     saveCustomFlashcard(card);
     const updated = addXP(10);
