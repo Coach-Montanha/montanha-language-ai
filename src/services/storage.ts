@@ -342,3 +342,63 @@ export function updateLearnerMemoryFromInteraction(
   return updatedMemory;
 }
 
+// ================= BACKUP & PORTABILIDADE LOCAL-FIRST =================
+
+const BACKUP_KEYS = [
+  STORAGE_KEY_PROGRESS,
+  STORAGE_KEY_CHAT,
+  STORAGE_KEY_CUSTOM_CARDS,
+  "smart_language_analysis_cache_v1",
+  "smart_language_fontsize",
+  "smart_language_design",
+];
+
+const LANG_KEYS: SupportedLanguage[] = ["en", "es", "fr", "de", "it", "ru", "ja", "el-koine"];
+
+export function exportFullBackupData(): string {
+  if (typeof window === "undefined") return "{}";
+  const snapshot: Record<string, unknown> = {
+    exportedAt: new Date().toISOString(),
+    version: "smart_language_backup_v1",
+  };
+  // Chaves fixas
+  for (const key of BACKUP_KEYS) {
+    const raw = localStorage.getItem(key);
+    if (raw !== null) {
+      try {
+        snapshot[key] = JSON.parse(raw);
+      } catch {
+        snapshot[key] = raw;
+      }
+    }
+  }
+  // Chaves por idioma (top200 + memória)
+  for (const lang of LANG_KEYS) {
+    const top200Key = getTop200StorageKey(lang);
+    const memKey = getLearnerMemoryKey(lang);
+    const rawTop = localStorage.getItem(top200Key);
+    const rawMem = localStorage.getItem(memKey);
+    if (rawTop !== null) {
+      try { snapshot[top200Key] = JSON.parse(rawTop); } catch { snapshot[top200Key] = rawTop; }
+    }
+    if (rawMem !== null) {
+      try { snapshot[memKey] = JSON.parse(rawMem); } catch { snapshot[memKey] = rawMem; }
+    }
+  }
+  return JSON.stringify(snapshot, null, 2);
+}
+
+export function importFullBackupData(json: string): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const snapshot = JSON.parse(json) as Record<string, unknown>;
+    for (const [key, value] of Object.entries(snapshot)) {
+      if (key === "exportedAt" || key === "version") continue;
+      localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
+    }
+    return true;
+  } catch (e) {
+    console.error("Erro ao importar backup:", e);
+    return false;
+  }
+}

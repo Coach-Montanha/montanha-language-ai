@@ -15,6 +15,8 @@ import { UserProgress, SupportedLanguage } from "@/types/language";
 import { TUTORS, getTutorById, getTutorsByLanguage, getDefaultTutorForLanguage } from "@/data/tutors";
 import { SUPPORTED_LANGUAGES, getLanguageById } from "@/data/languages";
 import { speakText, stopSpeaking } from "@/services/speech";
+import { exportFullBackupData, importFullBackupData } from "@/services/storage";
+import { clearAnalysisCache } from "@/services/ai-cache";
 import {
   Volume2,
   Key,
@@ -30,6 +32,8 @@ import {
   Palette,
   Sun,
   GraduationCap,
+  Download,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -560,6 +564,82 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <p className="text-xs text-muted-foreground leading-relaxed">
               Instale o <strong>Smart Language</strong> na tela inicial do seu smartphone para praticar conversação diária em tela cheia com áudio nativo.
             </p>
+          </div>
+
+
+          {/* 8. Backup & Portabilidade Local-First */}
+          <div className="space-y-2 rounded-xl border border-violet-500/20 bg-violet-500/5 p-3.5">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
+                <Download className="h-4 w-4 text-violet-500" />
+                Backup &amp; Portabilidade
+              </label>
+              <span className="text-[11px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-full">
+                Local-First
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Exporte todo seu progresso, cartões, histórico e memória do tutor para um arquivo JSON. Restaure em qualquer dispositivo.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-8 text-xs gap-1.5 text-violet-600 dark:text-violet-400 border-violet-300/50 hover:bg-violet-500/10"
+                onClick={() => {
+                  const json = exportFullBackupData();
+                  const blob = new Blob([json], { type: "application/json" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `smart-language-backup-${new Date().toISOString().split("T")[0]}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success("Backup exportado com sucesso!");
+                }}
+              >
+                <Download className="h-3.5 w-3.5" /> Exportar Backup
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-8 text-xs gap-1.5 text-emerald-600 dark:text-emerald-400 border-emerald-300/50 hover:bg-emerald-500/10"
+                onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.accept = ".json,application/json";
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      const text = ev.target?.result as string;
+                      const ok = importFullBackupData(text);
+                      if (ok) {
+                        toast.success("Backup restaurado! Recarregue a página para ver as mudanças.");
+                      } else {
+                        toast.error("Falha ao restaurar backup. Verifique o arquivo.");
+                      }
+                    };
+                    reader.readAsText(file);
+                  };
+                  input.click();
+                }}
+              >
+                <Upload className="h-3.5 w-3.5" /> Restaurar Backup
+              </Button>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full h-7 text-[11px] gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                clearAnalysisCache();
+                toast.success("Cache semântico limpo!");
+              }}
+            >
+              <RotateCcw className="h-3 w-3" /> Limpar Cache de Análises
+            </Button>
           </div>
 
           {/* Zerar progresso */}

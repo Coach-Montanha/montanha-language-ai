@@ -3650,12 +3650,18 @@ const POS_LEXICON: Record<
   сегодня: { pos: "Advérbio de Tempo", badge: "Advérbio", color: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800", trans: "hoje" },
 };
 
+import { getCachedAnalysis, setCachedAnalysis } from "./ai-cache";
+
 export async function breakdownSentence(
   sentence: string,
   apiKey?: string,
   language: SupportedLanguage = "en"
 ): Promise<SentenceAnalysis> {
   const clean = sentence.trim();
+
+  // Cache semântico local-first: retorna em 0ms se já foi analisado
+  const cached = getCachedAnalysis(language, clean);
+  if (cached) return cached;
   const langNames: Record<string, string> = {
     en: "English",
     de: "German (Deutsch)",
@@ -3712,12 +3718,14 @@ Return ONLY a valid JSON object with this exact structure:
           };
         });
 
-        return {
+        const geminiResult: SentenceAnalysis = {
           original: clean,
           tokens,
           naturalTranslation: parsed.naturalTranslation || "Tradução da frase",
           explanation: parsed.explanation || `Estrutura gramatical padrão em ${targetLangName}.`,
         };
+        setCachedAnalysis(language, clean, geminiResult);
+        return geminiResult;
       }
     } catch (e) {
       console.warn("Falha no Gemini ao destrinchar, utilizando motor léxico local:", e);
@@ -3872,10 +3880,12 @@ Return ONLY a valid JSON object with this exact structure:
     explanation = "No Grego Koiné, as declinações nominais e formas verbais ricas determinam a função sintática independentemente da ordem das palavras.";
   }
 
-  return {
+  const localResult: SentenceAnalysis = {
     original: clean,
     tokens,
     naturalTranslation,
     explanation,
   };
+  setCachedAnalysis(language, clean, localResult);
+  return localResult;
 }

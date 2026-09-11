@@ -9,6 +9,7 @@ import {
   PhoneCall,
   Luggage,
   GraduationCap,
+  NotebookPen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ interface HeaderProps {
   onOpenVoiceCall?: (() => void) | undefined;
   onOpenTravelPack?: (() => void) | undefined;
   onOpenPlacementTest?: (() => void) | undefined;
+  onOpenScratchpad?: (() => void) | undefined;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -41,6 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenVoiceCall,
   onOpenTravelPack,
   onOpenPlacementTest,
+  onOpenScratchpad,
 }) => {
   const currentLang = getLanguageById(progress.selectedLanguage || "en");
 
@@ -151,6 +154,20 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label="Abrir guia de viagem offline"
             >
               <Luggage className="h-4 w-4" />
+            </Button>
+          )}
+
+          {/* Botão da Prancheta Inteligente */}
+          {onOpenScratchpad && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-primary hover:bg-primary/10 active:scale-95 transition-transform"
+              onClick={onOpenScratchpad}
+              title="Prancheta Inteligente — Analise qualquer texto"
+              aria-label="Abrir prancheta inteligente"
+            >
+              <NotebookPen className="h-4 w-4" />
             </Button>
           )}
 

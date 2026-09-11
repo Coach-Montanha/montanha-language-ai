@@ -25,6 +25,7 @@ import { VoiceCallModal } from "@/components/VoiceCallModal";
 import { TravelPackModal } from "@/components/TravelPackModal";
 import { StreetTalkModal } from "@/components/StreetTalkModal";
 import { PlacementTestModal } from "@/components/PlacementTestModal";
+import { SmartScratchpadModal } from "@/components/SmartScratchpadModal";
 import { getDefaultTutorForLanguage } from "@/data/tutors";
 import { LanguageDefinition } from "@/types/language";
 import { Toaster } from "@/components/ui/sonner";
@@ -52,6 +53,7 @@ function SmartLanguageApp() {
   const [isTravelPackOpen, setIsTravelPackOpen] = useState(false);
   const [isStreetTalkOpen, setIsStreetTalkOpen] = useState(false);
   const [isPlacementTestOpen, setIsPlacementTestOpen] = useState(false);
+  const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
 
   const handleSelectLanguage = (lang: LanguageDefinition) => {
     const defaultTutor = getDefaultTutorForLanguage(lang.id);
@@ -176,6 +178,7 @@ function SmartLanguageApp() {
         onOpenVoiceCall={() => setIsVoiceCallOpen(true)}
         onOpenTravelPack={() => setIsTravelPackOpen(true)}
         onOpenPlacementTest={() => setIsPlacementTestOpen(true)}
+        onOpenScratchpad={() => setIsScratchpadOpen(true)}
       />
 
       {/* Conteúdo Principal com as 5 Abas */}
@@ -295,6 +298,24 @@ function SmartLanguageApp() {
             cefrLevel: level,
           };
           handleUpdateProgress(withCefr);
+        }}
+      />
+
+      {/* Modal: Prancheta Inteligente — Análise Livre Local-First */}
+      <SmartScratchpadModal
+        open={isScratchpadOpen}
+        onOpenChange={setIsScratchpadOpen}
+        progress={progress}
+        onUpdateProgress={handleUpdateProgress}
+        onOpenBreakdown={(text) => {
+          setIsScratchpadOpen(false);
+          setActiveTab("destrinchar");
+          // The BreakdownTab will pick up the text via its own input on next render
+          // We just navigate to the tab; user can paste/use the text there
+          setTimeout(() => {
+            const evt = new CustomEvent("smart-language-breakdown", { detail: { text } });
+            window.dispatchEvent(evt);
+          }, 150);
         }}
       />
 

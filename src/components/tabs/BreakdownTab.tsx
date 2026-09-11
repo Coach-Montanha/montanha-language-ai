@@ -5,7 +5,7 @@ import { getLanguageById } from "@/data/languages";
 import { getTutorsForLanguage } from "@/data/tutors";
 import { breakdownSentence } from "@/services/ai-engine";
 import { speakText } from "@/services/speech";
-import { addXP } from "@/services/storage";
+import { addXP, saveCustomFlashcard } from "@/services/storage";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Lightbulb,
   Puzzle,
+  BookmarkPlus,
 } from "lucide-react";
 import { SortableWords } from "@/components/ui/sortable-words";
 import { Rating } from "@/components/ui/rating";
@@ -55,6 +56,22 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
     setActiveToken(null);
   }, [activeLang]);
 
+  // Recebe texto da Prancheta Inteligente via CustomEvent
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ text: string }>).detail;
+      if (detail?.text) {
+        setInputSentence(detail.text);
+        setAnalysis(null);
+        setActiveToken(null);
+        handleAnalyze(detail.text);
+      }
+    };
+    window.addEventListener("smart-language-breakdown", handler);
+    return () => window.removeEventListener("smart-language-breakdown", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeLang, progress.geminiApiKey]);
+
   const handleAnalyze = async (textToUse?: string) => {
     const query = (textToUse || inputSentence).trim();
     if (!query || isLoading) return;
@@ -93,6 +110,34 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
   const handleSelectSample = (sample: string) => {
     setInputSentence(sample);
     handleAnalyze(sample);
+  };
+
+  const handleSaveWordToSRS = (token: WordToken) => {
+    const card = {
+      id: `breakdown_${Date.now()}_${token.word}`,
+      front: token.word,
+      back: token.literalTranslation,
+      language: activeLang,
+      category: token.posBadge || "Palavra",
+    };
+    saveCustomFlashcard(card);
+    const updated = addXP(5);
+    onUpdateProgress({ ...updated });
+    toast.success(`"${token.word}" salvo nos Cartões SRS! +5 XP`);
+  };
+
+  const handleSavePhraseToSRS = (phrase: string, translation: string) => {
+    const card = {
+      id: `breakdown_phrase_${Date.now()}`,
+      front: phrase,
+      back: translation,
+      language: activeLang,
+      category: "Frase",
+    };
+    saveCustomFlashcard(card);
+    const updated = addXP(10);
+    onUpdateProgress({ ...updated });
+    toast.success("Frase salva nos Cartões SRS! +10 XP");
   };
 
   const samplePillOptions = samplePhrases.slice(0, 6).map((s) => ({
@@ -290,14 +335,34 @@ export const BreakdownTab: React.FC<BreakdownTabProps> = ({
                       Nota: {activeToken.note}
                     </p>
                   )}
+                  <div className="pt-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleSaveWordToSRS(activeToken)}
+                      className="h-6 text-[10px] gap-1 text-violet-600 dark:text-violet-400 border-violet-300/50 hover:bg-violet-500/10"
+                    >
+                      <BookmarkPlus className="h-3 w-3" /> + Cartão SRS
+                    </Button>
+                  </div>
                 </div>
               )}
 
               {/* TRADUÇÃO NATURAL & FLUIDA */}
               <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 space-y-1.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Tradução Natural & Fluida</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Tradução Natural &amp; Fluida</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleSavePhraseToSRS(analysis.original, analysis.naturalTranslation)}
+                    className="h-6 text-[10px] gap-1 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10"
+                  >
+                    <BookmarkPlus className="h-3 w-3" /> + Cartão SRS
+                  </Button>
                 </div>
                 <p className="text-sm font-semibold text-foreground leading-relaxed">
                   &ldquo;{analysis.naturalTranslation}&rdquo;
