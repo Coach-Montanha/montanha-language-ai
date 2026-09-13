@@ -80,6 +80,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           return (
             <button
               key={item.id}
+              data-testid={`tab-${item.id}`}
               onClick={() => onChangeTab(item.id)}
               aria-label={`Aba ${item.label}`}
               aria-current={isActive ? "page" : undefined}

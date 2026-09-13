@@ -123,6 +123,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           <div className="grid grid-cols-3 gap-1 p-1 bg-muted rounded-xl text-center text-xs font-semibold">
             <button
               type="button"
+              data-testid="tab-login"
               onClick={() => {
                 setMode("login");
                 setErrorMsg("");
@@ -137,6 +138,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             </button>
             <button
               type="button"
+              data-testid="tab-register"
               onClick={() => {
                 setMode("register");
                 setErrorMsg("");
@@ -151,6 +153,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             </button>
             <button
               type="button"
+              data-testid="tab-reset"
               onClick={() => {
                 setMode("reset");
                 setErrorMsg("");
@@ -167,7 +170,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
           {/* Mensagem de Erro se houver */}
           {errorMsg && (
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs animate-in fade-in">
+            <div data-testid="auth-error-msg" className="flex items-center gap-2 p-2.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs animate-in fade-in">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -183,6 +186,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 </label>
                 <Input
                   type="text"
+                  data-testid="input-display-name"
                   placeholder="Ex: Lucas Silva"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
@@ -201,6 +205,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
+                  data-testid="input-username"
                   placeholder="Ex: lucas"
                   value={username}
                   onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ""))}
@@ -229,6 +234,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               <div className="relative">
                 <Input
                   type="password"
+                  data-testid="input-pin"
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={4}
@@ -260,6 +266,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 </label>
                 <Input
                   type="password"
+                  data-testid="input-confirm-pin"
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={4}
@@ -275,6 +282,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             {/* Botão de Envio */}
             <Button
               type="submit"
+              data-testid="btn-submit-auth"
               disabled={isLoading || pin.length !== 4 || !username.trim()}
               className="w-full h-10 rounded-xl font-bold text-xs gap-2 shadow-sm"
             >

@@ -187,6 +187,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Button
               size="icon"
               variant="ghost"
+              data-testid="btn-logout"
               className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
               onClick={onLogout}
               title={`Conectado como ${userName} (Clique para sair/trocar usuário)`}
