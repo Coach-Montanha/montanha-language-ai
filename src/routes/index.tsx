@@ -167,7 +167,7 @@ function SmartLanguageApp() {
       {/* Barra de Notificações Toast */}
       <Toaster position="top-center" richColors />
 
-      {/* Cabeçalho com Nome do Usuário, Streak, XP, Configurações e Logout */}
+      {/* Cabeçalho limpo com Nome do Usuário, Streak, XP, Configurações e Logout */}
       <Header
         progress={progress}
         userName={session.displayName}
@@ -175,10 +175,6 @@ function SmartLanguageApp() {
         onLogout={handleLogout}
         onOpenLanguageSelector={() => setIsLanguageModalOpen(true)}
         onOpenTimeline={() => setIsTimelineOpen(true)}
-        onOpenVoiceCall={() => setIsVoiceCallOpen(true)}
-        onOpenTravelPack={() => setIsTravelPackOpen(true)}
-        onOpenPlacementTest={() => setIsPlacementTestOpen(true)}
-        onOpenScratchpad={() => setIsScratchpadOpen(true)}
       />
 
       {/* Conteúdo Principal com as 5 Abas */}
@@ -197,6 +193,7 @@ function SmartLanguageApp() {
             onUpdateProgress={handleUpdateProgress}
             selectedMission={selectedMission}
             onOpenTravelPack={() => setIsTravelPackOpen(true)}
+            onOpenPlacementTest={() => setIsPlacementTestOpen(true)}
           />
         )}
         {activeTab === "alfabeto" && (

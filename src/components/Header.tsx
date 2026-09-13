@@ -25,10 +25,6 @@ interface HeaderProps {
   onCycleFontSize?: (() => void) | undefined;
   onOpenLanguageSelector?: (() => void) | undefined;
   onOpenTimeline?: (() => void) | undefined;
-  onOpenVoiceCall?: (() => void) | undefined;
-  onOpenTravelPack?: (() => void) | undefined;
-  onOpenPlacementTest?: (() => void) | undefined;
-  onOpenScratchpad?: (() => void) | undefined;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -40,10 +36,6 @@ export const Header: React.FC<HeaderProps> = ({
   onCycleFontSize,
   onOpenLanguageSelector,
   onOpenTimeline,
-  onOpenVoiceCall,
-  onOpenTravelPack,
-  onOpenPlacementTest,
-  onOpenScratchpad,
 }) => {
   const currentLang = getLanguageById(progress.selectedLanguage || "en");
 
@@ -107,69 +99,6 @@ export const Header: React.FC<HeaderProps> = ({
             <Zap className="h-3.5 w-3.5 fill-violet-500 text-violet-500" />
             <span>{progress.xp} XP</span>
           </Badge>
-
-          {/* Botão de Chamada de Voz com Tutor */}
-          {onOpenVoiceCall && (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="relative h-8 w-8 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 active:scale-95 transition-transform"
-              onClick={onOpenVoiceCall}
-              title="Iniciar Chamada de Voz com o Tutor (Hands-free)"
-              aria-label="Iniciar chamada de voz"
-            >
-              <PhoneCall className="h-4 w-4" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500" />
-            </Button>
-          )}
-
-          {/* Botão de Simulado Relâmpago CEFR */}
-          {onOpenPlacementTest && (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="relative h-8 w-8 text-primary hover:bg-primary/10 active:scale-95 transition-transform"
-              onClick={onOpenPlacementTest}
-              title={`Simulado Relâmpago de Nivelamento CEFR (Nível: ${progress.cefrLevel || "Fazer Teste"})`}
-              aria-label="Fazer teste de nivelamento CEFR"
-            >
-              <GraduationCap className="h-4 w-4" />
-              {progress.cefrLevel && (
-                <span className="absolute -bottom-1 -right-0.5 text-[8px] font-black bg-primary text-primary-foreground px-1 py-0.2 rounded-full leading-none shadow-xs">
-                  {progress.cefrLevel}
-                </span>
-              )}
-            </Button>
-          )}
-
-          {/* Botão de Pacote de Viagem Offline */}
-          {onOpenTravelPack && (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 active:scale-95 transition-transform"
-              onClick={onOpenTravelPack}
-              title="Pacote de Sobrevivência para Viagem Offline"
-              aria-label="Abrir guia de viagem offline"
-            >
-              <Luggage className="h-4 w-4" />
-            </Button>
-          )}
-
-          {/* Botão da Prancheta Inteligente */}
-          {onOpenScratchpad && (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8 text-primary hover:bg-primary/10 active:scale-95 transition-transform"
-              onClick={onOpenScratchpad}
-              title="Prancheta Inteligente — Analise qualquer texto"
-              aria-label="Abrir prancheta inteligente"
-            >
-              <NotebookPen className="h-4 w-4" />
-            </Button>
-          )}
 
           {/* Botão de Configurações */}
           <Button

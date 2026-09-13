@@ -52,9 +52,10 @@ import {
   X,
   Play,
   Layers,
-  Sparkle,
   Headphones,
   Luggage,
+  GraduationCap,
+  Sparkle as SparkleIcon,
 } from "lucide-react";
 import { Stepper, StepItem } from "@/components/ui/stepper";
 import { Rating } from "@/components/ui/rating";
@@ -66,6 +67,7 @@ interface ScenarioTabProps {
   onUpdateProgress: (updated: UserProgress) => void;
   selectedMission?: WeeklyMission | null;
   onOpenTravelPack?: (() => void) | undefined;
+  onOpenPlacementTest?: (() => void) | undefined;
 }
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -87,6 +89,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
   onUpdateProgress,
   selectedMission,
   onOpenTravelPack,
+  onOpenPlacementTest,
 }) => {
   const currentLanguage: SupportedLanguage = progress.selectedLanguage || "en";
   const langDef = getLanguageById(currentLanguage);
@@ -432,8 +435,39 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
 
   return (
     <div className="flex flex-col h-[calc(100vh-7.5rem)] max-w-lg mx-auto w-full">
-      {/* 1. CABEÇALHO DA TRILHA DE SITUAÇÕES REAIS */}
+      {/* 1. SELETOR DE MODALIDADES DA ABA SITUAÇÕES (CEFR, Guia de Viagem e Cenários) */}
       <div className="p-2 border-b border-border bg-card/70 space-y-2">
+        <div className="grid grid-cols-3 gap-1.5 p-1 bg-muted/60 rounded-xl border border-border">
+          <button
+            type="button"
+            className="py-1.5 px-1 rounded-lg text-[11px] font-bold bg-background text-primary shadow-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            title="Praticar diálogos e situações reais"
+          >
+            <Compass className="h-3.5 w-3.5 text-primary" />
+            <span className="truncate">Situações</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onOpenPlacementTest?.()}
+            className="py-1.5 px-1 rounded-lg text-[11px] font-bold text-muted-foreground hover:text-foreground hover:bg-background/60 flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+            title="Fazer Simulado de Nivelamento CEFR"
+          >
+            <GraduationCap className="h-3.5 w-3.5 text-emerald-500" />
+            <span className="truncate">Simulado CEFR</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onOpenTravelPack?.()}
+            className="py-1.5 px-1 rounded-lg text-[11px] font-bold text-muted-foreground hover:text-foreground hover:bg-background/60 flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+            title="Abrir Pacote de Sobrevivência para Viagens"
+          >
+            <Luggage className="h-3.5 w-3.5 text-amber-500" />
+            <span className="truncate">Guia Viagem</span>
+          </button>
+        </div>
+
         {/* Barra superior: Idioma, Ações e Botão Procedural */}
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-1.5">
