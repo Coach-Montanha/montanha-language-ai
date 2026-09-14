@@ -31,6 +31,7 @@ import {
   Subtitles,
   Activity,
 } from "lucide-react";
+import { AudioWaveform } from "@/components/ui/AudioWaveform";
 import { toast } from "sonner";
 
 interface VoiceCallModalProps {
@@ -321,6 +322,14 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
               {activeTutor.avatar}
             </div>
           </div>
+
+          {/* Bencho UI Audio Waveform Component */}
+          <AudioWaveform
+            isActive={callState === "speaking" || callState === "listening"}
+            color={callState === "listening" ? "emerald" : callState === "speaking" ? "teal" : "amber"}
+            barCount={14}
+            label={callState === "speaking" ? "Tutor Áudio" : callState === "listening" ? "Seu Microfone" : "Bencho Audio"}
+          />
 
           {/* Status dinâmico da chamada */}
           <div className="text-center space-y-1 z-10">
