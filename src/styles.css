@@ -511,4 +511,37 @@ html[data-design="focus"].dark [data-slot="card"] {
   width: 100%;
 }
 
+/* 4. MicroKit Aurora Shine Button */
+.microkit-btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+.microkit-btn-shine::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: skewX(-25deg);
+  transition: left 0.6s ease;
+}
+.microkit-btn-shine:hover::before {
+  left: 150%;
+}
+
+/* 5. MicroKit Arrow Slide Link */
+.microkit-arrow-slide {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.microkit-arrow-slide .arrow-icon {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.microkit-arrow-slide:hover .arrow-icon {
+  transform: translateX(4px);
+}
+
 
