@@ -454,4 +454,61 @@ html[data-design="focus"].dark [data-slot="card"] {
   animation: soundwave 0.8s ease-in-out 0.4s infinite;
 }
 
+/* ==========================================================================
+   MICROKIT UI MICRO-INTERACTIONS (COPY-PASTE COMPONENTS)
+   ========================================================================== */
+
+/* 1. MicroKit Text Swap (Translation Reveal) */
+.microkit-text-swap {
+  position: relative;
+  display: inline-flex;
+  overflow: hidden;
+}
+.microkit-text-swap .swap-primary {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+}
+.microkit-text-swap .swap-secondary {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(100%);
+  opacity: 0;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+}
+.microkit-text-swap:hover .swap-primary {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+.microkit-text-swap:hover .swap-secondary {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* 2. MicroKit Blur Glide Menu */
+.microkit-blur-menu {
+  background: rgba(17, 24, 39, 0.85) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 3. MicroKit Sliding Underline Tabs */
+.microkit-tab-underline {
+  position: relative;
+}
+.microkit-tab-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.microkit-tab-underline:hover::after, .microkit-tab-underline[aria-selected="true"]::after {
+  width: 100%;
+}
+
 
