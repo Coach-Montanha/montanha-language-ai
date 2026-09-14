@@ -187,9 +187,10 @@ function RootShell({ children }: { children: ReactNode }) {
                 transition: opacity 0.35s ease, visibility 0.35s ease;
               }
               #smart-app-splash.splash-dismissed {
-                opacity: 0;
-                visibility: hidden;
-                pointer-events: none;
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+                display: none !important;
               }
               .splash-box {
                 width: 76px;
@@ -272,23 +273,22 @@ function RootShell({ children }: { children: ReactNode }) {
               (function() {
                 function dismiss() {
                   var el = document.getElementById('smart-app-splash');
-                  if (el && !el.classList.contains('splash-dismissed')) {
+                  if (el) {
                     el.classList.add('splash-dismissed');
-                    setTimeout(function() {
-                      if (el && el.parentNode) {
-                        el.parentNode.removeChild(el);
-                      }
-                    }, 400);
+                    el.style.display = 'none';
+                    if (el.parentNode) {
+                      try { el.parentNode.removeChild(el); } catch(e){}
+                    }
                   }
                 }
                 if (document.readyState === 'complete') {
-                  setTimeout(dismiss, 120);
+                  setTimeout(dismiss, 50);
                 } else {
                   window.addEventListener('load', function() {
-                    setTimeout(dismiss, 120);
+                    setTimeout(dismiss, 50);
                   });
                 }
-                setTimeout(dismiss, 1800);
+                setTimeout(dismiss, 500);
               })();
             `,
           }}
