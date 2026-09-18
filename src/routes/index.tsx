@@ -10,6 +10,7 @@ import {
 } from "@/services/auth";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
+import { LeftSidebar } from "@/components/LeftSidebar";
 import { LoginScreen } from "@/components/LoginScreen";
 import { ActivityTimelineModal } from "@/components/ActivityTimelineModal";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
@@ -162,24 +163,29 @@ function SmartLanguageApp() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans select-none antialiased">
-      {/* Barra de Notificações Toast */}
-      <Toaster position="top-center" richColors />
+      {/* Layout com Sidebar Desktop & Conteúdo */}
+      <div className="flex flex-1 w-full min-h-0">
+        <LeftSidebar
+          activeTab={activeTab}
+          onChangeTab={setActiveTab}
+          onOpenDailySprint={() => setIsDailySprintOpen(true)}
+          dailySprintDone={progress.dailySprintDone}
+        />
 
-      {/* Cabeçalho limpo com Nome do Usuário, Streak, XP, Configurações e Logout */}
-      <Header
-        progress={progress}
-        userName={session.displayName}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onLogout={handleLogout}
-        onOpenLanguageSelector={() => setIsLanguageModalOpen(true)}
-        onOpenTimeline={() => setIsTimelineOpen(true)}
-      />
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Cabeçalho limpo com Nome do Usuário, Streak, XP, Configurações e Logout */}
+          <Header
+            progress={progress}
+            userName={session.displayName}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onLogout={handleLogout}
+            onOpenLanguageSelector={() => setIsLanguageModalOpen(true)}
+            onOpenTimeline={() => setIsTimelineOpen(true)}
+          />
 
-      {/* Conteúdo Principal com as 5 Abas */}
-      <main className="flex-1 pb-16 overflow-hidden flex flex-col">
-        {activeTab === "conversa" && (
+          {/* Conteúdo Principal com as 5 Abas */}
+          <main className="flex-1 pb-16 overflow-hidden flex flex-col">
+            {activeTab === "conversa" && (
           <ConversationTab
             progress={progress}
             onUpdateProgress={handleUpdateProgress}
@@ -215,6 +221,8 @@ function SmartLanguageApp() {
           />
         )}
       </main>
+      </div>
+      </div>
 
       {/* Navegação Inferior de Abas + Treino 5 min (feita para celular) */}
       <BottomNav
