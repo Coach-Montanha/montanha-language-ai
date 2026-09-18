@@ -137,7 +137,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       rate: speed,
       gender: currentTutor.gender,
       pitch: currentTutor.speechPitch,
-      lang: currentLang.speechLangCode,
+      lang: currentTutor.speechLangCode || currentLang.speechLangCode,
+      preferredVoiceKeywords: currentTutor.preferredVoiceKeywords,
     });
   };
 

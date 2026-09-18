@@ -156,6 +156,8 @@ export interface TutorPersona {
   initialGreetingPhonetic?: string | undefined;
   initialGreetingPt?: string | undefined;
   speechPitch?: number | undefined;
+  speechLangCode?: string | undefined;
+  preferredVoiceKeywords?: string[] | undefined;
   samplePhrase: string;
 }
 

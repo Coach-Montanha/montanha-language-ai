@@ -21,6 +21,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Olá! Eu sou o Leo de Chicago. Super animado para conversar com você! Não se preocupe em errar — vou corrigir com carinho cada deslize para você soar natural. Como tem sido o seu dia?",
     speechPitch: 0.78,
+    speechLangCode: "en-US",
+    preferredVoiceKeywords: ["David", "Leo", "Lucas", "Guy", "Natural", "Male"],
     samplePhrase: "Hey friend! Take it easy, we'll master this together.",
   },
   {
@@ -42,6 +44,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Olá querido(a)! Eu sou a Emma de Londres. É um prazer absoluto te conhecer. Vá no seu ritmo, não há pressa alguma, e vamos polir o seu inglês juntos. Sobre o que você gostaria de conversar hoje?",
     speechPitch: 1.05,
+    speechLangCode: "en-GB",
+    preferredVoiceKeywords: ["George", "Hazel", "Sonia", "Female", "UK", "British", "Natural"],
     samplePhrase: "Splendid job! Just one tiny detail to polish, my friend.",
   },
   {
@@ -63,6 +67,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Oi! Aqui é a Sophia de Nova York! Você tem um potencial incrível e estou aqui para te apoiar 100%. Fale à vontade — vou notar qualquer errinho e te orientar. O que você está fazendo hoje?",
     speechPitch: 1.1,
+    speechLangCode: "en-US",
+    preferredVoiceKeywords: ["Zira", "Samantha", "Victoria", "Female", "Natural"],
     samplePhrase: "You're doing awesome! Let's just fix this quick preposition.",
   },
   {
@@ -84,6 +90,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Olá! Eu sou o Lucas de Toronto. É muito bom ter você aqui. Não há pressão alguma na nossa conversa — cada pequeno erro é apenas um passo adiante. Como estão as coisas com você hoje?",
     speechPitch: 0.76,
+    speechLangCode: "en-CA",
+    preferredVoiceKeywords: ["Liam", "Lucas", "Canadian", "Male", "Natural"],
     samplePhrase: "Take your time! We're in this together, step by step.",
   },
 
@@ -101,12 +109,14 @@ export const TUTORS: TutorPersona[] = [
     styleDesc: "Espanhol castelhano nítido e natural. Conversa com entusiasmo, muito acolhedor e focado na fala do dia a dia.",
     bioPt: "Madrilenho autêntico, apaixonado por tapas, futebol e cultura hispânica. Mateo ensina com uma simpatia contagiante, garantindo que você compreenda as nuances dos verbos e preposições com leveza.",
     initialGreeting:
-      "¡Hola amigo! Soy Mateo de Madrid. ¡Qué gran alegría tenerte aquí! No te preocupes en absoluto por cometer errores — te corregiré con cariño para que hables con total naturalidad. ¿Cómo va tu día hoy?",
+      "¡Hola amigo! Soy Mateo de Madrid. ¡Qué gran alegría tenerte aqui! No te preocupes en absoluto por cometer errores — te corregiré con cariño para que hables con total naturalidad. ¿Cómo va tu día hoy?",
     initialGreetingPhonetic:
       "Ó-la a-mí-go! Sôi Ma-tê-o de Ma-dríd. Ké gran a-le-grí-a te-nér-te a-kí! No te pre-o-kú-pes en ab-so-lú-to por co-me-tér e-rró-res — te co-rre-ji-ré con ca-rí-nho pa-ra ke á-bles con to-tál na-tu-ra-li-dád. Có-mo va tu dí-a ói?",
     initialGreetingPt:
       "Olá amigo! Sou o Mateo de Madrid. Que grande alegria ter você aqui! Não se preocupe em cometer erros — vou te corrigir com carinho para que você fale com total naturalidade. Como vai o seu dia hoje?",
     speechPitch: 0.78,
+    speechLangCode: "es-ES",
+    preferredVoiceKeywords: ["Pablo", "Raul", "Alvaro", "Diego", "Castilian", "Spanish", "Male"],
     samplePhrase: "¡Tranquilo amigo! Vamos a dominar el español juntos paso a paso.",
   },
   {
@@ -128,6 +138,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Olá! Sou a Valentina de Buenos Aires. Que bom que você está aprendendo espanhol comigo! Fale com total confiança, qualquer pequeno detalhe nós lapidamos juntos com muito carinho. Como você está hoje?",
     speechPitch: 1.05,
+    speechLangCode: "es-AR",
+    preferredVoiceKeywords: ["Elena", "Sabina", "Argentina", "Female", "Spanish"],
     samplePhrase: "¡Buenísimo! Cada pequena frase é um paso enorme hacia adelante.",
   },
 
@@ -151,6 +163,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Olá! Sou o Kenji de Tóquio. Muito prazer em te conhecer! Sem se preocupar com erros, vamos praticar japonês com leveza juntos. Como foi o seu dia hoje?",
     speechPitch: 0.76,
+    speechLangCode: "ja-JP",
+    preferredVoiceKeywords: ["Keita", "Ichiro", "Naoki", "Kenji", "Male", "Japanese"],
     samplePhrase: "Daijoubu desu yo! Yukkuri renshuu shimashou (Tudo bem! Vamos praticar com calma).",
   },
   {
@@ -172,6 +186,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Olá! Me chamo Sakura, de Kyoto. Boas-vindas ao mundo do japonês! Fale com o coração tranquilo, vou te ensinar com todo carinho. O que você fez hoje?",
     speechPitch: 1.1,
+    speechLangCode: "ja-JP",
+    preferredVoiceKeywords: ["Nanami", "Kyoko", "Haruka", "Sakura", "Female", "Japanese"],
     samplePhrase: "Ganbatte kudasai! (Dê o seu melhor! Estamos juntos nessa jornada).",
   },
 
@@ -195,6 +211,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Alegrai-vos! Eu sou Teófilo de Atenas. Graça e paz a vós! Com dedicação aprenderemos o grego koiné das Sagradas Escrituras. O que desejas ler e estudar hoje?",
     speechPitch: 0.75,
+    speechLangCode: "el-GR",
+    preferredVoiceKeywords: ["Stefanos", "Nikos", "Dimitris", "Male", "Greek"],
     samplePhrase: "En archêi ên ho Lógos! (No princípio era o Verbo — João 1:1).",
   },
   {
@@ -216,6 +234,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Alegrai-vos no Senhor! Meu nome é Helena, de Tessalônica. Não temais deslizes gramaticais — com amor e paciência aprenderemos o grego do Evangelho. Como estás hoje?",
     speechPitch: 1.05,
+    speechLangCode: "el-GR",
+    preferredVoiceKeywords: ["Athina", "Helena", "Female", "Greek"],
     samplePhrase: "Hê agápê oudépote píptei! (O amor jamais acaba — 1 Coríntios 13:8).",
   },
 
@@ -239,6 +259,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Olá caríssimo! Sou o Matteo de Roma. Que bom ter você aqui! Fale sem medo: corrigiremos cada pequeno detalhe com um sorriso. Como está indo o seu dia?",
     speechPitch: 0.78,
+    speechLangCode: "it-IT",
+    preferredVoiceKeywords: ["Cosimo", "Diego", "Marco", "Luca", "Male", "Italian"],
     samplePhrase: "Benvenuto! Insieme parleremo un italiano meraviglioso.",
   },
   {
@@ -260,6 +282,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Olá a todos! Meu nome é Giulia, de Florença, o berço da língua italiana. Vou te guiar com toda a calma e doçura do mundo. Sobre o que você gostaria de conversar hoje?",
     speechPitch: 1.05,
+    speechLangCode: "it-IT",
+    preferredVoiceKeywords: ["Elsa", "Alice", "Giulia", "Female", "Italian"],
     samplePhrase: "Bravissimo! Passo dopo passo perfezioniamo ogni parola insieme.",
   },
 
@@ -283,6 +307,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Bom dia meu amigo! Meu nome é Antoine, de Paris. É um prazer enorme conhecê-lo. Não tema cometer erros, vamos lapidar cada frase com prazer. Como vai você hoje?",
     speechPitch: 0.76,
+    speechLangCode: "fr-FR",
+    preferredVoiceKeywords: ["Henri", "Paul", "Jean", "Antoine", "Male", "French"],
     samplePhrase: "C'est magnifique ! Avec de la patience, votre français sera superbe.",
   },
   {
@@ -304,6 +330,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Oi, oi! Aqui é a Camille de Lyon! Estou encantada em te acompanhar no seu aprendizado. Fale livremente, eu te explico tudo de forma simples em francês e português. O que você fez de bom hoje?",
     speechPitch: 1.1,
+    speechLangCode: "fr-FR",
+    preferredVoiceKeywords: ["Hortense", "Julie", "Celine", "Camille", "Female", "French"],
     samplePhrase: "Bravo ! Petit à petit, l'oiseau fait son nid — on avance ensemble.",
   },
 
@@ -327,6 +355,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Olá! Eu sou o Max de Berlim. Muito bom te conhecer! Sem medo de errar — praticamos com calma e corrigimos cada detalhe. Como vai você hoje?",
     speechPitch: 0.76,
+    speechLangCode: "de-DE",
+    preferredVoiceKeywords: ["Stefan", "Conrad", "Max", "Male", "German"],
     samplePhrase: "Kein Problem! Schritt für Schritt meistern wir die deutsche Sprache zusammen.",
   },
   {
@@ -348,6 +378,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Bom dia! Meu nome é Hannah e sou de Munique. Boas-vindas! Fale livremente — vou te corrigir com carinho para você falar com total segurança. O que você fez de bom hoje?",
     speechPitch: 1.05,
+    speechLangCode: "de-DE",
+    preferredVoiceKeywords: ["Katja", "Marlene", "Hannah", "Female", "German"],
     samplePhrase: "Wunderbar! Du machst das schon richtig gut — immer weiter so!",
   },
 
@@ -371,6 +403,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Olá! Meu nome é Dmitri, sou de São Petersburgo. Muito feliz em te conhecer! Não se preocupe com erros — vamos analisar cada frase com carinho. Como estão suas coisas hoje?",
     speechPitch: 0.75,
+    speechLangCode: "ru-RU",
+    preferredVoiceKeywords: ["Pavel", "Dmitry", "Maxim", "Yuri", "Male", "Russian"],
     samplePhrase: "Всё получится! Шаг за шагом мы освоим русский язык вместе. (Vai dar tudo certo! Passo a passo dominaremos o russo juntos.)",
   },
   {
@@ -392,6 +426,8 @@ export const TUTORS: TutorPersona[] = [
     initialGreetingPt:
       "Oi! Eu sou a Elena de Moscou. Boas-vindas ao mundo da língua russa! Fale livremente, sempre vou te ajudar com carinho e indicar a sonoridade correta. O que você fez hoje?",
     speechPitch: 1.05,
+    speechLangCode: "ru-RU",
+    preferredVoiceKeywords: ["Irina", "Elena", "Svetlana", "Female", "Russian"],
     samplePhrase: "Отлично! Каждый шаг приближает вас к свободной речи. (Excelente! Cada passo te aproxima da fala fluente.)",
   },
 ];

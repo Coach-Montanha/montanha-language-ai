@@ -5,6 +5,7 @@ export interface SpeakOptions {
   pitch?: number | undefined;
   lang?: string | undefined;
   voiceName?: string | undefined;
+  preferredVoiceKeywords?: string[] | undefined;
   gender?: ("male" | "female") | undefined;
   onStart?: (() => void) | undefined;
   onEnd?: (() => void) | undefined;
@@ -74,6 +75,20 @@ export function speakText(text: string, options: SpeakOptions = {}): void {
       const gender = options.gender;
       let matchedVoice: SpeechSynthesisVoice | undefined;
       let isConfirmedMaleVoice = false;
+
+      // 0. Tentar voz específica selecionada pelo usuário pelo nome exato (ex: no SettingsModal)
+      if (options.voiceName) {
+        matchedVoice = voices.find((v) => v.name.toLowerCase() === options.voiceName!.toLowerCase());
+      }
+
+      // 0b. Tentar encontrar voz combinando o idioma/sotaque + palavras-chave da voz do tutor
+      if (!matchedVoice && options.preferredVoiceKeywords && options.preferredVoiceKeywords.length > 0) {
+        const keywords = options.preferredVoiceKeywords;
+        matchedVoice = langVoices.find((v) => {
+          const nameLower = v.name.toLowerCase();
+          return keywords.some((kw) => nameLower.includes(kw.toLowerCase()));
+        });
+      }
 
       // Palavras-chave inequívocas de nomes e marcadores femininos
       const FEMALE_VOICE_KEYWORDS = [

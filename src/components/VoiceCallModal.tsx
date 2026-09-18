@@ -97,7 +97,8 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         rate: audioSpeed,
         pitch: activeTutor.speechPitch,
         gender: activeTutor.gender,
-        lang: langDef.speechLangCode,
+        lang: activeTutor.speechLangCode || langDef.speechLangCode,
+        preferredVoiceKeywords: activeTutor.preferredVoiceKeywords,
         onEnd: () => {
           if (activeCallRef.current && !isMuted) {
             startListeningSession(initialHistory);
@@ -197,7 +198,8 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             rate: audioSpeed,
             pitch: activeTutor.speechPitch,
             gender: activeTutor.gender,
-            lang: langDef.speechLangCode,
+            lang: activeTutor.speechLangCode || langDef.speechLangCode,
+            preferredVoiceKeywords: activeTutor.preferredVoiceKeywords,
             onEnd: () => {
               if (activeCallRef.current && !isMuted) {
                 startListeningSession(nextHistory);

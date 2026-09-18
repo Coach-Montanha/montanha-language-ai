@@ -50,7 +50,8 @@ export const TutorSelectorModal: React.FC<TutorSelectorModalProps> = ({
       rate: audioSpeed,
       gender: tutor.gender,
       pitch: tutor.speechPitch,
-      lang: langDef.speechLangCode,
+      lang: tutor.speechLangCode || langDef.speechLangCode,
+      preferredVoiceKeywords: tutor.preferredVoiceKeywords,
     });
   };
 
