@@ -163,6 +163,11 @@ function SmartLanguageApp() {
     );
   }
 
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans select-none antialiased">
+      {/* Barra de Notificações Toast */}
+      <Toaster position="top-center" richColors />
+
       {/* Layout com Sidebar Desktop & Conteúdo */}
       <div className="flex flex-1 w-full min-h-0">
         <LeftSidebar
