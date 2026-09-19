@@ -128,37 +128,46 @@ export function speakText(text: string, options: SpeakOptions = {}): void {
       ];
 
       if (langVoices.length > 0) {
+        // Tentar primeiro encontrar voz neural/HD de alta fidelidade para o gênero desejado
+        const hdVoices = langVoices.filter((v) => {
+          const n = v.name.toLowerCase();
+          return n.includes("natural") || n.includes("neural") || n.includes("google") || n.includes("online") || n.includes("enhanced") || n.includes("premium");
+        });
+
+        const poolToUse = hdVoices.length > 0 ? hdVoices : langVoices;
+
         if (gender === "female") {
           // Heurística de vozes femininas
-          matchedVoice = langVoices.find((v) => {
+          matchedVoice = poolToUse.find((v) => {
             const name = v.name.toLowerCase();
             return FEMALE_VOICE_KEYWORDS.some((kw) => name.includes(kw));
-          });
+          }) || langVoices.find((v) => FEMALE_VOICE_KEYWORDS.some((kw) => v.name.toLowerCase().includes(kw)));
         } else if (gender === "male") {
-          // 1. Tentar encontrar voz com nome explicitamente masculino
-          matchedVoice = langVoices.find((v) => {
+          // 1. Tentar encontrar voz com nome explicitamente masculino no pool HD
+          matchedVoice = poolToUse.find((v) => {
             const name = v.name.toLowerCase();
             return MALE_VOICE_KEYWORDS.some((kw) => name.includes(kw));
-          });
+          }) || langVoices.find((v) => MALE_VOICE_KEYWORDS.some((kw) => v.name.toLowerCase().includes(kw)));
 
           if (matchedVoice) {
             isConfirmedMaleVoice = true;
           } else {
-            // 2. Se não encontrou nome explicitamente masculino, preferir voz que NÃO seja feminina
-            matchedVoice = langVoices.find((v) => {
+            // 2. Se não encontrou nome explicitamente masculino, preferir voz que NÃO seja feminina no pool HD
+            matchedVoice = poolToUse.find((v) => {
               const name = v.name.toLowerCase();
               return !FEMALE_VOICE_KEYWORDS.some((kw) => name.includes(kw));
             });
 
             // 3. Em celulares Android com Google TTS, a Voz 2 ou 3 costuma ser a variante masculina
-            if (!matchedVoice && langVoices.length > 1) {
-              matchedVoice = langVoices[1];
+            if (!matchedVoice && poolToUse.length > 1) {
+              matchedVoice = poolToUse[1];
             }
           }
         }
 
         if (!matchedVoice) {
           matchedVoice =
+            hdVoices[0] ||
             langVoices.find(
               (v) =>
                 v.name.includes("Natural") ||

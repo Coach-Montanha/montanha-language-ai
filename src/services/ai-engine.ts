@@ -2400,9 +2400,11 @@ export async function tutorChat(
   apiKey?: string,
   tutorPersona?: TutorPersona,
   learnerMemory?: LearnerProfileMemory,
-  isPortugueseInput?: boolean
+  isPortugueseInput?: boolean,
+  aiModelPreference?: ("pro" | "flash") | undefined
 ): Promise<TutorChatResponse> {
   const activeTutor = tutorPersona || DEFAULT_TUTOR;
+  const preferredModel = aiModelPreference === "flash" ? "gemini-2.5-flash" : "gemini-2.5-pro";
   const hasTargetNativeScript =
     (activeTutor.language === "ru" && /[а-яА-ЯёЁ]/.test(userInput)) ||
     (activeTutor.language === "el-koine" && /[α-ωΑ-Ω]/.test(userInput)) ||
@@ -2526,7 +2528,7 @@ Respond in strictly valid JSON format matching that exact structure.`;
         .join("\n");
 
       const prompt = `Recent Conversation:\n${historyFormatted}\n\nUser ${userIsPortuguese ? "said in Portuguese" : "said"}: "${userInput}"\n\nGenerate ${activeTutor.name}'s interactive response with 5-6 suggested replies:`;
-      const responseRaw = await callGeminiRaw(apiKey, prompt, systemPrompt);
+      const responseRaw = await callGeminiRaw(apiKey, prompt, systemPrompt, preferredModel);
 
       const cleaned = responseRaw.replace(/```json/g, "").replace(/```/g, "").trim();
       const parsed = JSON.parse(cleaned);

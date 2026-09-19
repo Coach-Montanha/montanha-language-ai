@@ -8,9 +8,12 @@ export interface GeminiResponse {
 export async function callGeminiRaw(
   apiKey: string,
   prompt: string,
-  systemInstruction?: string
+  systemInstruction?: string,
+  preferredModel?: string
 ): Promise<string> {
-  const models = ["gemini-3.1-flash", "gemini-2.5-flash"];
+  const models = preferredModel
+    ? [preferredModel, "gemini-2.5-pro", "gemini-1.5-pro", "gemini-2.5-flash", "gemini-1.5-flash"]
+    : ["gemini-2.5-pro", "gemini-1.5-pro", "gemini-2.5-flash", "gemini-1.5-flash"];
 
   const body: {
     contents: Array<{ role: string; parts: Array<{ text: string }> }>;

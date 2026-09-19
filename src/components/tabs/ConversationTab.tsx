@@ -392,7 +392,8 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         progress.geminiApiKey,
         activeTutor,
         learnerMemory,
-        isPt
+        isPt,
+        progress.aiModelPreference
       );
 
       if (isPt) {

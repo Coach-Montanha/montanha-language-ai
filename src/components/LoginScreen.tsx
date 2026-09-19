@@ -1,5 +1,12 @@
 import React, { useState } from "react";
 import { UserSession, loginWithPin, registerWithPin, resetPin } from "@/services/auth";
+import {
+  checkAndLockGuestDemo,
+  validateEmailMx,
+  sendOtpToken,
+  verifyOtpToken,
+  checkProjectAccess
+} from "@/services/ecosystem-auth-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +22,9 @@ import {
   Globe,
   ChevronDown,
   ChevronUp,
+  ShieldCheck,
+  Mail,
+  LockCheck
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -98,6 +108,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const handleQuickDemo = async () => {
     setErrorMsg("");
     setIsLoading(true);
+    const demoEmail = "demo@montanha.app";
+
+    const lockout = await checkAndLockGuestDemo(demoEmail);
+    if (lockout.locked && !lockout.allowed) {
+      setErrorMsg(lockout.message);
+      toast.error("Trava Anti-Abuso Ativada: Modo demonstração já utilizado no ecossistema.");
+      setIsLoading(false);
+      return;
+    }
+
     const demoUser = "demo";
     const demoPin = "1234";
     setUsername(demoUser);
@@ -214,9 +234,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         {/* Ecosystem Bar */}
         {showEcosystem && (
           <div className="p-3.5 rounded-2xl bg-slate-900/95 border border-indigo-500/40 shadow-2xl space-y-2 animate-in fade-in">
-            <div className="text-[11px] font-bold text-indigo-300 flex items-center gap-1.5 uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Plataformas do Ecossistema Montanha</span>
+            <div className="text-[11px] font-bold text-indigo-300 flex items-center justify-between uppercase tracking-wider">
+              <span className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Plataformas do Ecossistema Montanha</span>
+              <a href="/master-admin" className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-md hover:bg-purple-500/40 font-bold transition flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-purple-400" /> Painel Master
+              </a>
             </div>
             <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
               {ECOSYSTEM_APPS.map((app) => (

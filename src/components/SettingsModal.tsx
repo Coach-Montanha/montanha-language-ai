@@ -59,6 +59,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     progress.selectedTutorId || getDefaultTutorForLanguage(progress.selectedLanguage || "en").id
   );
   const [fontSize, setFontSize] = useState<"sm" | "md" | "lg" | "xl">(progress.fontSize || "md");
+  const [aiModelPreference, setAiModelPreference] = useState<"pro" | "flash">(
+    progress.aiModelPreference || "pro"
+  );
   const [design, setDesign] = useState<"classic" | "midnight" | "focus">(
     progress.design ||
       (typeof window !== "undefined"
@@ -121,6 +124,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       selectedLanguage,
       selectedTutorId,
       fontSize,
+      aiModelPreference,
       design,
     };
     if (typeof window !== "undefined") {
@@ -156,6 +160,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         selectedLanguage: "en",
         selectedTutorId: "leo",
         fontSize: "md",
+        aiModelPreference: "pro",
         design: "classic",
       };
       document.documentElement.setAttribute("data-design", "classic");
@@ -525,18 +530,76 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* 6. Modo de Inteligência Artificial */}
-          <div className="space-y-2 rounded-xl border border-border bg-card/60 p-3.5">
+          <div className="space-y-3 rounded-xl border border-border bg-card/60 p-3.5">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5">
                 <Bot className="h-4 w-4 text-emerald-500" />
-                Motor de IA
+                Motor de IA &amp; Precisão Pedagógica
               </Label>
               <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" />
                 {apiKey.trim() ? "Gemini Conectado" : "Motor Inteligente Nativo"}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+
+            {/* Seletor de Modelo */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground font-medium">Modelo da Inteligência Artificial:</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAiModelPreference("pro")}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    aiModelPreference === "pro"
+                      ? "border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/20 shadow-xs"
+                      : "border-border bg-card/40 hover:bg-muted/40"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1">
+                      🎯 Gemini Pro
+                      <Badge variant="outline" className="text-[9px] px-1 py-0 border-emerald-500/40 text-emerald-500">
+                        Alta Precisão
+                      </Badge>
+                    </span>
+                    {aiModelPreference === "pro" && (
+                      <span className="h-3.5 w-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px]">
+                        <Check className="h-2 w-2" />
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                    Raciocínio profundo, correções impecáveis e respostas com tom cultural autêntico.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAiModelPreference("flash")}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    aiModelPreference === "flash"
+                      ? "border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/20 shadow-xs"
+                      : "border-border bg-card/40 hover:bg-muted/40"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1">
+                      ⚡ Gemini Flash
+                    </span>
+                    {aiModelPreference === "flash" && (
+                      <span className="h-3.5 w-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px]">
+                        <Check className="h-2 w-2" />
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                    Respostas ultra-rápidas e economiza dados em conexões lentas.
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed pt-1">
               Todos os tutores dos 6 idiomas contam com correção instantânea e explicação em português, funcionando tanto com o motor embutido quanto com o Google Gemini.
             </p>
             <div className="relative mt-2">
@@ -645,7 +708,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* Zerar progresso */}
           <div className="pt-2 border-t border-border flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Quer recomeçar do zero?</span>
+            <a
+              href="/master-admin"
+              className="text-xs font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/30 transition-all"
+            >
+              👑 Painel Master SuperAdmin
+            </a>
             <Button
               variant="ghost"
               size="sm"

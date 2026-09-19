@@ -183,6 +183,7 @@ export interface UserProgress {
   voiceCallsCount?: number | undefined;
   bestPronunciationScore?: number | undefined;
   cefrLevel?: string | undefined;
+  aiModelPreference?: ("pro" | "flash") | undefined;
 }
 
 export interface LearnerTopicMemory {
