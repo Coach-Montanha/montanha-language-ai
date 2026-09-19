@@ -10,12 +10,16 @@ export async function callGeminiRaw(
   prompt: string,
   systemInstruction?: string
 ): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const models = ["gemini-3.1-flash", "gemini-2.5-flash"];
 
   const body: {
     contents: Array<{ role: string; parts: Array<{ text: string }> }>;
     systemInstruction?: { parts: Array<{ text: string }> };
-    generationConfig?: { temperature: number; maxOutputTokens: number };
+    generationConfig?: {
+      temperature: number;
+      topP: number;
+      maxOutputTokens: number;
+    };
   } = {
     contents: [
       {
@@ -24,8 +28,9 @@ export async function callGeminiRaw(
       },
     ],
     generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 1000,
+      temperature: 0.72,
+      topP: 0.95,
+      maxOutputTokens: 1200,
     },
   };
 
@@ -35,23 +40,31 @@ export async function callGeminiRaw(
     };
   }
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  let lastError: Error | null = null;
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    const msg = errData?.error?.message || `Erro na API (${response.status})`;
-    throw new Error(msg);
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        const msg = errData?.error?.message || `Erro na API (${response.status})`;
+        throw new Error(msg);
+      }
+
+      const data = await response.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) {
+        return text;
+      }
+    } catch (err: any) {
+      lastError = err;
+    }
   }
 
-  const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error("Resposta vazia recebida do Gemini.");
-  }
-
-  return text;
+  throw lastError || new Error("Falha ao gerar resposta com o modelo Gemini.");
 }
