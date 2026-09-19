@@ -64,14 +64,11 @@ const DISPOSABLE_EMAIL_DOMAINS = new Set([
 
 function getSupabaseClient(): SupabaseClient | null {
   try {
-    const url =
-      (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) ||
-      (typeof process !== 'undefined' && process.env?.SUPABASE_URL) ||
-      '';
-    const key =
-      (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_SUPABASE_ANON_KEY || import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY)) ||
-      (typeof process !== 'undefined' && (process.env?.SUPABASE_ANON_KEY || process.env?.SUPABASE_PUBLISHABLE_KEY)) ||
-      '';
+    const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {};
+    const procEnv = (typeof process !== 'undefined' && process.env) ? process.env : {};
+
+    const url = env['VITE_SUPABASE_URL'] || procEnv['SUPABASE_URL'] || '';
+    const key = env['VITE_SUPABASE_ANON_KEY'] || env['VITE_SUPABASE_PUBLISHABLE_KEY'] || procEnv['SUPABASE_ANON_KEY'] || procEnv['SUPABASE_PUBLISHABLE_KEY'] || '';
 
     if (url && key) {
       return createClient(url, key);

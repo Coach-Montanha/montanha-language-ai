@@ -23,8 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
   ShieldCheck,
-  Mail,
-  LockCheck
+  Mail
 } from "lucide-react";
 import { toast } from "sonner";
 
