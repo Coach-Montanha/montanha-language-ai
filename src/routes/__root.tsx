@@ -173,10 +173,7 @@ function RootShell({ children }: { children: ReactNode }) {
             __html: `
               #smart-app-splash {
                 position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
+                top: 0; left: 0; right: 0; bottom: 0;
                 z-index: 999999;
                 background-color: #09090b;
                 display: flex;
@@ -184,7 +181,7 @@ function RootShell({ children }: { children: ReactNode }) {
                 align-items: center;
                 justify-content: center;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                transition: opacity 0.35s ease, visibility 0.35s ease;
+                transition: opacity 0.4s ease, visibility 0.4s ease;
               }
               #smart-app-splash.splash-dismissed {
                 opacity: 0 !important;
@@ -193,43 +190,49 @@ function RootShell({ children }: { children: ReactNode }) {
                 display: none !important;
               }
               .splash-box {
-                width: 76px;
-                height: 76px;
-                border-radius: 22px;
-                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #090d16 100%);
-                border: 1.5px solid rgba(59, 130, 246, 0.4);
-                box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.7), 0 0 25px rgba(37, 99, 235, 0.35);
+                width: 96px;
+                height: 96px;
+                border-radius: 28px;
+                background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+                border: 2px solid rgba(99, 102, 241, 0.4);
+                box-shadow: 0 0 35px rgba(99, 102, 241, 0.3), inset 0 0 15px rgba(99, 102, 241, 0.15);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                animation: splashPulse 2s ease-in-out infinite;
+                animation: splashPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
               }
               .splash-title {
-                margin-top: 18px;
-                font-size: 19px;
-                font-weight: 800;
+                margin-top: 22px;
+                font-size: 22px;
+                font-weight: 900;
                 letter-spacing: -0.02em;
                 color: #f8fafc;
                 text-align: center;
               }
+              .splash-title span {
+                color: #6366f1;
+              }
               .splash-subtitle {
-                margin-top: 4px;
-                font-size: 12px;
+                margin-top: 6px;
+                font-size: 13px;
+                font-weight: 500;
                 color: #94a3b8;
                 text-align: center;
+                max-width: 360px;
+                padding: 0 16px;
               }
               .splash-spinner {
                 margin-top: 24px;
-                width: 22px;
-                height: 22px;
-                border: 2.5px solid rgba(255, 255, 255, 0.1);
-                border-top-color: #3b82f6;
+                width: 26px;
+                height: 26px;
+                border: 3px solid rgba(99, 102, 241, 0.15);
+                border-top-color: #6366f1;
                 border-radius: 50%;
                 animation: splashSpin 0.75s linear infinite;
               }
               @keyframes splashPulse {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.04); }
+                0%, 100% { transform: scale(1); box-shadow: 0 0 35px rgba(99, 102, 241, 0.3); }
+                50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(99, 102, 241, 0.5); }
               }
               @keyframes splashSpin {
                 to { transform: rotate(360deg); }
@@ -242,25 +245,12 @@ function RootShell({ children }: { children: ReactNode }) {
         {/* Tela Inicial de Carregamento Instantânea com o Símbolo Oficial do Montanha Language AI */}
         <div id="smart-app-splash" aria-label="Carregando Montanha Language AI...">
           <div className="splash-box">
-            <svg
-              width="44"
-              height="44"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#fbbf24"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" fill="#fef08a" fillOpacity="0.25" />
-              <path d="M5 3v4" />
-              <path d="M7 5H3" />
-              <path d="M19 17v4" />
-              <path d="M21 19h-4" />
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" fill="#6366f1" fillOpacity="0.25" />
             </svg>
           </div>
-          <div className="splash-title">Montanha Language AI</div>
-          <div className="splash-subtitle">Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida</div>
+          <div className="splash-title">Montanha <span>Language AI</span></div>
+          <div className="splash-subtitle">Tutor de Idiomas com IA, Treinos Diários de 5 Minutos &amp; Imersão Fluida</div>
           <div className="splash-spinner"></div>
         </div>
 
