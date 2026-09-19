@@ -113,8 +113,8 @@ export const MasterAdminDashboard: React.FC = () => {
     let loaded: EcosystemSubscription[] = [];
 
     try {
-      const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {};
-      const procEnv = (typeof process !== 'undefined' && process.env) ? process.env : {};
+      const env = ((typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {}) as Record<string, string>;
+      const procEnv = ((typeof process !== 'undefined' && process.env) ? process.env : {}) as Record<string, string>;
 
       const url = env['VITE_SUPABASE_URL'] || procEnv['SUPABASE_URL'];
       const key = env['VITE_SUPABASE_ANON_KEY'] || env['VITE_SUPABASE_PUBLISHABLE_KEY'] || procEnv['SUPABASE_ANON_KEY'] || procEnv['SUPABASE_PUBLISHABLE_KEY'];
@@ -157,8 +157,8 @@ export const MasterAdminDashboard: React.FC = () => {
     }
 
     try {
-      const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {};
-      const procEnv = (typeof process !== 'undefined' && process.env) ? process.env : {};
+      const env = ((typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {}) as Record<string, string>;
+      const procEnv = ((typeof process !== 'undefined' && process.env) ? process.env : {}) as Record<string, string>;
 
       const url = env['VITE_SUPABASE_URL'] || procEnv['SUPABASE_URL'];
       const key = env['VITE_SUPABASE_ANON_KEY'] || env['VITE_SUPABASE_PUBLISHABLE_KEY'] || procEnv['SUPABASE_ANON_KEY'] || procEnv['SUPABASE_PUBLISHABLE_KEY'];
