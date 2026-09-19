@@ -51,7 +51,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
         <div>
           <h2 className="text-sm font-extrabold text-foreground">Montanha Language AI</h2>
-          <p className="text-[10px] text-muted-foreground font-medium">Tutor & Imersão Fluida com IA</p>
+          <p className="text-[10px] text-muted-foreground font-medium">Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida</p>
         </div>
       </div>
 

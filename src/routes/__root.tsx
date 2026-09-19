@@ -104,7 +104,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#2563eb" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "Montanha Language" },
+      { name: "apple-mobile-web-app-title", content: "Montanha Language AI" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "application-name", content: "Montanha Language AI" },
       { property: "og:title", content: "Montanha Language AI — Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida" },
@@ -239,8 +239,8 @@ function RootShell({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
-        {/* Tela Inicial de Carregamento Instantânea com o Símbolo Oficial do Smart Language */}
-        <div id="smart-app-splash" aria-label="Carregando Smart Language...">
+        {/* Tela Inicial de Carregamento Instantânea com o Símbolo Oficial do Montanha Language AI */}
+        <div id="smart-app-splash" aria-label="Carregando Montanha Language AI...">
           <div className="splash-box">
             <svg
               width="44"
@@ -259,8 +259,8 @@ function RootShell({ children }: { children: ReactNode }) {
               <path d="M21 19h-4" />
             </svg>
           </div>
-          <div className="splash-title">Smart Language</div>
-          <div className="splash-subtitle">Tutor de línguas com IA</div>
+          <div className="splash-title">Montanha Language AI</div>
+          <div className="splash-subtitle">Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida</div>
           <div className="splash-spinner"></div>
         </div>
 
