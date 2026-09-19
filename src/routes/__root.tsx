@@ -95,23 +95,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
       },
-      { title: "Smart Language - Tutor de Línguas com IA" },
+      { title: "Montanha Language AI — Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida" },
       {
         name: "description",
         content:
-          "Aprenda a falar, ouvir e ler idiomas com tutor com IA, missões reais e treino de 5 minutos.",
+          "Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida.",
       },
       { name: "theme-color", content: "#2563eb" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "Smart Language" },
+      { name: "apple-mobile-web-app-title", content: "Montanha Language" },
       { name: "mobile-web-app-capable", content: "yes" },
-      { name: "application-name", content: "Smart Language" },
-      { property: "og:title", content: "Smart Language - Tutor de Línguas com IA" },
+      { name: "application-name", content: "Montanha Language AI" },
+      { property: "og:title", content: "Montanha Language AI — Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida" },
       {
         property: "og:description",
         content:
-          "Tutor nativo com personalidade, missões de sobrevivência e pronúncia fonética.",
+          "Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida.",
       },
       { property: "og:type", content: "website" },
     ],

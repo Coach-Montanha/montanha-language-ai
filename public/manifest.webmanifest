@@ -1,7 +1,7 @@
 {
-  "name": "Smart Language - Tutor de Línguas com IA",
-  "short_name": "Smart Language",
-  "description": "Aprenda a falar, ouvir e ler idiomas com tutor com IA, situações reais de sobrevivência e treino de 5 minutos.",
+  "name": "Montanha Language AI",
+  "short_name": "Montanha Language",
+  "description": "Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

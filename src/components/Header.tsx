@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div>
             <div className="flex items-center gap-1.5">
               <h1 className="text-base font-bold leading-tight tracking-tight text-foreground">
-                Smart Language
+                Montanha Language AI
               </h1>
               {/* Pill Seletor de Idioma */}
               {onOpenLanguageSelector && (
@@ -67,7 +67,7 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
             <p className="text-[10px] text-muted-foreground leading-none font-medium">
-              Tutor & Treino 5 min
+              Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida
             </p>
           </div>
         </div>

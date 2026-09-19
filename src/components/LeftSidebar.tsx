@@ -50,8 +50,8 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           <Sparkles className="h-5 w-5 text-amber-300" />
         </div>
         <div>
-          <h2 className="text-sm font-extrabold text-foreground">Smart Language</h2>
-          <p className="text-[10px] text-muted-foreground font-medium">Tutor com IA</p>
+          <h2 className="text-sm font-extrabold text-foreground">Montanha Language AI</h2>
+          <p className="text-[10px] text-muted-foreground font-medium">Tutor & Imersão Fluida com IA</p>
         </div>
       </div>
 
