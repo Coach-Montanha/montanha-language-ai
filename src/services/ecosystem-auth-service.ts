@@ -422,3 +422,117 @@ export async function checkProjectAccess(
     message: 'Acesso liberado em modo demonstração.'
   };
 }
+
+export const APP_NAMES_MAP: Record<string, { name: string; url: string }> = {
+  'smart-language': { name: 'Montanha Language AI', url: 'http://localhost:5173' },
+  'eduflow-finance': { name: 'Montanha Personal Studio', url: 'http://localhost:5174' },
+  'construtor-pdf': { name: 'Montanha PDF Studio', url: 'http://localhost:5175' },
+  'sistema-hibrido': { name: 'Montanha Hybrid Training', url: 'http://localhost:5176' },
+  'whatsapp-lovable': { name: 'Montanha WhatsApp Automation', url: 'http://localhost:5177' },
+  'all': { name: 'Ecossistema Montanha (5 Apps)', url: 'http://localhost:5173' }
+};
+
+export function generateTempPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 4; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `MTN-${code}`;
+}
+
+export async function generateTempAccessInvite(
+  clientName: string,
+  email: string,
+  phone: string,
+  projectId: string,
+  durationDays: number | 'vitalicio'
+): Promise<{
+  success: boolean;
+  tempPassword: string;
+  expiresAt: string | null;
+  validityLabel: string;
+  whatsappUrl: string;
+  inviteText: string;
+  message: string;
+}> {
+  const tempPassword = generateTempPassword();
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanPhone = phone.replace(/\D/g, '');
+
+  let expiresAt: string | null = null;
+  let validityLabel = '';
+
+  if (durationDays === 'vitalicio') {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 10);
+    expiresAt = d.toISOString();
+    validityLabel = 'Vitalício (Sem Expiração)';
+  } else {
+    const days = Number(durationDays) || 30;
+    const d = new Date(Date.now() + days * 24 * 3600 * 1000);
+    expiresAt = d.toISOString();
+    validityLabel = `${days} dias`;
+  }
+
+  const appInfo = APP_NAMES_MAP[projectId] || { name: projectId, url: typeof window !== 'undefined' ? window.location.origin : '' };
+  const expiresFormatted = expiresAt ? expiresAt.split('T')[0] : 'Indefinido';
+
+  const inviteText = `Olá, ${clientName}! 🎟️\n\nSeu acesso ao *${appInfo.name}* (Ecossistema Montanha) foi gerado com sucesso!\n\n🔑 *Login:* ${cleanEmail}\n🔒 *Senha Temporária:* ${tempPassword}\n⏳ *Validade:* ${validityLabel} (Até ${expiresFormatted})\n🌐 *Link de Acesso:* ${appInfo.url}\n\nBons treinos e excelentes resultados! 🚀`;
+
+  const phoneParam = cleanPhone.startsWith('55') ? cleanPhone : '55' + cleanPhone;
+  const whatsappUrl = `https://wa.me/${phoneParam}?text=${encodeURIComponent(inviteText)}`;
+
+  const projectsToGrant = projectId === 'all'
+    ? ['smart-language', 'eduflow-finance', 'construtor-pdf', 'sistema-hibrido', 'whatsapp-lovable']
+    : [projectId];
+
+  const supabase = getSupabaseClient();
+  const updatedSubs: EcosystemSubscription[] = [];
+
+  for (const pid of projectsToGrant) {
+    const sub: EcosystemSubscription = {
+      id: `sub_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      email: cleanEmail,
+      project_id: pid,
+      payment_status: 'PAGO',
+      access_expires_at: expiresAt,
+      is_active: true,
+      created_at: new Date().toISOString()
+    };
+    updatedSubs.push(sub);
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`ecosystem_sub_${pid}_${cleanEmail}`, JSON.stringify(sub));
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    const existingRaw = localStorage.getItem('master_admin_subscriptions');
+    let existing: EcosystemSubscription[] = [];
+    if (existingRaw) {
+      try { existing = JSON.parse(existingRaw); } catch (e) {}
+    }
+    const combined = [...updatedSubs, ...existing];
+    localStorage.setItem('master_admin_subscriptions', JSON.stringify(combined));
+  }
+
+  if (supabase) {
+    try {
+      await supabase.from('ecosystem_subscriptions').upsert(updatedSubs);
+    } catch (err) {
+      console.warn('[EcosystemAuth] Supabase sync for invite failed:', err);
+    }
+  }
+
+  return {
+    success: true,
+    tempPassword,
+    expiresAt,
+    validityLabel,
+    whatsappUrl,
+    inviteText,
+    message: 'Convite e senha temporária gerados com sucesso!'
+  };
+}
+

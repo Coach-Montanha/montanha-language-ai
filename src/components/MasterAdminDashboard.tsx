@@ -28,6 +28,7 @@ import {
   verifyOtpToken,
   sendOtpToken,
   checkProjectAccess,
+  generateTempAccessInvite,
   EcosystemSubscription
 } from '../services/ecosystem-auth-service';
 
@@ -59,6 +60,33 @@ export const MasterAdminDashboard: React.FC = () => {
   const [newProjectId, setNewProjectId] = useState<string>('smart-language');
   const [newPaymentStatus, setNewPaymentStatus] = useState<'PAGO' | 'PENDENTE' | 'INADIMPLENTE' | 'CANCELADO'>('PAGO');
   const [newExpiresAt, setNewExpiresAt] = useState<string>('');
+
+  // 🎟️ Invite Generator state
+  const [inviteClientName, setInviteClientName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [invitePhone, setInvitePhone] = useState('');
+  const [inviteProjectId, setInviteProjectId] = useState('all');
+  const [inviteDuration, setInviteDuration] = useState<string>('30');
+  const [generatedInvite, setGeneratedInvite] = useState<{
+    tempPassword: string;
+    whatsappUrl: string;
+    inviteText: string;
+  } | null>(null);
+
+  const handleGenerateInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteClientName || !inviteEmail || !invitePhone) {
+      notify('error', 'Preencha todos os campos do convite.');
+      return;
+    }
+    const duration = inviteDuration === 'vitalicio' ? 'vitalicio' : Number(inviteDuration);
+    const res = await generateTempAccessInvite(inviteClientName, inviteEmail, invitePhone, inviteProjectId, duration);
+    if (res.success) {
+      setGeneratedInvite(res);
+      notify('success', `Senha temporária ${res.tempPassword} gerada com sucesso!`);
+      fetchSubscriptions();
+    }
+  };
 
   const MOCK_SUBSCRIPTIONS: EcosystemSubscription[] = [
     {
@@ -351,6 +379,119 @@ export const MasterAdminDashboard: React.FC = () => {
           <div className="text-3xl font-black text-red-400">{defaultedSubs}</div>
           <span className="text-[10px] text-red-300 font-medium">Trava Anti-Abuso Ativa</span>
         </div>
+      </div>
+
+      {/* 🎟️ Gerador de Convites & Acesso Temporário */}
+      <div className="bg-slate-950/80 border border-purple-500/30 rounded-2xl p-6 shadow-xl backdrop-blur-xl space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2.5 py-0.5 rounded-full">
+              🎟️ GERADOR DE CONVITES WHATSAPP
+            </span>
+            <h2 className="text-lg font-black text-white mt-1">Gerador de Convites &amp; Acesso Temporário</h2>
+            <p className="text-xs text-slate-400">Gere senhas temporárias no formato MTN-XXXX e envie convites diretos via WhatsApp.</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleGenerateInvite} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div>
+            <label className="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[10px]">Nome do Cliente</label>
+            <input
+              type="text"
+              required
+              placeholder="Ex: João Silva"
+              value={inviteClientName}
+              onChange={(e) => setInviteClientName(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-purple-500"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[10px]">E-mail</label>
+            <input
+              type="email"
+              required
+              placeholder="cliente@exemplo.com"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-purple-500"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[10px]">Telefone WhatsApp</label>
+            <input
+              type="text"
+              required
+              placeholder="Ex: 5511999999999"
+              value={invitePhone}
+              onChange={(e) => setInvitePhone(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-purple-500 font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[10px]">Aplicativo Liberado</label>
+            <select
+              value={inviteProjectId}
+              onChange={(e) => setInviteProjectId(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-purple-500 font-bold"
+            >
+              <option value="all">🌐 Todos os 5 Apps do Ecossistema</option>
+              {ECOSYSTEM_APPS.map((app) => (
+                <option key={app.id} value={app.id}>{app.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="sm:col-span-2 lg:col-span-2">
+            <label className="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[10px]">Validade do Acesso</label>
+            <select
+              value={inviteDuration}
+              onChange={(e) => setInviteDuration(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-purple-500 font-bold"
+            >
+              <option value="7">7 dias (Trial / Degustação)</option>
+              <option value="30">30 dias (Mensal)</option>
+              <option value="365">365 dias (Anual)</option>
+              <option value="vitalicio">Vitalício (Sem limite)</option>
+            </select>
+          </div>
+
+          <div className="sm:col-span-2 lg:col-span-2 flex items-end">
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-purple-600 to-cyan-500 hover:opacity-90 text-white font-bold h-10 rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              🎟️ Gerar Convite &amp; Senha Temporária
+            </button>
+          </div>
+        </form>
+
+        {generatedInvite && (
+          <div className="mt-4 p-4 rounded-xl bg-purple-500/10 border border-purple-500/30 space-y-3 text-xs">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-purple-500/20 pb-2">
+              <div>
+                <span className="text-[10px] text-purple-300 font-bold uppercase tracking-wider">Senha Temporária Gerada:</span>
+                <div className="text-2xl font-black font-mono text-cyan-300 tracking-widest">{generatedInvite.tempPassword}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => window.open(generatedInvite.whatsappUrl, '_blank')}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer"
+              >
+                📱 Enviar Convite pelo WhatsApp
+              </button>
+            </div>
+
+            <div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Prévia da Mensagem Formatada:</span>
+              <pre className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-slate-200 text-xs whitespace-pre-wrap font-sans leading-relaxed">
+                {generatedInvite.inviteText}
+              </pre>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Workspace Table & Filters */}
