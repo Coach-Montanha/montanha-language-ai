@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useRouterState } from '@tanstack/react-router';
 import { Shield, LogOut, UserCheck } from 'lucide-react';
 
 export const IMPERSONATE_STORAGE_KEY = 'montanha_impersonate';
@@ -34,6 +35,7 @@ export function clearImpersonation() {
 
 export const ImpersonationBanner: React.FC = () => {
   const [email, setEmail] = useState<string | null>(null);
+  const currentSearch = useRouterState({ select: (s) => s.location.search });
 
   useEffect(() => {
     setEmail(getImpersonatedEmail());
@@ -46,7 +48,7 @@ export const ImpersonationBanner: React.FC = () => {
 
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
-  }, []);
+  }, [currentSearch]);
 
   if (!email) return null;
 

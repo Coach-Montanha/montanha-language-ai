@@ -45,7 +45,7 @@ const ECOSYSTEM_APPS = [
     category: 'Alta Performance & Endurance',
     color: 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300',
     icon: Flame,
-    url: 'http://localhost:5173/eco',
+    url: 'http://localhost:5176/eco',
     isLocal: false,
     description: 'Plataforma de periodização de treino com IA, musculação, endurance, LPO e kettlebell.'
   },
