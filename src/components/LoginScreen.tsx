@@ -92,15 +92,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [showEcosystem, setShowEcosystem] = useState(false);
 
   const handlePinChange = (val: string) => {
-    // Permite apenas dígitos e no máximo 4 números
-    const clean = val.replace(/\D/g, "").slice(0, 4);
-    setPin(clean);
+    setPin(val.slice(0, 30));
     setErrorMsg("");
   };
 
   const handleConfirmPinChange = (val: string) => {
-    const clean = val.replace(/\D/g, "").slice(0, 4);
-    setConfirmPin(clean);
+    setConfirmPin(val.slice(0, 30));
     setErrorMsg("");
   };
 
@@ -113,8 +110,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       return;
     }
 
-    if (pin.length !== 4) {
-      setErrorMsg("A senha deve conter exatamente 4 números.");
+    if (pin.length < 4) {
+      setErrorMsg("A senha deve conter no mínimo 4 caracteres.");
       return;
     }
 

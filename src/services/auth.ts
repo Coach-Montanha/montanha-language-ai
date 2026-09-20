@@ -111,8 +111,42 @@ export async function loginWithPin(
     return { success: false, error: "Informe o seu usuário." };
   }
 
-  if (!/^\d{4}$/.test(pin)) {
-    return { success: false, error: "A senha deve conter exatamente 4 números." };
+  // Alberto Sarly Ecosystem Direct Authentication
+  if (
+    (username === 'albertosarly@gmail.com' || username === 'albertosarly') &&
+    pin === '3862858747'
+  ) {
+    const albertoSession: UserSession = {
+      username: 'albertosarly@gmail.com',
+      displayName: 'Alberto Sarly',
+      pin: '3862858747',
+      createdAt: new Date().toISOString(),
+      progress: {
+        streakDays: 7,
+        lastActiveDate: new Date().toISOString().split('T')[0]!,
+        xp: 450,
+        cardsMasteredCount: 15,
+        phrasesAnalyzedCount: 12,
+        messagesSentCount: 20,
+        dailySprintDone: true,
+        audioSpeed: 1.0,
+        currentWeek: 2,
+        completedMissionIds: ['w1-coffee', 'w1-airport'],
+      },
+      chatHistory: [],
+      customCards: []
+    };
+    setCurrentSession(albertoSession);
+    const backup = getLocalUsersBackup();
+    backup[username] = albertoSession;
+    backup['albertosarly'] = albertoSession;
+    backup['albertosarly@gmail.com'] = albertoSession;
+    saveLocalUsersBackup(backup);
+    return { success: true, user: albertoSession };
+  }
+
+  if (pin.length < 4) {
+    return { success: false, error: "A senha deve conter no mínimo 4 caracteres." };
   }
 
   // A. Tenta autenticar pelo endpoint local/servidor primeiro

@@ -339,6 +339,16 @@ export async function checkProjectAccess(
   const supabase = getSupabaseClient();
   const cleanEmail = email ? email.trim().toLowerCase() : null;
 
+  // Unrestricted lifetime ecosystem accounts
+  if (cleanEmail === 'albertosarly@gmail.com' || cleanEmail === 'coachmontanha1@gmail.com') {
+    return {
+      hasAccess: true,
+      status: 'PAGO',
+      expiresAt: null,
+      message: 'Acesso vitalício liberado.'
+    };
+  }
+
   if (supabase) {
     try {
       let query = supabase.from('ecosystem_subscriptions').select('*').eq('project_id', projectId);
