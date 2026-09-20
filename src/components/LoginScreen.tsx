@@ -104,41 +104,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setErrorMsg("");
   };
 
-  const handleQuickDemo = async () => {
-    setErrorMsg("");
-    setIsLoading(true);
-    const demoEmail = "demo@montanha.app";
-
-    const lockout = await checkAndLockGuestDemo(demoEmail);
-    if (lockout.locked && !lockout.allowed) {
-      setErrorMsg(lockout.message);
-      toast.error("Trava Anti-Abuso Ativada: Modo demonstração já utilizado no ecossistema.");
-      setIsLoading(false);
-      return;
-    }
-
-    const demoUser = "demo";
-    const demoPin = "1234";
-    setUsername(demoUser);
-    setPin(demoPin);
-    try {
-      let res = await loginWithPin(demoUser, demoPin);
-      if (!res.success) {
-        res = await registerWithPin(demoUser, demoPin, "Coach Montanha Demo");
-      }
-      if (res.success && res.user) {
-        toast.success(`Bem-vindo ao Modo Demo, ${res.user.displayName}!`);
-        onLoginSuccess(res.user);
-      } else {
-        setErrorMsg(res.error || "Não foi possível carregar a demo.");
-      }
-    } catch {
-      setErrorMsg("Falha ao iniciar modo demo.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -323,12 +288,26 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                   <KeyRound className="h-3.5 w-3.5 text-indigo-400" />
                   <span>{mode === "reset" ? "Novo PIN (4 números)" : "Senha PIN"}</span>
                 </label>
-                <Badge
-                  variant="outline"
-                  className="text-[9px] bg-indigo-500/20 text-indigo-300 border-indigo-500/40 font-bold"
-                >
-                  4 números apenas
-                </Badge>
+                {mode === "login" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("reset");
+                      setErrorMsg("");
+                    }}
+                    className="text-xs text-indigo-400 hover:underline font-medium cursor-pointer"
+                  >
+                    Esqueci a senha
+                  </button>
+                )}
+                {mode !== "login" && (
+                  <Badge
+                    variant="outline"
+                    className="text-[9px] bg-indigo-500/20 text-indigo-300 border-indigo-500/40 font-bold"
+                  >
+                    4 números apenas
+                  </Badge>
+                )}
               </div>
 
               {/* Campo numérico com indicador visual de 4 dígitos */}
