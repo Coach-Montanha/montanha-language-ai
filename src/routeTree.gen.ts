@@ -10,11 +10,29 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BoostRouteImport } from './routes/boost'
+import { Route as CreateRouteImport } from './routes/create'
+import { Route as EcoRouteImport } from './routes/eco'
 import { Route as MasterAdminRouteImport } from './routes/master-admin'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoostRoute = BoostRouteImport.update({
+  id: '/boost',
+  path: '/boost',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreateRoute = CreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EcoRoute = EcoRouteImport.update({
+  id: '/eco',
+  path: '/eco',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MasterAdminRoute = MasterAdminRouteImport.update({
@@ -25,27 +43,39 @@ const MasterAdminRoute = MasterAdminRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/boost': typeof BoostRoute
+  '/create': typeof CreateRoute
+  '/eco': typeof EcoRoute
   '/master-admin': typeof MasterAdminRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/boost': typeof BoostRoute
+  '/create': typeof CreateRoute
+  '/eco': typeof EcoRoute
   '/master-admin': typeof MasterAdminRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/boost': typeof BoostRoute
+  '/create': typeof CreateRoute
+  '/eco': typeof EcoRoute
   '/master-admin': typeof MasterAdminRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/master-admin'
+  fullPaths: '/' | '/boost' | '/create' | '/eco' | '/master-admin'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/master-admin'
-  id: '__root__' | '/' | '/master-admin'
+  to: '/' | '/boost' | '/create' | '/eco' | '/master-admin'
+  id: '__root__' | '/' | '/boost' | '/create' | '/eco' | '/master-admin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BoostRoute: typeof BoostRoute
+  CreateRoute: typeof CreateRoute
+  EcoRoute: typeof EcoRoute
   MasterAdminRoute: typeof MasterAdminRoute
 }
 
@@ -56,6 +86,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boost': {
+      id: '/boost'
+      path: '/boost'
+      fullPath: '/boost'
+      preLoaderRoute: typeof BoostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/create': {
+      id: '/create'
+      path: '/create'
+      fullPath: '/create'
+      preLoaderRoute: typeof CreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eco': {
+      id: '/eco'
+      path: '/eco'
+      fullPath: '/eco'
+      preLoaderRoute: typeof EcoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/master-admin': {
@@ -70,6 +121,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BoostRoute: BoostRoute,
+  CreateRoute: CreateRoute,
+  EcoRoute: EcoRoute,
   MasterAdminRoute: MasterAdminRoute,
 }
 export const routeTree = rootRouteImport
