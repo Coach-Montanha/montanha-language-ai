@@ -114,9 +114,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida.",
       },
+      { property: "og:url", content: "https://montanha-language-ai.vercel.app/" },
+      { property: "og:site_name", content: "Montanha Language AI" },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "https://montanha-language-ai.vercel.app/icons/icon-512.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Montanha Language AI — Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida" },
+      { name: "twitter:description", content: "Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida." },
+      { name: "twitter:image", content: "https://montanha-language-ai.vercel.app/icons/icon-512.png" },
+      { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+      { name: "google-site-verification", content: "GSC_VERIFICATION_PLACEHOLDER" },
     ],
     links: [
+      { rel: "canonical", href: "https://montanha-language-ai.vercel.app/" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -138,6 +148,31 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "apple-touch-icon", sizes: "192x192", href: "/icons/icon-192.png" },
       { rel: "apple-touch-icon", sizes: "512x512", href: "/icons/icon-512.png" },
       { rel: "mask-icon", href: "/icons/icon.svg", color: "#09090b" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "Montanha Language AI",
+          headline: "Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida",
+          operatingSystem: "Web, iOS, Android",
+          applicationCategory: "EducationalApplication",
+          description: "Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida.",
+          url: "https://montanha-language-ai.vercel.app/",
+          offers: {
+            "@type": "Offer",
+            price: "0",
+            priceCurrency: "BRL",
+          },
+          author: {
+            "@type": "Organization",
+            name: "Ecossistema Montanha",
+            url: "https://montanha-language-ai.vercel.app/",
+          },
+        }),
+      },
     ],
   }),
   shellComponent: RootShell,
