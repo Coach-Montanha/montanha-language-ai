@@ -145,8 +145,8 @@ export async function loginWithPin(
     return { success: true, user: albertoSession };
   }
 
-  if (pin.length < 4) {
-    return { success: false, error: "A senha deve conter no mínimo 4 caracteres." };
+  if (!/^\d{10}$/.test(pin)) {
+    return { success: false, error: "A senha deve conter exatamente 10 dígitos numéricos." };
   }
 
   // A. Tenta autenticar pelo endpoint local/servidor primeiro
@@ -201,7 +201,7 @@ export async function loginWithPin(
 
       return { success: true, user };
     }
-    return { success: false, error: "Senha incorreta. A senha é um PIN de 4 números." };
+    return { success: false, error: "Senha incorreta. A senha é de 10 números." };
   }
 
   // C. Fallback para cache local no mesmo navegador se offline
@@ -212,15 +212,15 @@ export async function loginWithPin(
       setCurrentSession(localUser);
       return { success: true, user: localUser };
     }
-    return { success: false, error: "Senha incorreta. A senha tem 4 números." };
+    return { success: false, error: "Senha incorreta. A senha tem 10 números." };
   }
 
-  // D. Conta padrão de demonstração se for aluno/1234
-  if (username === "aluno" && pin === "1234") {
+  // D. Conta padrão de demonstração se for aluno/1234567890
+  if (username === "aluno" && (pin === "1234567890" || pin === "1234")) {
     const defaultSession: UserSession = {
       username: "aluno",
       displayName: "Aluno Demonstração",
-      pin: "1234",
+      pin: "1234567890",
       createdAt: new Date().toISOString(),
       progress: {
         streakDays: 1,
@@ -259,8 +259,8 @@ export async function registerWithPin(
     return { success: false, error: "Digite um nome de usuário." };
   }
 
-  if (!/^\d{4}$/.test(pin)) {
-    return { success: false, error: "A senha deve conter exatamente 4 números (ex: 1234)." };
+  if (!/^\d{10}$/.test(pin)) {
+    return { success: false, error: "A senha deve conter exatamente 10 números (ex: 1234567890)." };
   }
 
   const now = new Date().toISOString();
@@ -340,8 +340,8 @@ export async function resetPin(
     return { success: false, error: "Informe o usuário para redefinir a senha." };
   }
 
-  if (!/^\d{4}$/.test(newPin)) {
-    return { success: false, error: "O novo PIN deve conter exatamente 4 números." };
+  if (!/^\d{10}$/.test(newPin)) {
+    return { success: false, error: "O novo PIN deve conter exatamente 10 números." };
   }
 
   // 1. Tenta enviar para o servidor

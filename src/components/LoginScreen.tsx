@@ -92,12 +92,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [showEcosystem, setShowEcosystem] = useState(false);
 
   const handlePinChange = (val: string) => {
-    setPin(val.slice(0, 30));
+    setPin(val.replace(/\D/g, "").slice(0, 10));
     setErrorMsg("");
   };
 
   const handleConfirmPinChange = (val: string) => {
-    setConfirmPin(val.slice(0, 30));
+    setConfirmPin(val.replace(/\D/g, "").slice(0, 10));
     setErrorMsg("");
   };
 
@@ -110,8 +110,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       return;
     }
 
-    if (pin.length < 4) {
-      setErrorMsg("A senha deve conter no mínimo 4 caracteres.");
+    if (!/^\d{10}$/.test(pin)) {
+      setErrorMsg("A senha deve conter exatamente 10 dígitos numéricos.");
       return;
     }
 
@@ -278,56 +278,56 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               </div>
             </div>
 
-            {/* Senha (PIN de exatamente 4 números) */}
+            {/* Senha (PIN de exatamente 10 números) */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
                   <KeyRound className="h-3.5 w-3.5 text-indigo-400" />
-                  <span>{mode === "reset" ? "Novo PIN (4 números)" : "Senha PIN"}</span>
+                  <span>{mode === "reset" ? "Novo PIN (10 números)" : "Senha PIN (10 dígitos)"}</span>
                 </label>
-                {mode === "login" && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode("reset");
-                      setErrorMsg("");
-                    }}
-                    className="text-xs text-indigo-400 hover:underline font-medium cursor-pointer"
-                  >
-                    Esqueci a senha
-                  </button>
-                )}
-                {mode !== "login" && (
+                <div className="flex items-center gap-2">
                   <Badge
                     variant="outline"
                     className="text-[9px] bg-indigo-500/20 text-indigo-300 border-indigo-500/40 font-bold"
                   >
-                    4 números apenas
+                    10 números
                   </Badge>
-                )}
+                  {mode === "login" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode("reset");
+                        setErrorMsg("");
+                      }}
+                      className="text-xs text-indigo-400 hover:underline font-medium cursor-pointer"
+                    >
+                      Esqueci
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* Campo numérico com indicador visual de 4 dígitos */}
+              {/* Campo numérico com indicador visual de 10 dígitos */}
               <div className="relative">
                 <Input
                   type="password"
                   data-testid="input-pin"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  maxLength={4}
-                  placeholder="••••"
+                  maxLength={10}
+                  placeholder="••••••••••"
                   value={pin}
                   onChange={(e) => handlePinChange(e.target.value)}
-                  className="h-11 text-center font-mono text-lg tracking-[0.6em] bg-slate-900/90 border-indigo-500/40 text-white rounded-xl focus-visible:ring-indigo-500"
+                  className="h-11 text-center font-mono text-sm tracking-[0.3em] bg-slate-900/90 border-indigo-500/40 text-white rounded-xl focus-visible:ring-indigo-500"
                   required
                 />
               </div>
 
-              <div className="flex justify-center gap-2 pt-1">
-                {[0, 1, 2, 3].map((idx) => (
+              <div className="flex justify-center gap-1.5 pt-1">
+                {[...Array(10).keys()].map((idx) => (
                   <span
                     key={idx}
-                    className={`h-2.5 w-2.5 rounded-full transition-all ${
+                    className={`h-2 w-2 rounded-full transition-all ${
                       pin.length > idx ? "bg-indigo-500 scale-110 shadow-[0_0_8px_rgba(99,102,241,0.8)]" : "bg-slate-800"
                     }`}
                   />
@@ -339,18 +339,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             {mode === "reset" && (
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                  Confirmar Novo PIN (4 números)
+                  Confirmar Novo PIN (10 números)
                 </label>
                 <Input
                   type="password"
                   data-testid="input-confirm-pin"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  maxLength={4}
-                  placeholder="••••"
+                  maxLength={10}
+                  placeholder="••••••••••"
                   value={confirmPin}
                   onChange={(e) => handleConfirmPinChange(e.target.value)}
-                  className="h-11 text-center font-mono text-lg tracking-[0.6em] bg-slate-900/90 border-indigo-500/40 text-white rounded-xl"
+                  className="h-11 text-center font-mono text-sm tracking-[0.3em] bg-slate-900/90 border-indigo-500/40 text-white rounded-xl"
                   required
                 />
               </div>
@@ -360,7 +360,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <Button
               type="submit"
               data-testid="btn-submit-auth"
-              disabled={isLoading || pin.length !== 4 || !username.trim()}
+              disabled={isLoading || pin.length !== 10 || !username.trim()}
               className="w-full h-10 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
             >
               {isLoading ? (
