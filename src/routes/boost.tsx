@@ -52,8 +52,11 @@ function BoostPage() {
   const [activeSprint, setActiveSprint] = useState<number | null>(null);
 
   const startSprint = (index: number) => {
-    setActiveSprint(index);
-    toast.success(`Iniciando ${SPRINT_CHALLENGES[index].title}! Prepare o microfone e foco total.`);
+    const item = SPRINT_CHALLENGES[index];
+    if (item) {
+      setActiveSprint(index);
+      toast.success(`Iniciando ${item.title}! Prepare o microfone e foco total.`);
+    }
   };
 
   return (
