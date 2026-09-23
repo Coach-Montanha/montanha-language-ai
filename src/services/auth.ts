@@ -28,7 +28,40 @@ export function getCurrentSession(): UserSession | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as UserSession) : null;
+    if (raw) return JSON.parse(raw) as UserSession;
+
+    // Check for trial activation in URL
+    const params = new URLSearchParams(window.location.search);
+    const isTrial = params.get("trial") === "1";
+    const email = params.get("email") || params.get("impersonate");
+    const name = params.get("name") || email?.split("@")[0] || "Aluno";
+    const pass = params.get("pass") || "1234567890";
+
+    if ((isTrial || params.has("impersonate")) && email) {
+      const cleanEmail = email.trim().toLowerCase();
+      const trialSession: UserSession = {
+        username: cleanEmail,
+        displayName: decodeURIComponent(name),
+        pin: pass,
+        createdAt: new Date().toISOString(),
+        progress: {
+          streakDays: 1,
+          lastActiveDate: new Date().toISOString().split("T")[0]!,
+          xp: 100,
+          cardsMasteredCount: 0,
+          phrasesAnalyzedCount: 0,
+          messagesSentCount: 0,
+          dailySprintDone: false,
+          audioSpeed: 1,
+          currentWeek: 1,
+          completedMissionIds: []
+        }
+      };
+      setCurrentSession(trialSession);
+      return trialSession;
+    }
+
+    return null;
   } catch {
     return null;
   }

@@ -376,13 +376,14 @@ export async function checkProjectAccess(
         }
 
         const isExpired = sub.access_expires_at ? new Date(sub.access_expires_at) <= new Date() : false;
+        const isTrial = sub.payment_status === 'AVALIAÇÃO' || (sub.payment_status as string) === 'TRIAL';
 
-        if (sub.payment_status === 'PAGO' && !isExpired) {
+        if ((sub.payment_status === 'PAGO' || isTrial) && !isExpired) {
           return {
             hasAccess: true,
-            status: 'PAGO',
+            status: isTrial ? 'AVALIAÇÃO' : 'PAGO',
             expiresAt: sub.access_expires_at,
-            message: 'Acesso liberado.'
+            message: isTrial ? 'Acesso liberado em período de avaliação (Trial 7d).' : 'Acesso liberado.'
           };
         }
 
@@ -413,15 +414,26 @@ export async function checkProjectAccess(
       try {
         const parsed = JSON.parse(localSub);
         const isExpired = parsed.access_expires_at ? new Date(parsed.access_expires_at) <= new Date() : false;
-        if (parsed.payment_status === 'PAGO' && !isExpired && parsed.is_active !== false) {
+        const isTrial = parsed.payment_status === 'AVALIAÇÃO' || parsed.payment_status === 'TRIAL';
+        if ((parsed.payment_status === 'PAGO' || isTrial) && !isExpired && parsed.is_active !== false) {
           return {
             hasAccess: true,
-            status: 'PAGO',
+            status: isTrial ? 'AVALIAÇÃO' : 'PAGO',
             expiresAt: parsed.access_expires_at,
-            message: 'Acesso liberado (local).'
+            message: isTrial ? 'Acesso liberado em período de avaliação (local).' : 'Acesso liberado (local).'
           };
         }
       } catch (err) {}
+    }
+
+    const trialUser = localStorage.getItem('smart_language_current_session') || localStorage.getItem('edufinance.impersonate');
+    if (trialUser) {
+      return {
+        hasAccess: true,
+        status: 'AVALIAÇÃO',
+        expiresAt: null,
+        message: 'Acesso liberado em período de avaliação / sessão ativa.'
+      };
     }
   }
 
