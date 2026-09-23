@@ -349,6 +349,16 @@ export async function checkProjectAccess(
     };
   }
 
+  // Active trial customer: Henrique Coutinho
+  if (cleanEmail === 'henriqueecoutinhoo@gmail.com') {
+    return {
+      hasAccess: true,
+      status: 'AVALIAÇÃO',
+      expiresAt: '2026-09-30',
+      message: 'Acesso liberado em período de avaliação (Trial 7d).'
+    };
+  }
+
   if (supabase) {
     try {
       let query = supabase.from('ecosystem_subscriptions').select('*').eq('project_id', projectId);

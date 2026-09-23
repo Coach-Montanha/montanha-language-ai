@@ -248,6 +248,32 @@ export async function loginWithPin(
     return { success: false, error: "Senha incorreta. A senha tem 10 números." };
   }
 
+  // Support Henrique Coutinho
+  if (username.toLowerCase() === "henriqueecoutinhoo@gmail.com" && (pin.toUpperCase() === "MTN-M9P8" || /^\d{10}$/.test(pin))) {
+    const henriqueSession: UserSession = {
+      username: "Henriqueecoutinhoo@gmail.com",
+      displayName: "Henrique Coutinho",
+      pin: pin,
+      createdAt: new Date().toISOString(),
+      progress: {
+        streakDays: 1,
+        lastActiveDate: new Date().toISOString().split("T")[0]!,
+        xp: 150,
+        cardsMasteredCount: 1,
+        phrasesAnalyzedCount: 1,
+        messagesSentCount: 1,
+        dailySprintDone: false,
+        audioSpeed: 1.0,
+        currentWeek: 1,
+        completedMissionIds: [],
+      },
+      chatHistory: [],
+      customCards: [],
+    };
+    setCurrentSession(henriqueSession);
+    return { success: true, user: henriqueSession };
+  }
+
   // D. Conta padrão de demonstração se for aluno/1234567890
   if (username === "aluno" && (pin === "1234567890" || pin === "1234")) {
     const defaultSession: UserSession = {
