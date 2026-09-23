@@ -274,6 +274,14 @@ export async function loginWithPin(
     return { success: true, user: defaultSession };
   }
 
+  // E. Se for um e-mail ou usuário convidado com 10 dígitos, auto-cadastra e efetua login
+  if (/^\d{10}$/.test(pin) && (username.includes("@") || username.length >= 3)) {
+    const regResult = await registerWithPin(username, pin, username.split("@")[0]);
+    if (regResult.success && regResult.user) {
+      return { success: true, user: regResult.user };
+    }
+  }
+
   return { success: false, error: "Usuário não encontrado. Verifique o nome ou crie uma conta." };
 }
 

@@ -376,9 +376,10 @@ export async function checkProjectAccess(
         }
 
         const isExpired = sub.access_expires_at ? new Date(sub.access_expires_at) <= new Date() : false;
-        const isTrial = sub.payment_status === 'AVALIAÇÃO' || (sub.payment_status as string) === 'TRIAL';
+        const currentStatus = sub.payment_status as string;
+        const isTrial = currentStatus === 'AVALIAÇÃO' || currentStatus === 'TRIAL';
 
-        if ((sub.payment_status === 'PAGO' || isTrial) && !isExpired) {
+        if ((currentStatus === 'PAGO' || isTrial) && !isExpired) {
           return {
             hasAccess: true,
             status: isTrial ? 'AVALIAÇÃO' : 'PAGO',
