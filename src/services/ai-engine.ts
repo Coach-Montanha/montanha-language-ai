@@ -2365,31 +2365,32 @@ export function generateLocalTutorReply(
     default: {
       const enOptions = [
         {
-          replyText: `That's a really thoughtful point! What made you reflect on that today?`,
-          translationPt: `Esse é um ponto muito bem pensado! O que fez você refletir sobre isso hoje?`,
+          replyText: `That's a really interesting point! What else comes to mind when you think about "${userInput.trim()}"?`,
+          translationPt: `Esse é um ponto muito interessante! O que mais vem à sua mente quando você pensa em "${userInput.trim()}"?`,
         },
         {
-          replyText: `You're expressing your thoughts with great clarity. What do you enjoy doing to recharge after a busy day?`,
-          translationPt: `Você está expressando seus pensamentos com grande clareza. O que você gosta de fazer para recarregar após um dia corrido?`,
+          replyText: `Got it! Speaking of "${userInput.trim()}", how does that fit into your daily routine?`,
+          translationPt: `Entendi! Falando sobre "${userInput.trim()}", como isso se encaixa na sua rotina diária?`,
         },
         {
-          replyText: `Step by step, your conversational confidence is shining through. Would you like to dive deeper into this or try a new topic?`,
-          translationPt: `Passo a passo, sua confiança conversacional está brilhando. Gostaria de se aprofundar nisso ou tentar um novo assunto?`,
+          replyText: `That makes total sense. Have you always felt that way about "${userInput.trim()}"?`,
+          translationPt: `Isso faz todo sentido. Você sempre se sentiu assim em relação a "${userInput.trim()}"?`,
         },
         {
-          replyText: `That's intriguing! How does that usually play out in your daily routine?`,
-          translationPt: `Isso é intrigante! Como isso costuma acontecer na sua rotina diária?`,
+          replyText: `Nice! If you had to explain "${userInput.trim()}" to a friend visiting ${activeTutor.city}, what would you tell them?`,
+          translationPt: `Legal! Se você tivesse que explicar "${userInput.trim()}" a um amigo visitando ${activeTutor.city}, o que diria a ele?`,
         },
         {
-          replyText: `Your phrasing is sounding noticeably more natural! What was the highlight of your week so far?`,
-          translationPt: `Sua forma de falar está soando visivelmente mais natural! Qual foi o ponto alto da sua semana até agora?`,
+          replyText: `I like your perspective on "${userInput.trim()}". What's the most surprising part about it for you?`,
+          translationPt: `Gosto da sua perspectiva sobre "${userInput.trim()}". Qual é a parte mais surpreendente disso para você?`,
         },
         {
-          replyText: `I love where this dialogue is heading. If you had an entirely free weekend ahead, how would you spend it?`,
-          translationPt: `Adoro o rumo desta conversa. Se você tivesse um fim de semana inteiramente livre pela frente, como passaria ele?`,
+          replyText: `Tell me a bit more about "${userInput.trim()}"! How did you get into that?`,
+          translationPt: `Me conte um pouco mais sobre "${userInput.trim()}"! Como você se interessou por isso?`,
         },
       ];
-      return enOptions[seed % enOptions.length]!;
+      const dynamicIndex = Math.abs((historyLen * 7 + userInput.length * 13) % enOptions.length);
+      return enOptions[dynamicIndex]!;
     }
   }
 }
