@@ -1155,6 +1155,9 @@ export type UserIntentType =
   | "topic_weather"
   | "topic_learning"
   | "topic_weekend"
+  | "topic_history"
+  | "topic_city"
+  | "topic_faith"
   | "affirmation"
   | "negation"
   | "thanks"
@@ -1163,6 +1166,29 @@ export type UserIntentType =
 
 export function classifyUserIntent(userInput: string, _tutorLanguage?: SupportedLanguage): UserIntentType {
   const lower = userInput.toLowerCase().trim();
+
+  // 0a. Pedidos sobre História / Passado / Cultura histórica
+  if (
+    /\b(history|historian|historical|past|ancient|hist[oó]ria|hist[oó]rico|hist[oó]rica|passado|antigo|antiga|geschichte|historisch|historia|historique|storia|история|исторический|rekishi)\b/i.test(lower) ||
+    /(teach me about history|tell me about history|fale sobre hist[oó]ria|me ensine sobre hist[oó]ria|erzähl mir über geschichte|cuéntame de historia)/i.test(lower)
+  ) {
+    return "topic_history";
+  }
+
+  // 0b. Pedidos sobre a Cidade do Tutor
+  if (
+    /\b(your city|about your city|tell me about your city|sua cidade|su ciudad|de la ciudad|la tua città|votre ville|deine stadt|deiner stadt|твой город|твоём городе|tua cidade|machino koto)\b/i.test(lower) ||
+    /(fale sobre sua cidade|tell me about your city|erzähl mir von deiner stadt|cuéntame de tu ciudad|parlami della tua città|parle-moi de ta ville)/i.test(lower)
+  ) {
+    return "topic_city";
+  }
+
+  // 0c. Fé / Gratidão a Deus / Espiritualidade
+  if (
+    /\b(god|lord|blessed|blessing|thank god|thank the lord|deus|senhor|gra[çc]as a deus|dieu|gott|dios|dio|бог|господь|благодарение|kamisama)\b/i.test(lower)
+  ) {
+    return "topic_faith";
+  }
 
   // 0a. Horário do Museu / Abertura / Ingressos
   if (
@@ -2351,6 +2377,21 @@ export function generateLocalTutorReply(
       return {
         replyText: `You are so very welcome! Being in your corner and seeing your confidence grow is the best part of my job. What's on your mind to explore next?`,
         translationPt: `Você é muito bem-vindo(a)! Estar do seu lado e ver sua confiança crescer é a melhor parte do meu trabalho. O que você gostaria de explorar a seguir?`,
+      };
+    case "topic_history":
+      return {
+        replyText: `History is such a fascinating topic! From ancient civilizations to turning points that shaped our world today. What specific era or historical event interests you most?`,
+        translationPt: `História é um assunto fascinante! De civilizações antigas a momentos decisivos que moldaram nosso mundo hoje. Qual era ou evento histórico específico mais te interessa?`,
+      };
+    case "topic_city":
+      return {
+        replyText: `${activeTutor.city} is an incredible city! It has a unique energy, famous landmarks, rich culture, and great food spots. What would you love to know about life here in ${activeTutor.city}?`,
+        translationPt: `${activeTutor.city} é uma cidade incrível! Tem uma energia única, pontos turísticos famosos, cultura rica e ótimos lugares para comer. O que você gostaria de saber sobre a vida aqui em ${activeTutor.city}?`,
+      };
+    case "topic_faith":
+      return {
+        replyText: `Amen to that! Expressing gratitude and faith brings so much peace to our day. How do you like to start your mornings with a positive mindset?`,
+        translationPt: `Amém a isso! Expressar gratidão e fé traz tanta paz para o nosso dia. Como você gosta de começar suas manhãs com uma mentalidade positiva?`,
       };
     case "greeting":
       return historyLen <= 1
