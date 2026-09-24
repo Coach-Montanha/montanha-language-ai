@@ -544,4 +544,38 @@ html[data-design="focus"].dark [data-slot="card"] {
   transform: translateX(4px);
 }
 
+/* ====================================================================
+   VERCEL WEB INTERFACE GUIDELINES COMPLIANCE
+   ==================================================================== */
+html {
+  color-scheme: dark;
+}
+
+button, input, select, textarea, a {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Vercel guideline: mobile input font-size >= 16px to prevent iOS auto-zoom */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Vercel guideline: Windows select dark mode contrast */
+select {
+  background-color: var(--secondary);
+  color: var(--foreground);
+}
+
+/* Tabular numbers for timers, streak days, XP counters */
+.tabular-nums,
+[data-tabular-nums] {
+  font-variant-numeric: tabular-nums;
+}
+
+
 
