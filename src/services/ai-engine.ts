@@ -9,6 +9,7 @@ import {
   ContextualSuggestion,
   TutorChatResponse,
   LearnerProfileMemory,
+  ConversationMode,
 } from "@/types/language";
 import { PRESET_THEMES, getPresetThemesForLanguage } from "@/data/vocabulary";
 import { callGeminiRaw } from "./gemini";
@@ -1158,6 +1159,10 @@ export type UserIntentType =
   | "topic_history"
   | "topic_city"
   | "topic_faith"
+  | "topic_music"
+  | "topic_beach_nature"
+  | "topic_destination"
+  | "affirmation_lets_go"
   | "affirmation"
   | "negation"
   | "thanks"
@@ -1220,6 +1225,34 @@ export function classifyUserIntent(userInput: string, _tutorLanguage?: Supported
     /\b(fim de semana|finais de semana|tempo livre|weekend|weekends|free time|wochenende|freizeit|fin de semana|fines de semana|tiempo libre|fine settimana|tempo libero|week-end|temps libre|выходные|выходных|свободное время)\b/i.test(lower)
   ) {
     return "topic_weekend";
+  }
+
+  // 0e. Música, Instrumentos, Meditação e Arte
+  if (
+    /\b(music|song|songs|sing|singing|band|rock|pop|jazz|classical|piano|guitar|violin|drum|drums|listen|meditation|meditate|sound|art|drawing|painting|m[uú]sica|m[uú]sicas|ouvir m[uú]sica|cantar|viol[aã]o|medita[çc][aã]o|meditar|arte|musik|musique|música|музыка|ongaku)\b/i.test(lower)
+  ) {
+    return "topic_music";
+  }
+
+  // 0f. Praias, Mar, Oceano, Natureza e Montanhas
+  if (
+    /\b(beach|sea|ocean|waves|sand|coast|nature|mountain|mountains|lake|forest|trail|praia|mar|oceano|areia|natureza|montanha|montanhas|floresta|lago|playa|strand|plage|spiaggia|море|пляж|природа|umi|hama)\b/i.test(lower)
+  ) {
+    return "topic_beach_nature";
+  }
+
+  // 0g. Países e Destinos Turísticos
+  if (
+    /\b(brasil|brazil|usa|united states|america|japan|tokyo|france|paris|italy|rome|spain|madrid|germany|berlin|london|uk|chicago|new york|eua|jap[aã]o|fran[çc]a|it[aá]lia|espanha|alemanha|inglaterra)\b/i.test(lower)
+  ) {
+    return "topic_destination";
+  }
+
+  // 0h. Vamos começar / Bora / Partiu / Let's go
+  if (
+    /\b(let'?s go|bora|vamos|let us go|lets do it|let'?s do it|i'?m ready|vamos l[aá]|on y va|los geht'?s|andiamo|dale|adelante)\b/i.test(lower)
+  ) {
+    return "affirmation_lets_go";
   }
 
   // 1. Pergunta sobre o nome do tutor
@@ -1352,7 +1385,8 @@ export function classifyUserIntent(userInput: string, _tutorLanguage?: Supported
 export function generateLocalTutorReply(
   userInput: string,
   activeTutor: TutorPersona,
-  historyLen: number
+  historyLen: number,
+  conversationMode?: ConversationMode
 ): { replyText: string; translationPt: string } {
   const intent = classifyUserIntent(userInput, activeTutor.language);
   const lang = activeTutor.language;
@@ -1467,31 +1501,57 @@ export function generateLocalTutorReply(
               replyText: `Привет ещё раз! Здорово, что мы продолжаем практиковаться. О чём ты сейчас думаешь?`,
               translationPt: `Olá novamente! Que ótimo que estamos continuando a praticar. No que você está pensando agora?`,
             };
+      case "topic_music":
+        return {
+          replyText: `Музыка и медитация отлично помогают восстановить душевные силы! Какую музыку ты любишь слушать для отдыха: спокойную, инструментальную или что-то с ритмом?`,
+          translationPt: `Música e meditação ajudam muito a restaurar as energias! Que tipo de música você gosta de ouvir para relaxar: calma, instrumental ou algo com ritmo?`,
+        };
+      case "topic_beach_nature":
+        return {
+          replyText: `Море, пляж и свежий воздух — это настоящее блаженство! Ты больше любишь загорать на тёплом песке или плавать в волнах?`,
+          translationPt: `O mar, a praia e o ar fresco são uma bênção! Você prefere tomar sol na areia quentinha ou nadar nas ondas?`,
+        };
+      case "topic_destination":
+        return {
+          replyText: `Какое потрясающее направление! Ты уже бывал там или мечтаешь поехать туда в путешествие?`,
+          translationPt: `Que destino incrível! Você já esteve lá ou sonha em viajar para lá?`,
+        };
+      case "affirmation_lets_go":
+        return {
+          replyText: `Прекрасно, поехали! С какой темы или жизненной ситуации мы начнём прямо сейчас?`,
+          translationPt: `Maravilha, vamos nessa! Com qual tema ou situação da vida real nós começamos agora?`,
+        };
       default: {
+        if (conversationMode === "challenge") {
+          return {
+            replyText: `Мини-вызов! Попробуй описать «${userInput.trim()}» полным предложением на русском языке. Справишься?`,
+            translationPt: `Mini-desafio! Tente descrever "${userInput.trim()}" com uma frase completa em russo. Consegue?`,
+          };
+        }
+        if (conversationMode === "debate") {
+          return {
+            replyText: `Любопытный взгляд на «${userInput.trim()}»! А что, если кто-то категорически не согласен? Как ты защитишь свою позицию?`,
+            translationPt: `Ponto de vista curioso sobre "${userInput.trim()}"! E se alguém discordar categoricamente? Como você defenderia sua posição?`,
+          };
+        }
+        if (conversationMode === "grammar") {
+          return {
+            replyText: `Говоря о «${userInput.trim()}», в живой русской речи часто говорят: «дело вкуса» или «взять себя в руки». Как бы ты применил это?`,
+            translationPt: `Falando sobre "${userInput.trim()}", no russo falado costuma-se usar expressões autênticas. Como você aplicaria isso?`,
+          };
+        }
         const ruOptions = [
           {
-            replyText: `Интересная мысль! Русский язык очень выразительный. Что именно навело тебя на эти размышления?`,
-            translationPt: `Pensamento interessante! A língua russa é muito expressiva. O que exatamente te levou a essas reflexões?`,
+            replyText: `Это действительно важная мысль! Что ещё приходит тебе в голову, когда ты говоришь о «${userInput.trim()}»?`,
+            translationPt: `Isso é realmente uma reflexão importante! O que mais vem à sua cabeça quando você fala sobre "${userInput.trim()}"?`,
           },
           {
-            replyText: `Ты формулируешь мысли всё более уверенно! Расскажи, как ты обычно любишь проводить свободные вечера?`,
-            translationPt: `Você está formulando ideias com cada vez mais confiança! Conte, como você normalmente gosta de passar suas noites livres?`,
+            replyText: `Понял тебя! А как «${userInput.trim()}» связано с твоими привычками или повседневной жизнью?`,
+            translationPt: `Entendi você! E como "${userInput.trim()}" se relaciona com seus hábitos ou vida cotidiana?`,
           },
           {
-            replyText: `Каждый шаг в практике приближает тебя к свободной речи. Хочешь разобрать новые слова или продолжить этот диалог?`,
-            translationPt: `Cada passo na prática te aproxima da fala fluente. Quer explorar palavras novas ou continuar este diálogo?`,
-          },
-          {
-            replyText: `Очень любопытно! А как обычно устроен твой день: ты любишь просыпаться пораньше или предпочитаешь вечер?`,
-            translationPt: `Muito curioso! E como costuma ser seu dia: você gosta de acordar mais cedo ou prefere a noite?`,
-          },
-          {
-            replyText: `Твоя речь звучит всё более естественно! Какая тема для беседы кажется тебе сейчас самой увлекательной?`,
-            translationPt: `Sua fala está soando cada vez mais natural! Que tema de conversa te parece mais empolgante agora?`,
-          },
-          {
-            replyText: `Здорово, что мы можем так открыто общаться на русском языке. Что интересного произошло у тебя за последнее время?`,
-            translationPt: `Que ótimo podermos nos comunicar tão abertamente em russo. O que aconteceu de interessante com você nos últimos tempos?`,
+            replyText: `Звучит убедительно. Как давно ты пришёл к такому мнению о «${userInput.trim()}»?`,
+            translationPt: `Soa convincente. Há quanto tempo você chegou a essa opinião sobre "${userInput.trim()}"?`,
           },
         ];
         return ruOptions[seed % ruOptions.length]!;
@@ -1607,31 +1667,57 @@ export function generateLocalTutorReply(
               replyText: `Hallo nochmals! Schön, dass wir weiter Deutsch üben. Woran denkst du gerade?`,
               translationPt: `Olá novamente! Que bom continuarmos praticando alemão. No que você está pensando agora?`,
             };
+      case "topic_music":
+        return {
+          replyText: `Musik und Meditation sind einfach herrlich zum Abschalten! Welche Musik hilft dir am besten: sanfte Klänge, klassische Stücke oder etwas mit gutem Beat?`,
+          translationPt: `Música e meditação são simplesmente maravilhosas para relaxar! Que música mais te ajuda: sons suaves, peças clássicas ou algo com uma boa batida?`,
+        };
+      case "topic_beach_nature":
+        return {
+          replyText: `Das Meer, der Strand und die frische Luft tun der Seele so gut! Liegst du lieber entspannt im warmen Sand oder springst du direkt in die Wellen?`,
+          translationPt: `O mar, a praia e o ar fresco fazem tão bem para a alma! Você prefere relaxar na areia quente ou pular direto nas ondas?`,
+        };
+      case "topic_destination":
+        return {
+          replyText: `Das ist wirklich ein traumhaftes Reiseziel! Warst du schon mal dort oder steht es ganz oben auf deiner Wunschliste?`,
+          translationPt: `Esse é realmente um destino dos sonhos! Você já esteve lá ou está no topo da sua lista de desejos?`,
+        };
+      case "affirmation_lets_go":
+        return {
+          replyText: `Klasse, packen wir es an! Mit welchem Thema oder welcher Alltagssituation legen wir direkt los?`,
+          translationPt: `Show, vamos nessa! Com qual assunto ou situação do cotidiano começamos direto?`,
+        };
       default: {
+        if (conversationMode === "challenge") {
+          return {
+            replyText: `Schnelle Herausforderung! Versuche, „${userInput.trim()}“ in einem vollständigen deutschen Satz mit 2 Adjektiven zu beschreiben!`,
+            translationPt: `Desafio rápido! Tente descrever "${userInput.trim()}" em uma frase alemã completa com 2 adjetivos!`,
+          };
+        }
+        if (conversationMode === "debate") {
+          return {
+            replyText: `Das ist eine interessante Sicht auf „${userInput.trim()}“! Aber was würdest du jemandem entgegnen, der das ganz anders sieht?`,
+            translationPt: `Essa é uma visão interessante sobre "${userInput.trim()}"! Mas o que você responderia a alguém que vê isso de forma bem diferente?`,
+          };
+        }
+        if (conversationMode === "grammar") {
+          return {
+            replyText: `Passend zu „${userInput.trim()}“: Im Deutschen sagt man umgangssprachlich gern „den Bogen raushaben“ (pegar o jeito). Kennst du diesen Ausdruck?`,
+            translationPt: `Combinando com "${userInput.trim()}": em alemão usamos a expressão "den Bogen raushaben" (pegar o jeito). Você conhece essa expressão?`,
+          };
+        }
         const deOptions = [
           {
-            replyText: `Das ist wirklich ein interessanter Gedanke! Was hat dich heute darauf gebracht?`,
-            translationPt: `Esse é realmente um pensamento interessante! O que te fez pensar nisso hoje?`,
+            replyText: `Das ist wirklich ein interessanter Gedanke zu „${userInput.trim()}“! Was kommt dir dabei noch in den Sinn?`,
+            translationPt: `Esse é realmente um pensamento interessante sobre "${userInput.trim()}"! O que mais vem à sua mente com isso?`,
           },
           {
-            replyText: `Du drückst dich schon richtig gut aus! Wie verbringst du normalerweise deine Abende?`,
-            translationPt: `Você já está se expressando muito bem! Como você costuma passar suas noites?`,
+            replyText: `Verstehe! Wie passt „${userInput.trim()}“ denn zu deiner gewohnten Alltagsroutine?`,
+            translationPt: `Entendo! E como "${userInput.trim()}" se encaixa na sua rotina diária habitual?`,
           },
           {
-            replyText: `Schritt für Schritt wird dein Deutsch immer sicherer. Möchtest du neue Wörter lernen oder freier plaudern?`,
-            translationPt: `Passo a passo o seu alemão está ficando cada vez mais seguro. Quer aprender palavras novas ou bater um papo mais livre?`,
-          },
-          {
-            replyText: `Sehr spannend! Wie sieht deine gewohnte Morgenroutine vor der Arbeit aus?`,
-            translationPt: `Muito empolgante! Como é a sua rotina matinal habitual antes do trabalho?`,
-          },
-          {
-            replyText: `Das klingt schon sehr flüssig! Welches Thema liegt dir beim Deutschsprechen am meisten am Herzen?`,
-            translationPt: `Isso já soa muito fluente! Qual assunto é mais importante para você ao falar alemão?`,
-          },
-          {
-            replyText: `Toll, wie wir uns auf Deutsch unterhalten können! Was war das Beste an deiner Woche?`,
-            translationPt: `Incrível como conseguimos conversar em alemão! Qual foi a melhor coisa da sua semana?`,
+            replyText: `Guter Punkt! Wenn du einem Freund in ${activeTutor.city} davon erzählen würdest, wie würdest du es erklären?`,
+            translationPt: `Bom ponto! Se você contasse isso a um amigo em ${activeTutor.city}, como explicaria?`,
           },
         ];
         return deOptions[seed % deOptions.length]!;
@@ -1747,31 +1833,57 @@ export function generateLocalTutorReply(
               replyText: `¡Hola de nuevo! Qué bien seguir charlando en español. ¿De qué te apetece hablar ahora?`,
               translationPt: `Olá de novo! Que bom continuar conversando em espanhol. Sobre o que você tem vontade de falar agora?`,
             };
+      case "topic_music":
+        return {
+          replyText: `¡La música y la meditación son fantásticas para desconectar y recargar pilas! ¿Qué tipo de música te gusta escuchar cuando buscas relajarte?`,
+          translationPt: `A música e a meditação são fantásticas para desligar e recarregar as pilhas! Que tipo de música você gosta de ouvir quando busca relaxar?`,
+        };
+      case "topic_beach_nature":
+        return {
+          replyText: `¡No hay nada comparable al mar, la brisa de la playa y el contacto con la naturaleza! ¿Eres más de tumbarte al sol o de meterte al agua?`,
+          translationPt: `Não há nada comparável ao mar, à brisa da praia e ao contato com a natureza! Você é mais de deitar ao sol ou de entrar na água?`,
+        };
+      case "topic_destination":
+        return {
+          replyText: `¡Es un destino simplemente maravilloso! ¿Ya has tenido la oportunidad de estar allí o es un viaje que tienes pendiente?`,
+          translationPt: `É um destino simplesmente maravilhoso! Você já teve a oportunidade de estar lá ou é uma viagem pendente?`,
+        };
+      case "affirmation_lets_go":
+        return {
+          replyText: `¡De una, vamos a por ello! ¿Qué tema o reto de la vida diaria te apetece practicar ahora mismo?`,
+          translationPt: `Com certeza, vamos nessa! Que tema ou desafio do dia a dia você quer praticar agora mesmo?`,
+        };
       default: {
+        if (conversationMode === "challenge") {
+          return {
+            replyText: `¡Reto exprés! ¿Cómo describirías "${userInput.trim()}" en una frase completa en español con dos adjetivos? ¡A ver cómo te sale!`,
+            translationPt: `Desafio relâmpago! Como você descreveria "${userInput.trim()}" em uma frase completa em espanhol com dois adjetivos? Vamos ver como você se sai!`,
+          };
+        }
+        if (conversationMode === "debate") {
+          return {
+            replyText: `¡Es una postura muy válida sobre "${userInput.trim()}"! Pero imagina que alguien opina justo lo opuesto, ¿con qué argumento defenderías tu idea?`,
+            translationPt: `É uma postura muito válida sobre "${userInput.trim()}"! Mas imagine que alguém opina exatamente o oposto, com qual argumento você defenderia sua ideia?`,
+          };
+        }
+        if (conversationMode === "grammar") {
+          return {
+            replyText: `A propósito de "${userInput.trim()}": en español solemos usar la expresión "cogerle el tranquillo" o "pillar el truco" (pegar o jeito). ¿Te animas a usarla?`,
+            translationPt: `A propósito de "${userInput.trim()}": em espanhol costumamos usar a expressão "cogerle el tranquillo" (pegar o jeito). Você topa usá-la?`,
+          };
+        }
         const esOptions = [
           {
-            replyText: `¡Eso es muy interesante! ¿Qué te llevó a pensar en eso el día de hoy?`,
-            translationPt: `Isso é muito interessante! O que te levou a pensar nisso no dia de hoje?`,
+            replyText: `¡Eso es muy interesante sobre "${userInput.trim()}"! ¿Qué más te viene a la mente sobre esto?`,
+            translationPt: `Isso é muito interessante sobre "${userInput.trim()}"! O que mais vem à sua mente sobre isso?`,
           },
           {
-            replyText: `Te estás expresando con mucha soltura. ¿Qué sueles hacer los fines de semana para disfrutar?`,
-            translationPt: `Você está se expressando com muita naturalidade. O que você costuma fazer nos finais de semana para curtir?`,
+            replyText: `¡Entendido! Y hablando de "${userInput.trim()}", ¿cómo encaja en tu rutina diaria?`,
+            translationPt: `Entendido! E falando de "${userInput.trim()}", como isso se encaixa na sua rotina diária?`,
           },
           {
-            replyText: `Paso a paso tu confianza al hablar español se nota más. ¿Quieres explorar un nuevo tema o seguir con este?`,
-            translationPt: `Passo a passo sua confiança ao falar espanhol fica mais evidente. Quer explorar um novo assunto ou continuar com este?`,
-          },
-          {
-            replyText: `¡Qué buena observación! ¿Cómo funciona eso habitualmente en tu rutina diaria?`,
-            translationPt: `Que boa observação! Como isso costuma funcionar na sua rotina diária?`,
-          },
-          {
-            replyText: `Tu español suena cada vez más natural. ¿Cuál ha sido el mejor momento de tu semana?`,
-            translationPt: `Seu espanhol soa cada vez mais natural. Qual foi o melhor momento da sua semana?`,
-          },
-          {
-            replyText: `Me encanta charlar contigo. Si pudieras hacer cualquier plan este fin de semana, ¿cuál sería?`,
-            translationPt: `Adoro conversar com você. Se pudesse fazer qualquer plano neste fim de semana, qual seria?`,
+            replyText: `Tiene todo el sentido. Si tuvieras que explicárselo a un amigo en ${activeTutor.city}, ¿qué le dirías?`,
+            translationPt: `Faz todo sentido. Se você tivesse que explicar isso a um amigo em ${activeTutor.city}, o que diria?`,
           },
         ];
         return esOptions[seed % esOptions.length]!;
@@ -1887,31 +1999,57 @@ export function generateLocalTutorReply(
               replyText: `Ciao di nuovo! Che bello proseguire la nostra chiacchierata in italiano. A cosa stai pensando in questo momento?`,
               translationPt: `Olá de novo! Que bom continuar nosso bate-papo em italiano. No que você está pensando neste momento?`,
             };
+      case "topic_music":
+        return {
+          replyText: `La musica e la meditazione sono perfette per rigenerarsi e staccare la spina! Che genere di musica preferisci ascoltare per rilassarti?`,
+          translationPt: `A música e a meditação são perfeitas para se regenerar e desligar a mente! Que gênero de música prefere ouvir para relaxar?`,
+        };
+      case "topic_beach_nature":
+        return {
+          replyText: `Non c'è niente di più bello del mare, della brezza sulla spiaggia e della natura! Preferisci rilassarti sulla sabbia o fare un bel tuffo in acqua?`,
+          translationPt: `Não há nada mais bonito que o mar, a brisa na praia e a natureza! Prefere relaxar na areia ou dar um belo mergulho na água?`,
+        };
+      case "topic_destination":
+        return {
+          replyText: `È davvero una meta fantastica per un viaggio! Ci sei già stato o è una delle tue prossime tappe dei sogni?`,
+          translationPt: `É realmente um destino fantástico para uma viagem! Você já esteve lá ou é uma das suas próximas paradas dos sonhos?`,
+        };
+      case "affirmation_lets_go":
+        return {
+          replyText: `Perfetto, andiamo alla grande! Su quale tema o situazione quotidiana vogliamo concentrarci subito?`,
+          translationPt: `Perfeito, vamos com tudo! Em qual tema ou situação cotidiana queremos focar agora?`,
+        };
       default: {
+        if (conversationMode === "challenge") {
+          return {
+            replyText: `Sfida rapida! Prova a descrivere "${userInput.trim()}" con una frase completa in italiano usando due aggettivi espressivi!`,
+            translationPt: `Desafio rápido! Tente descrever "${userInput.trim()}" com uma frase completa em italiano usando dois adjetivos expressivos!`,
+          };
+        }
+        if (conversationMode === "debate") {
+          return {
+            replyText: `È una prospettiva interessante su "${userInput.trim()}"! Ma se qualcuno sostenesse il contrario, come difenderesti il tuo punto di vista?`,
+            translationPt: `É uma perspectiva interessante sobre "${userInput.trim()}"! Mas se alguém sustentasse o contrário, como defenderia seu ponto de vista?`,
+          };
+        }
+        if (conversationMode === "grammar") {
+          return {
+            replyText: `A proposito di "${userInput.trim()}": in italiano si usa spesso l'espressione "prenderci la mano" (pegar o jeito). Ti va di fare una frase?`,
+            translationPt: `A propósito de "${userInput.trim()}": em italiano usa-se muito a expressão "prenderci la mano" (pegar o jeito). Quer fazer uma frase?`,
+          };
+        }
         const itOptions = [
           {
-            replyText: `È davvero una riflessione interessante! Cosa ti ha fatto venire in mente questo oggi?`,
-            translationPt: `É realmente uma reflexão interessante! O que te fez lembrar disso hoje?`,
+            replyText: `È davvero una riflessione stimolante su "${userInput.trim()}"! Cos'altro ti viene in mente al riguardo?`,
+            translationPt: `É realmente uma reflexão estimulante sobre "${userInput.trim()}"! O que mais vem à sua mente a esse respeito?`,
           },
           {
-            replyText: `Ti esprimi già con molta chiarezza! Come ami trascorrere le tue serate libere?`,
-            translationPt: `Você já se expressa com muita clareza! Como você gosta de passar suas noites livres?`,
+            replyText: `Ho capito benissimo! E in che modo "${userInput.trim()}" si inserisce nella tua vita di tutti i giorni?`,
+            translationPt: `Entendi muito bem! E de que modo "${userInput.trim()}" se insere na sua vida cotidiana?`,
           },
           {
-            replyText: `Passo dopo passo il tuo italiano diventa più sicuro. Ti va di provare nuovi vocaboli o continuare a chiacchierare?`,
-            translationPt: `Passo a passo seu italiano fica mais seguro. Tem vontade de testar vocabulário novo ou continuar conversando?`,
-          },
-          {
-            replyText: `Molto curioso! Come si svolge di solito la tua tipica mattinata prima del lavoro?`,
-            translationPt: `Muito curioso! Como costuma ser sua manhã típica antes do trabalho?`,
-          },
-          {
-            replyText: `Il tuo accento e il ritmo stanno migliorando a vista d'occhio! Di cosa vorresti parlare adesso?`,
-            translationPt: `Seu sotaque e ritmo estão melhorando a olhos vistos! Do que você gostaria de falar agora?`,
-          },
-          {
-            replyText: `È sempre un piacere parlare con te. Qual è stata la cosa più bella successa in questa settimana?`,
-            translationPt: `É sempre um prazer falar com você. Qual foi a coisa mais legal que aconteceu nesta semana?`,
+            replyText: `Ha perfettamente senso. Se dovessi raccontarlo a un amico qui a ${activeTutor.city}, cosa gli diresti?`,
+            translationPt: `Faz todo sentido. Se tivesse que contar isso a um amigo aqui em ${activeTutor.city}, o que diria a ele?`,
           },
         ];
         return itOptions[seed % itOptions.length]!;
@@ -2027,31 +2165,57 @@ export function generateLocalTutorReply(
               replyText: `Rebonjour ! C'est un réel plaisir de poursuivre notre échange en français. À quoi pensez-vous en ce moment ?`,
               translationPt: `Olá novamente! É um prazer continuar nossa conversa em francês. No que você está pensando neste momento?`,
             };
+      case "topic_music":
+        return {
+          replyText: `La musique et la méditation sont idéales pour se ressourcer et apaiser l'esprit ! Quel genre musical préférez-vous pour vous détendre ?`,
+          translationPt: `A música e a meditação são ideais para recarregar as energias e acalmar a mente! Que gênero musical você prefere para relaxar?`,
+        };
+      case "topic_beach_nature":
+        return {
+          replyText: `Rien ne vaut le bord de mer, la brise marine et la quiétude de la nature ! Aimez-vous vous promener les pieds dans le sable ou vous baigner ?`,
+          translationPt: `Nada se compara à beira-mar, à brisa marinha e à quietude da natureza! Você gosta de caminhar com os pés na areia ou de mergulhar?`,
+        };
+      case "topic_destination":
+        return {
+          replyText: `C'est une destination absolument fascinante pour voyager ! Avez-vous déjà eu l'occasion d'y séjourner ou rêvez-vous d'y aller ?`,
+          translationPt: `É um destino absolutamente fascinante para viajar! Você já teve a oportunidade de ficar lá ou sonha em ir?`,
+        };
+      case "affirmation_lets_go":
+        return {
+          replyText: `Formidable, allons-y avec enthousiasme ! Par quel sujet ou quelle mise en situation pratique souhaiteriez-vous commencer ?`,
+          translationPt: `Formidável, vamos lá com entusiasmo! Por qual assunto ou situação prática você gostaria de começar?`,
+        };
       default: {
+        if (conversationMode === "challenge") {
+          return {
+            replyText: `Défi express ! Pourriez-vous décrire « ${userInput.trim()} » en français avec une phrase complète comportant deux adjectifs ? À vous de jouer !`,
+            translationPt: `Desafio expresso! Você conseguiria descrever "${userInput.trim()}" em francês com uma frase completa contendo dois adjetivos? Sua vez!`,
+          };
+        }
+        if (conversationMode === "debate") {
+          return {
+            replyText: `C'est un point de vue tout à fait pertinent sur « ${userInput.trim()} » ! Mais si quelqu'un soutenait l'opposé, que lui répondriez-vous ?`,
+            translationPt: `É um ponto de vista totalmente pertinente sobre "${userInput.trim()}"! Mas se alguém defendesse o oposto, o que você responderia a ela?`,
+          };
+        }
+        if (conversationMode === "grammar") {
+          return {
+            replyText: `À propos de « ${userInput.trim()} » : en français familier, on dit souvent « prendre le coup de main » (pegar o jeito). Connaissiez-vous cette expression ?`,
+            translationPt: `A propósito de "${userInput.trim()}": em francês coloquial costuma-se dizer "prendre le coup de main" (pegar o jeito). Conhecia essa expressão?`,
+          };
+        }
         const frOptions = [
           {
-            replyText: `C'est une réflexion tout à fait intéressante ! Qu'est-ce qui a inspiré cette pensée aujourd'hui ?`,
-            translationPt: `É uma reflexão totalmente interessante! O que inspirou esse pensamento hoje?`,
+            replyText: `C'est une réflexion captivante à propos de « ${userInput.trim()} » ! Qu'est-ce qui vous vient à l'esprit d'autre à ce sujet ?`,
+            translationPt: `É uma reflexão cativante sobre "${userInput.trim()}"! O que mais vem à sua mente a esse respeito?`,
           },
           {
-            replyText: `Vous vous exprimez avec une belle clarté ! Comment aimez-vous occuper vos soirées libres ?`,
-            translationPt: `Você está se expressando com muita clareza! Como gosta de passar suas noites livres?`,
+            replyText: `C'est bien noté ! Et comment « ${userInput.trim()} » s'articule-t-il avec votre quotidien ?`,
+            translationPt: `Anotado! E como "${userInput.trim()}" se articula com o seu dia a dia?`,
           },
           {
-            replyText: `Pas à pas, votre français devient plus naturel. Souhaitez-vous aborder du vocabulaire nouveau ou poursuivre cet échange ?`,
-            translationPt: `Passo a passo seu francês fica mais natural. Gostaria de ver vocabulário novo ou continuar esta conversa?`,
-          },
-          {
-            replyText: `C'est très curieux ! Comment se déroule habituellement votre routine matinale ?`,
-            translationPt: `Isso é muito curioso! Como costuma ser sua rotina matinal?`,
-          },
-          {
-            replyText: `Votre expression est de plus en plus fluide. Quel a été le meilleur moment de votre semaine ?`,
-            translationPt: `Sua expressão está cada vez mais fluida. Qual foi o melhor momento da sua semana?`,
-          },
-          {
-            replyText: `J'apprécie beaucoup notre discussion. Si vous aviez un week-end totalement libre, que feriez-vous ?`,
-            translationPt: `Aprecio muito nossa conversa. Se tivesse um fim de semana totalmente livre, o que faria?`,
+            replyText: `Cela a tout son sens. Si vous deviez l'expliquer à un ami ici à ${activeTutor.city}, que lui diriez-vous ?`,
+            translationPt: `Faz todo sentido. Se você tivesse que explicar isso a um amigo aqui em ${activeTutor.city}, o que diria?`,
           },
         ];
         return frOptions[seed % frOptions.length]!;
@@ -2167,31 +2331,57 @@ export function generateLocalTutorReply(
               replyText: `Konnichiwa! Mata o-hanashi dekite ureshii desu. Ima nani o kangaete imasu ka?`,
               translationPt: `Olá! Fico feliz em conversarmos novamente. No que você está pensando agora?`,
             };
+      case "topic_music":
+        return {
+          replyText: `Ongaku ya meisou wa kokoro o rirakkusu saseru no ni saikou desu ne! Donna ongaku o kiku no ga suki desu ka?`,
+          translationPt: `Música e meditação são o máximo para relaxar o coração! Que tipo de música você gosta de ouvir?`,
+        };
+      case "topic_beach_nature":
+        return {
+          replyText: `Umi ya kaigan no kaze, shizen no keshiki wa hontou ni iyasaremasu ne! Suna-hama de bittari suru no to umi de oyogu no, dochira ga suki desu ka?`,
+          translationPt: `O mar, o vento da praia e a paisagem natural realmente curam a mente! Você prefere relaxar na areia ou nadar no mar?`,
+        };
+      case "topic_destination":
+        return {
+          replyText: `Sore wa totemo suteki na ryokou-saki desu ne! Mou itta koto ga arimasu ka, soretomo korekara ikitai desu ka?`,
+          translationPt: `Esse é um destino de viagem muito maravilhoso! Você já foi até lá ou ainda quer ir?`,
+        };
+      case "affirmation_lets_go":
+        return {
+          replyText: `Yoshi, ikimashou! Kyou wa donna wadai ya bamen kara renshuu o hajimemasu ka?`,
+          translationPt: `Legal, vamos nessa! Hoje começamos a praticar com qual assunto ou situação?`,
+        };
       default: {
+        if (conversationMode === "challenge") {
+          return {
+            replyText: `Chousen desu! "${userInput.trim()}" ni tsuite, Nihongo no bun de setsumei shite mite kudasai! Dekimasu ka?`,
+            translationPt: `Desafio! Tente explicar sobre "${userInput.trim()}" com uma frase em japonês! Consegue?`,
+          };
+        }
+        if (conversationMode === "debate") {
+          return {
+            replyText: `"${userInput.trim()}" ni tsuite, kyoumi bukai iken desu! Moshi hantai no hito ga itara, dou kotaemasu ka?`,
+            translationPt: `Sobre "${userInput.trim()}", é uma opinião muito interessante! Se houvesse alguém que discordasse, como você responderia?`,
+          };
+        }
+        if (conversationMode === "grammar") {
+          return {
+            replyText: `"${userInput.trim()}" ni kanren shite: Nihongo dewa yoku "kotsu o tsukamu" (pegar o jeito) to iimasu yo!`,
+            translationPt: `Em relação a "${userInput.trim()}": em japonês costuma-se dizer "kotsu o tsukamu" (pegar o jeito)!`,
+          };
+        }
         const jaOptions = [
           {
-            replyText: `Sore wa totemo omoshiroi iken desu ne! Naze sou omotta no desu ka?`,
-            translationPt: `Essa é uma opinião muito interessante! Por que você pensou nisso?`,
+            replyText: `"${userInput.trim()}" ni tsuite, totemo omoshiroi iken desu ne! Hoka ni donna koto o omoimasu ka?`,
+            translationPt: `Sobre "${userInput.trim()}", é uma opinião muito interessante! O que mais você pensa a respeito?`,
           },
           {
-            replyText: `Dandan Nihongo ga jouzu ni natte kimashita ne! Yasumi no hi wa donna koto o shimasu ka?`,
-            translationPt: `Aos poucos seu japonês está ficando muito bom! O que você faz nos dias de folga?`,
+            replyText: `Naruhodo! "${userInput.trim()}" wa mainichi no seikatsu to dou kankei shite imasu ka?`,
+            translationPt: `Entendi! Como "${userInput.trim()}" se relaciona com a sua vida diária?`,
           },
           {
-            replyText: `Ippo zutsu jishin ga tsuite kimashita yo. Atarashii kotoba o benkyou shimasu ka?`,
-            translationPt: `Passo a passo você está ganhando confiança. Quer estudar palavras novas?`,
-          },
-          {
-            replyText: `Kyoumi bukai desu! Fudan no asa no shuukan wa donna kanji desu ka?`,
-            translationPt: `Muito interessante! Como costuma ser seu hábito matinal habitual?`,
-          },
-          {
-            replyText: `Hatsuon mo totemo shizen ni kikoemasu yo! Ima ichiban kyoumi ga aru koto wa nan desu ka?`,
-            translationPt: `Sua pronúncia também soa muito natural! O que mais te interessa no momento?`,
-          },
-          {
-            replyText: `Issho ni Nihongo de hanasete tanoshii desu. Konshuu no ichiban ii dekigoto wa nan deshita ka?`,
-            translationPt: `É divertido conversar em japonês juntos. Qual foi o melhor acontecimento desta semana?`,
+            replyText: `Tashika ni sou desu ne! ${activeTutor.city} no tomodachi ni setsumei suru to shitara, nan to iimasu ka?`,
+            translationPt: `Com certeza é assim! Se fosse explicar para um amigo em ${activeTutor.city}, o que você diria?`,
           },
         ];
         return jaOptions[seed % jaOptions.length]!;
@@ -2257,11 +2447,31 @@ export function generateLocalTutorReply(
           replyText: `Eucharistô soi apò kardías! Ho Theòs phylássê se kaì tên hodón sou.`,
           translationPt: `Agradeço-te de coração! Que Deus guarde a ti e aos teus caminhos.`,
         };
+      case "topic_music":
+        return {
+          replyText: `He mousikè kaì he hymnodía anapaúousin tên kardían. Tí euphraínei se;`,
+          translationPt: `A música e os cânticos repousam o coração. O que alegra você?`,
+        };
+      case "topic_beach_nature":
+        return {
+          replyText: `He thálassa kaì he ktísis toû Theou megále estín. Philéis tò kállos tês ktíseos;`,
+          translationPt: `O mar e a criação de Deus são grandiosos. Você ama a beleza da criação?`,
+        };
+      case "topic_destination":
+        return {
+          replyText: `Thaumastòs tópos eis poreían! Eporeúthês ekeî é théleis poreúesthai;`,
+          translationPt: `Lugar maravilhoso para uma jornada! Você foi lá ou deseja ir?`,
+        };
+      case "affirmation_lets_go":
+        return {
+          replyText: `Ágomen oûn! Tí théleis anaginóskein kaì matheîn nûn;`,
+          translationPt: `Vamos então! O que desejas ler e aprender agora?`,
+        };
       default: {
         const greekOptions = [
           {
-            replyText: `Kálon kaì thaumastón estin! Anaginóskomen tàs graphás met' eunoías kaì spoudês.`,
-            translationPt: `Isso é belo e maravilhoso! Lemos as escrituras com boa vontade e diligência.`,
+            replyText: `Kálon kaì thaumastón estin perì toútou! Tí laleîs eti;`,
+            translationPt: `Belo e maravilhoso é sobre isso! O que mais dizes?`,
           },
           {
             replyText: `Ho lógos ho sós phôs toîs posí mou. Tí érgon poieîs sêmeron?`,
@@ -2270,10 +2480,6 @@ export function generateLocalTutorReply(
           {
             replyText: `Zêtêite kaì heurêsete! Pôs dýnamai boêtheîn soi eis tên gnôsin?`,
             translationPt: `Buscai e achareis! Como posso te ajudar no conhecimento?`,
-          },
-          {
-            replyText: `Eirênê pâsin toîs agapôsin tên alêtheian. Tí laleîs perì toútou?`,
-            translationPt: `Paz a todos os que amam a verdade. O que dizes sobre isso?`,
           },
         ];
         return greekOptions[seed % greekOptions.length]!;
@@ -2393,6 +2599,26 @@ export function generateLocalTutorReply(
         replyText: `Amen to that! Expressing gratitude and faith brings so much peace to our day. How do you like to start your mornings with a positive mindset?`,
         translationPt: `Amém a isso! Expressar gratidão e fé traz tanta paz para o nosso dia. Como você gosta de começar suas manhãs com uma mentalidade positiva?`,
       };
+    case "topic_music":
+      return {
+        replyText: `Music and meditation are such an incredible way to unwind and recharge! What kind of music helps you decompress best—chill acoustic guitar, lo-fi beats, or something else?`,
+        translationPt: `Música e meditação são uma forma incrível de descontrair e recarregar! Que tipo de música mais te ajuda a relaxar — violão acústico, batidas de lo-fi ou outra coisa?`,
+      };
+    case "topic_beach_nature":
+      return {
+        replyText: `There's truly nothing like being by the ocean and feeling that fresh salt breeze! Do you prefer chilling on the sand or diving right into the waves?`,
+        translationPt: `Realmente não há nada como estar à beira do oceano e sentir aquela brisa fresca do mar! Você prefere relaxar na areia ou mergulhar direto nas ondas?`,
+      };
+    case "topic_destination":
+      return {
+        replyText: `That sounds like an amazing place to travel to! Have you already spent time there, or is it high up on your travel bucket list?`,
+        translationPt: `Isso soa como um lugar incrível para viajar! Você já passou algum tempo lá ou está no topo da sua lista de viagens dos sonhos?`,
+      };
+    case "affirmation_lets_go":
+      return {
+        replyText: `Awesome, let's dive right in! What specific topic or real-life scenario would you love to tackle first?`,
+        translationPt: `Show, vamos mergulhar de cabeça! Em qual assunto ou cenário da vida real você adoraria focar primeiro?`,
+      };
     case "greeting":
       return historyLen <= 1
         ? {
@@ -2404,6 +2630,24 @@ export function generateLocalTutorReply(
             translationPt: `Olá novamente! Muito bom mantermos nossa conversa fluindo. O que está na sua cabeça agora?`,
           };
     default: {
+      if (conversationMode === "challenge") {
+        return {
+          replyText: `Quick challenge! How would you describe "${userInput.trim()}" in complete English using two descriptive adjectives? Give it a shot!`,
+          translationPt: `Desafio rápido! Como você descreveria "${userInput.trim()}" em inglês completo usando dois adjetivos descritivos? Tente!`,
+        };
+      }
+      if (conversationMode === "debate") {
+        return {
+          replyText: `That's an interesting take on "${userInput.trim()}"! But what if someone argued the opposite? How would you defend your perspective?`,
+          translationPt: `Essa é uma visão interessante sobre "${userInput.trim()}"! Mas e se alguém defendesse o oposto? Como você defenderia sua perspectiva?`,
+        };
+      }
+      if (conversationMode === "grammar") {
+        return {
+          replyText: `Great mention of "${userInput.trim()}"! A natural native idiom we often use here is "to get the hang of it" (pegar o jeito). How would you put that into a sentence?`,
+          translationPt: `Ótima menção a "${userInput.trim()}"! Uma expressão nativa que usamos muito por aqui é "to get the hang of it" (pegar o jeito). Como você usaria isso numa frase?`,
+        };
+      }
       const enOptions = [
         {
           replyText: `That's a really interesting point! What else comes to mind when you think about "${userInput.trim()}"?`,
@@ -2443,7 +2687,8 @@ export async function tutorChat(
   tutorPersona?: TutorPersona,
   learnerMemory?: LearnerProfileMemory,
   isPortugueseInput?: boolean,
-  aiModelPreference?: ("pro" | "flash") | undefined
+  aiModelPreference?: ("pro" | "flash") | undefined,
+  conversationMode?: ConversationMode
 ): Promise<TutorChatResponse> {
   const activeTutor = tutorPersona || DEFAULT_TUTOR;
   const preferredModel = aiModelPreference === "flash" ? "gemini-2.5-flash" : "gemini-2.5-pro";
@@ -2463,6 +2708,21 @@ export async function tutorChat(
     ru: "Russian (Русский - with Cyrillic script)",
   };
   const targetLangName = langNames[activeTutor.language] || "English";
+
+  const modeInstruction = {
+    chat: `Conversation Mode: CASUAL FRIENDLY CHAT (Bate-papo Fluído)
+- Keep the dialogue warm, natural, engaging, and relaxed like two close friends enjoying coffee.
+- Ask authentic follow-up questions connecting to what the student said.`,
+    challenge: `Conversation Mode: ACTIVE SPRINT / CHALLENGE (Desafio do Tutor)
+- Challenge the student directly with an engaging real-world task or fast-paced question.
+- Prompt them to respond with specific details or vocabulary in ${targetLangName}.`,
+    debate: `Conversation Mode: OPINION DEBATE (Debate de Opinião)
+- Playfully and respectfully offer an alternative perspective or devil's advocate view on what the student said.
+- Ask them to argue their point or defend their choice in ${targetLangName}.`,
+    grammar: `Conversation Mode: REAL-WORLD EXPRESSIONS & COLLOCATIONS (Expressões Nativas)
+- Introduce 1-2 native idioms or everyday collocations relevant to the topic.
+- Prompt the student to use them in their next reply.`
+  }[conversationMode || "chat"];
 
   // Nuances culturais e expressivas autênticas por tutor e idioma (Prompt Engineering)
   const personaNuances: Record<string, string> = {
@@ -2511,6 +2771,8 @@ Your Persona, Cultural Flavor & Style:
 - Cultural nuances & native expressions: ${tutorNuance}
 - Goal: Make the dialogue feel GENUINELY ALIVE, NATURAL, ENGAGING, and HIGHLY INTERACTIVE — like two close friends enjoying coffee, NOT a robotic exam or rigid grammar textbook.
 ${memoryContext}
+${modeInstruction}
+
 Interaction Guidelines & Fluency System (80/20 Applied Linguistics):
 1. HIGH-FREQUENCY VOCABULARY & REAL-LIFE LANGUAGE (80/20 RULE): Prioritize high-frequency, authentic expressions used by actual natives in ${activeTutor.city}. Exclude overly academic, archaic, or textbook jargon unless specifically asked. Focus on functional fluency.
 2. THINK DIRECTLY IN THE TARGET LANGUAGE (STOP MENTAL TRANSLATION):
@@ -2660,7 +2922,7 @@ Respond in strictly valid JSON format matching that exact structure.`;
     const userPhonetic = offlineTrans.phonetic;
     const userTranslationPt = offlineTrans.translationPt;
 
-    const { replyText, translationPt } = generateLocalTutorReply(userTranslatedText, activeTutor, historyLen);
+    const { replyText, translationPt } = generateLocalTutorReply(userTranslatedText, activeTutor, historyLen, conversationMode);
     const phonetic = generatePhoneticGuide(replyText, activeTutor.language);
     const suggestedReplies = getDynamicSuggestions(activeTutor.language, userTranslatedText, activeTutor);
 
@@ -2677,7 +2939,7 @@ Respond in strictly valid JSON format matching that exact structure.`;
     };
   }
 
-  const { replyText, translationPt } = generateLocalTutorReply(userInput, activeTutor, historyLen);
+  const { replyText, translationPt } = generateLocalTutorReply(userInput, activeTutor, historyLen, conversationMode);
 
   const phonetic = generatePhoneticGuide(replyText, activeTutor.language);
   const userPhonetic = generatePhoneticGuide(userInput, activeTutor.language);

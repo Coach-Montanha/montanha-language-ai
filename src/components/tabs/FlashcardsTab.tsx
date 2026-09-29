@@ -45,8 +45,10 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
+  SpellCheck,
 } from "lucide-react";
 import { PillFilter } from "@/components/ui/pill-filter";
+import { AlphabetTab } from "./AlphabetTab";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -60,19 +62,29 @@ import { toast } from "sonner";
 interface FlashcardsTabProps {
   progress: UserProgress;
   onUpdateProgress: (updated: UserProgress) => void;
+  initialMode?: "top200" | "themes" | "alphabet";
 }
 
 export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
   progress,
   onUpdateProgress,
+  initialMode,
 }) => {
   const activeLang: SupportedLanguage = progress.selectedLanguage || "en";
   const langDef = getLanguageById(activeLang);
   const activeTutors = getTutorsForLanguage(activeLang);
   const activeTutor = activeTutors[0] || { name: "Tutor", gender: "male" };
 
-  // Modo ativo: 'top200' (200 Mais Usadas) ou 'themes' (Temas & IA)
-  const [activeMode, setActiveMode] = useState<"top200" | "themes">("top200");
+  // Modo ativo: 'top200' (200 Mais Usadas), 'themes' (Temas & IA) ou 'alphabet' (Sons & Alfabeto)
+  const [activeMode, setActiveMode] = useState<"top200" | "themes" | "alphabet">(
+    initialMode || "top200"
+  );
+
+  useEffect(() => {
+    if (initialMode) {
+      setActiveMode(initialMode);
+    }
+  }, [initialMode]);
 
   // ================= ESTADOS DO TOP 200 =================
   const top200List: TopWordCard[] = getTop200Words(activeLang);
@@ -392,7 +404,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
               setIsFlipped(false);
             }}
             aria-label="Modo Temas e Vocabulário com Inteligência Artificial"
-            className={`flex-1 py-2 px-3 min-h-[44px] rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`flex-1 py-2 px-2 min-h-[44px] rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer ${
               activeMode === "themes"
                 ? "bg-card text-foreground shadow-xs border border-border"
                 : "text-muted-foreground hover:text-foreground"
@@ -400,6 +412,23 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
           >
             <Layers className="h-4 w-4 text-primary" />
             <span className="truncate">Temas & IA</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveMode("alphabet");
+              setIsFlipped(false);
+            }}
+            aria-label="Modo Sons & Alfabeto"
+            className={`flex-1 py-2 px-2 min-h-[44px] rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeMode === "alphabet"
+                ? "bg-card text-foreground shadow-xs border border-border"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <SpellCheck className="h-4 w-4 text-emerald-500" />
+            <span className="truncate">Alfabeto</span>
           </button>
         </div>
 
@@ -961,6 +990,12 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
+        </div>
+      )}
+
+      {activeMode === "alphabet" && (
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+          <AlphabetTab progress={progress} onUpdateProgress={onUpdateProgress} />
         </div>
       )}
     </div>

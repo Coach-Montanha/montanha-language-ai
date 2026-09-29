@@ -17,9 +17,8 @@ const NAV_ITEMS: NavItem[] = [
   { type: "tab", id: "conversa", label: "Conversa", icon: MessageSquareText },
   { type: "tab", id: "cenario", label: "Situações", icon: Compass },
   { type: "sprint", id: "treino", label: "Treino 5m", icon: Timer },
-  { type: "tab", id: "alfabeto", label: "Alfabeto", icon: SpellCheck },
-  { type: "tab", id: "cartoes", label: "Cartões", icon: Layers },
-  { type: "tab", id: "destrinchar", label: "Destrinchar", icon: Split },
+  { type: "tab", id: "estudo", label: "Estudo", icon: Layers },
+  { type: "tab", id: "laboratorio", label: "Laboratório", icon: Split },
 ];
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -28,6 +27,10 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onOpenDailySprint,
   dailySprintDone,
 }) => {
+  const isEstudoActive = activeTab === "estudo" || activeTab === "cartoes" || activeTab === "alfabeto";
+  const isLabActive = activeTab === "laboratorio" || activeTab === "destrinchar";
+  const activeKey = isEstudoActive ? "estudo" : isLabActive ? "laboratorio" : activeTab;
+
   const navRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLSpanElement>(null);
   const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
@@ -35,13 +38,13 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   useEffect(() => {
     const nav = navRef.current;
     const bar = barRef.current;
-    const button = buttonRefs.current[activeTab];
+    const button = buttonRefs.current[activeKey];
     if (!nav || !bar || !button) return;
     const navRect = nav.getBoundingClientRect();
     const buttonRect = button.getBoundingClientRect();
     bar.style.top = `${buttonRect.top - navRect.top + 3}px`;
     bar.style.height = `${buttonRect.height - 6}px`;
-  }, [activeTab]);
+  }, [activeKey]);
 
   return (
     <aside className="hidden md:flex flex-col w-56 border-r border-border bg-background p-3 shrink-0 min-h-screen">
@@ -84,7 +87,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             );
           }
 
-          const isActive = activeTab === item.id;
+          const isActive = activeKey === item.id;
           return (
             <button
               key={item.id}

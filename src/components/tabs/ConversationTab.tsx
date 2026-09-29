@@ -5,6 +5,7 @@ import {
   TutorPersona,
   ContextualSuggestion,
   LearnerProfileMemory,
+  ConversationMode,
 } from "@/types/language";
 import {
   tutorChat,
@@ -178,6 +179,9 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     const saved = localStorage.getItem("smart_language_translate_pt");
     return saved !== null ? saved === "true" : true;
   });
+
+  // Modo pedagógico da conversa: chat, desafio, debate, gramática
+  const [conversationMode, setConversationMode] = useState<ConversationMode>("chat");
 
   // Estados para exibição progressiva sob demanda (Fonética e Tradução)
   const [expandedPhoneticIds, setExpandedPhoneticIds] = useState<Record<string, boolean>>({});
@@ -393,7 +397,8 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         activeTutor,
         learnerMemory,
         isPt,
-        progress.aiModelPreference
+        progress.aiModelPreference,
+        conversationMode
       );
 
       if (isPt) {
@@ -837,6 +842,77 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+      </div>
+
+      {/* Seletor de Modo Pedagógico de Conversa */}
+      <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/60 bg-muted/20 overflow-x-auto no-scrollbar shrink-0">
+        <button
+          type="button"
+          onClick={() => {
+            playOptionSelectSound();
+            setConversationMode("chat");
+          }}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+            conversationMode === "chat"
+              ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+              : "bg-background/80 text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border/40"
+          }`}
+          title="Modo Conversa Livre com o tutor"
+        >
+          <span>💬</span>
+          <span>Bate-papo</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            playOptionSelectSound();
+            setConversationMode("challenge");
+          }}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+            conversationMode === "challenge"
+              ? "bg-amber-600 text-white font-semibold shadow-xs"
+              : "bg-background/80 text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border/40"
+          }`}
+          title="Modo Desafio: IA propõe missões rápidas e perguntas para você formular"
+        >
+          <span>⚡</span>
+          <span>Desafio</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            playOptionSelectSound();
+            setConversationMode("debate");
+          }}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+            conversationMode === "debate"
+              ? "bg-indigo-600 text-white font-semibold shadow-xs"
+              : "bg-background/80 text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border/40"
+          }`}
+          title="Modo Debate: Defenda seu ponto de vista em tópicos instigantes"
+        >
+          <span>🎭</span>
+          <span>Debate</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            playOptionSelectSound();
+            setConversationMode("grammar");
+          }}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+            conversationMode === "grammar"
+              ? "bg-emerald-600 text-white font-semibold shadow-xs"
+              : "bg-background/80 text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border/40"
+          }`}
+          title="Modo Expressões: Foco em gírias, estruturas e gramática natural"
+        >
+          <span>📚</span>
+          <span>Expressões</span>
+        </button>
       </div>
 
       {/* Barra de Ação quando o modo de seleção de mensagens estiver ativo */}

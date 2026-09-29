@@ -205,21 +205,17 @@ function SmartLanguageApp() {
             selectedMission={selectedMission}
             onOpenTravelPack={() => setIsTravelPackOpen(true)}
             onOpenPlacementTest={() => setIsPlacementTestOpen(true)}
+            onOpenStreetTalk={() => setIsStreetTalkOpen(true)}
           />
         )}
-        {activeTab === "alfabeto" && (
-          <AlphabetTab
-            progress={progress}
-            onUpdateProgress={handleUpdateProgress}
-          />
-        )}
-        {activeTab === "cartoes" && (
+        {(activeTab === "estudo" || activeTab === "cartoes" || activeTab === "alfabeto") && (
           <FlashcardsTab
             progress={progress}
             onUpdateProgress={handleUpdateProgress}
+            initialMode={activeTab === "alfabeto" ? "alphabet" : "top200"}
           />
         )}
-        {activeTab === "destrinchar" && (
+        {(activeTab === "laboratorio" || activeTab === "destrinchar") && (
           <BreakdownTab
             progress={progress}
             onUpdateProgress={handleUpdateProgress}

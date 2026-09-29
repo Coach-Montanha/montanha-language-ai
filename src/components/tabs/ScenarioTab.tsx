@@ -68,6 +68,7 @@ interface ScenarioTabProps {
   selectedMission?: WeeklyMission | null;
   onOpenTravelPack?: (() => void) | undefined;
   onOpenPlacementTest?: (() => void) | undefined;
+  onOpenStreetTalk?: (() => void) | undefined;
 }
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -90,6 +91,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
   selectedMission,
   onOpenTravelPack,
   onOpenPlacementTest,
+  onOpenStreetTalk,
 }) => {
   const currentLanguage: SupportedLanguage = progress.selectedLanguage || "en";
   const langDef = getLanguageById(currentLanguage);
@@ -437,34 +439,44 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
     <div className="flex flex-col h-[calc(100vh-7.5rem)] max-w-lg mx-auto w-full">
       {/* 1. SELETOR DE MODALIDADES DA ABA SITUAÇÕES (CEFR, Guia de Viagem e Cenários) */}
       <div className="p-2 border-b border-border bg-card/70 space-y-2">
-        <div className="grid grid-cols-3 gap-1.5 p-1 bg-muted/60 rounded-xl border border-border">
+        <div className="grid grid-cols-4 gap-1 p-1 bg-muted/60 rounded-xl border border-border">
           <button
             type="button"
-            className="py-1.5 px-1 rounded-lg text-[11px] font-bold bg-background text-primary shadow-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            className="py-1.5 px-1 rounded-lg text-[10.5px] font-bold bg-background text-primary shadow-xs flex items-center justify-center gap-1 transition-all cursor-pointer"
             title="Praticar diálogos e situações reais"
           >
-            <Compass className="h-3.5 w-3.5 text-primary" />
-            <span className="truncate">Situações</span>
+            <Compass className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="truncate">Missões</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onOpenStreetTalk?.()}
+            className="py-1.5 px-1 rounded-lg text-[10.5px] font-bold text-muted-foreground hover:text-foreground hover:bg-background/60 flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
+            title="Aprender gírias e expressões reais do cotidiano"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-violet-500 shrink-0" />
+            <span className="truncate">Street Talk</span>
           </button>
 
           <button
             type="button"
             onClick={() => onOpenPlacementTest?.()}
-            className="py-1.5 px-1 rounded-lg text-[11px] font-bold text-muted-foreground hover:text-foreground hover:bg-background/60 flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+            className="py-1.5 px-1 rounded-lg text-[10.5px] font-bold text-muted-foreground hover:text-foreground hover:bg-background/60 flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
             title="Fazer Simulado de Nivelamento CEFR"
           >
-            <GraduationCap className="h-3.5 w-3.5 text-emerald-500" />
-            <span className="truncate">Simulado CEFR</span>
+            <GraduationCap className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+            <span className="truncate">CEFR</span>
           </button>
 
           <button
             type="button"
             onClick={() => onOpenTravelPack?.()}
-            className="py-1.5 px-1 rounded-lg text-[11px] font-bold text-muted-foreground hover:text-foreground hover:bg-background/60 flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+            className="py-1.5 px-1 rounded-lg text-[10.5px] font-bold text-muted-foreground hover:text-foreground hover:bg-background/60 flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
             title="Abrir Pacote de Sobrevivência para Viagens"
           >
-            <Luggage className="h-3.5 w-3.5 text-amber-500" />
-            <span className="truncate">Guia Viagem</span>
+            <Luggage className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+            <span className="truncate">Viagem</span>
           </button>
         </div>
 

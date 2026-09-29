@@ -1,4 +1,6 @@
-export type TabType = "conversa" | "cenario" | "alfabeto" | "cartoes" | "destrinchar";
+export type TabType = "conversa" | "cenario" | "estudo" | "laboratorio" | "alfabeto" | "cartoes" | "destrinchar";
+
+export type ConversationMode = "chat" | "challenge" | "debate" | "grammar";
 
 export interface GrammarCorrection {
   hasError: boolean;

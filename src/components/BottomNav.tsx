@@ -17,9 +17,8 @@ const NAV_ITEMS: BottomNavItem[] = [
   { type: "tab", id: "conversa", label: "Conversa", icon: MessageSquareText },
   { type: "tab", id: "cenario", label: "Situações", icon: Compass },
   { type: "sprint", id: "treino", label: "Treino 5m", icon: Timer },
-  { type: "tab", id: "alfabeto", label: "Alfabeto", icon: SpellCheck },
-  { type: "tab", id: "cartoes", label: "Cartões", icon: Layers },
-  { type: "tab", id: "destrinchar", label: "Destrinchar", icon: Split },
+  { type: "tab", id: "estudo", label: "Estudo", icon: Layers },
+  { type: "tab", id: "laboratorio", label: "Laboratório", icon: Split },
 ];
 
 export const BottomNav: React.FC<BottomNavProps> = ({
@@ -28,6 +27,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   onOpenDailySprint,
   dailySprintDone,
 }) => {
+  const isEstudoActive = activeTab === "estudo" || activeTab === "cartoes" || activeTab === "alfabeto";
+  const isLabActive = activeTab === "laboratorio" || activeTab === "destrinchar";
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background/95 backdrop-blur-lg pb-safe">
       <div className="mx-auto flex max-w-lg items-center justify-around px-0.5 py-1 sm:px-2">
@@ -76,7 +78,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             );
           }
 
-          const isActive = activeTab === item.id;
+          const isActive =
+            item.id === "estudo"
+              ? isEstudoActive
+              : item.id === "laboratorio"
+              ? isLabActive
+              : activeTab === item.id;
+
           return (
             <button
               key={item.id}
