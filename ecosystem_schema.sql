@@ -62,19 +62,44 @@ ALTER TABLE public.ecosystem_otp_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ecosystem_subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Allow public read/write access via Supabase Client
+DROP POLICY IF EXISTS "Public select ecosystem_users" ON public.ecosystem_users;
 CREATE POLICY "Public select ecosystem_users" ON public.ecosystem_users FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public insert ecosystem_users" ON public.ecosystem_users;
 CREATE POLICY "Public insert ecosystem_users" ON public.ecosystem_users FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public update ecosystem_users" ON public.ecosystem_users;
 CREATE POLICY "Public update ecosystem_users" ON public.ecosystem_users FOR UPDATE USING (true);
 
+
+DROP POLICY IF EXISTS "Public select ecosystem_guest_lockout" ON public.ecosystem_guest_lockout;
 CREATE POLICY "Public select ecosystem_guest_lockout" ON public.ecosystem_guest_lockout FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public insert ecosystem_guest_lockout" ON public.ecosystem_guest_lockout;
 CREATE POLICY "Public insert ecosystem_guest_lockout" ON public.ecosystem_guest_lockout FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public update ecosystem_guest_lockout" ON public.ecosystem_guest_lockout;
 CREATE POLICY "Public update ecosystem_guest_lockout" ON public.ecosystem_guest_lockout FOR UPDATE USING (true);
 
+
+DROP POLICY IF EXISTS "Public select ecosystem_otp_tokens" ON public.ecosystem_otp_tokens;
 CREATE POLICY "Public select ecosystem_otp_tokens" ON public.ecosystem_otp_tokens FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public insert ecosystem_otp_tokens" ON public.ecosystem_otp_tokens;
 CREATE POLICY "Public insert ecosystem_otp_tokens" ON public.ecosystem_otp_tokens FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public update ecosystem_otp_tokens" ON public.ecosystem_otp_tokens;
 CREATE POLICY "Public update ecosystem_otp_tokens" ON public.ecosystem_otp_tokens FOR UPDATE USING (true);
 
+
+DROP POLICY IF EXISTS "Public select ecosystem_subscriptions" ON public.ecosystem_subscriptions;
 CREATE POLICY "Public select ecosystem_subscriptions" ON public.ecosystem_subscriptions FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public insert ecosystem_subscriptions" ON public.ecosystem_subscriptions;
 CREATE POLICY "Public insert ecosystem_subscriptions" ON public.ecosystem_subscriptions FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public update ecosystem_subscriptions" ON public.ecosystem_subscriptions;
 CREATE POLICY "Public update ecosystem_subscriptions" ON public.ecosystem_subscriptions FOR UPDATE USING (true);
+
+DROP POLICY IF EXISTS "Public delete ecosystem_subscriptions" ON public.ecosystem_subscriptions;
 CREATE POLICY "Public delete ecosystem_subscriptions" ON public.ecosystem_subscriptions FOR DELETE USING (true);

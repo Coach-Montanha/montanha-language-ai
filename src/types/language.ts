@@ -163,6 +163,14 @@ export interface TutorPersona {
   samplePhrase: string;
 }
 
+export type AiModelId =
+  | "gemini-2.5-pro"
+  | "gemini-2.5-flash"
+  | "gemini-1.5-pro"
+  | "gemini-1.5-flash"
+  | "pro"
+  | "flash";
+
 export interface UserProgress {
   streakDays: number;
   lastActiveDate: string;
@@ -173,6 +181,7 @@ export interface UserProgress {
   dailySprintDone: boolean;
   geminiApiKey?: string | undefined;
   audioSpeed: number; // 0.7, 0.85, 1.0, 1.2
+  selectedVoiceName?: string | undefined;
   currentWeek?: number | undefined;
   customMissions?: WeeklyMission[] | undefined;
   completedMissionIds?: string[] | undefined;
@@ -185,7 +194,7 @@ export interface UserProgress {
   voiceCallsCount?: number | undefined;
   bestPronunciationScore?: number | undefined;
   cefrLevel?: string | undefined;
-  aiModelPreference?: ("pro" | "flash") | undefined;
+  aiModelPreference?: AiModelId | undefined;
 }
 
 export interface LearnerTopicMemory {

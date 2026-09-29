@@ -335,6 +335,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
       pitch: tutorToUse.speechPitch,
       lang: tutorToUse.speechLangCode || tutorLang.speechLangCode,
       preferredVoiceKeywords: tutorToUse.preferredVoiceKeywords,
+      voiceName: progress.selectedVoiceName,
       onStart: () => setSpeakingMessageId(msgId),
       onEnd: () => setSpeakingMessageId(null),
       onError: () => setSpeakingMessageId(null),
@@ -663,6 +664,8 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
       gender: activeTutor.gender,
       pitch: activeTutor.speechPitch,
       lang: activeLanguage.speechLangCode,
+      preferredVoiceKeywords: activeTutor.preferredVoiceKeywords,
+      voiceName: progress.selectedVoiceName,
       onEnd: () => setPreviewSpeakingText(null),
       onError: () => setPreviewSpeakingText(null),
     });

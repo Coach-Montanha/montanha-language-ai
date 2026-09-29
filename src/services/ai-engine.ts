@@ -10,9 +10,11 @@ import {
   TutorChatResponse,
   LearnerProfileMemory,
   ConversationMode,
+  AiModelId,
 } from "@/types/language";
 import { PRESET_THEMES, getPresetThemesForLanguage } from "@/data/vocabulary";
 import { callGeminiRaw } from "./gemini";
+import { compressContextForAgent, recordTokenSavings } from "./ruflo-eco-engine";
 
 // Base de regras de correção instantânea com explicação de 1 linha em português
 interface CorrectionRule {
@@ -1162,6 +1164,9 @@ export type UserIntentType =
   | "topic_music"
   | "topic_beach_nature"
   | "topic_destination"
+  | "topic_fitness_health"
+  | "topic_movies_books"
+  | "question_pronunciation"
   | "affirmation_lets_go"
   | "affirmation"
   | "negation"
@@ -1171,6 +1176,27 @@ export type UserIntentType =
 
 export function classifyUserIntent(userInput: string, _tutorLanguage?: SupportedLanguage): UserIntentType {
   const lower = userInput.toLowerCase().trim();
+
+  // 0-pron. Dúvida de Pronúncia / Fonética
+  if (
+    /(como pronuncia|como se pronuncia|qual a pron[uú]ncia|como falar|how do you pronounce|how to pronounce|pronunciation of|wie spricht man|cómo se pronuncia|come si pronuncia|comment on prononce|как произносится|hatsuon)/i.test(lower)
+  ) {
+    return "question_pronunciation";
+  }
+
+  // 0-fit. Treino, Academia, Saúde e Esportes (Ecossistema Montanha Personal & Hybrid)
+  if (
+    /\b(workout|gym|training|fitness|exercise|running|run|kettlebell|crossfit|muscle|health|treino|treinar|academia|muscula[çc][aã]o|corrida|correr|exerc[íi]cio|sa[úu]de|training|sport|esporte|esportes|entrenamiento|gimnasio|palestra|allenamento|cours|musculation|спорт|тренировка|зал|undou)\b/i.test(lower)
+  ) {
+    return "topic_fitness_health";
+  }
+
+  // 0-media. Filmes, Séries, Livros e Cinema
+  if (
+    /\b(movie|movies|film|films|cinema|series|tv show|book|books|reading|read|filme|filmes|cinema|s[eé]rie|s[eé]ries|livro|livros|leitura|ler|buch|bücher|pel[íi]cula|pel[íi]culas|libro|libros|livre|livres|кино|фильм|фильмы|книга|книги|eiga|hon)\b/i.test(lower)
+  ) {
+    return "topic_movies_books";
+  }
 
   // 0a. Pedidos sobre História / Passado / Cultura histórica
   if (
@@ -1501,6 +1527,21 @@ export function generateLocalTutorReply(
               replyText: `Привет ещё раз! Здорово, что мы продолжаем практиковаться. О чём ты сейчас думаешь?`,
               translationPt: `Olá novamente! Que ótimo que estamos continuando a praticar. No que você está pensando agora?`,
             };
+      case "topic_history":
+        return {
+          replyText: `История — это невероятно глубокая тема! Русская история полна великих событий, архитектурных памятников и культурных переломов. Какая эпоха тебя больше всего привлекает?`,
+          translationPt: `História é um tema incrivelmente profundo! A história russa é repleta de grandes eventos, monumentos arquitetônicos e reviravoltas culturais. Qual época mais te atrai?`,
+        };
+      case "topic_city":
+        return {
+          replyText: `${activeTutor.city} — удивительный город с неповторимой атмосферой, красивейшими мостами, театрами и уютными уголками! Что именно ты хотел бы узнать о жизни в ${activeTutor.city}?`,
+          translationPt: `${activeTutor.city} é uma cidade surpreendente com atmosfera sem igual, pontes lindíssimas, teatros e cantos acolhedores! O que exatamente você gostaria de saber sobre a vida em ${activeTutor.city}?`,
+        };
+      case "topic_faith":
+        return {
+          replyText: `Слава Богу! Искренняя вера, благодарность в сердце и душевное спокойствие дают человеку настоящую силу. С какими мыслями ты любишь начинать свой день?`,
+          translationPt: `Graças a Deus! Fé sincera, gratidão no coração e paz de espírito dão força verdadeira ao ser humano. Com quais pensamentos você gosta de começar o seu dia?`,
+        };
       case "topic_music":
         return {
           replyText: `Музыка и медитация отлично помогают восстановить душевные силы! Какую музыку ты любишь слушать для отдыха: спокойную, инструментальную или что-то с ритмом?`,
@@ -1515,6 +1556,21 @@ export function generateLocalTutorReply(
         return {
           replyText: `Какое потрясающее направление! Ты уже бывал там или мечтаешь поехать туда в путешествие?`,
           translationPt: `Que destino incrível! Você já esteve lá ou sonha em viajar para lá?`,
+        };
+      case "topic_fitness_health":
+        return {
+          replyText: `Спорт и регулярные тренировки отлично закаляют тело и проясняют ум! Ты больше предпочитаешь силовые упражнения, бег или функциональный тренинг?`,
+          translationPt: `Esporte e treinos regulares fortalecem o corpo e clareiam a mente! Você prefere musculação, corrida ou treino funcional?`,
+        };
+      case "topic_movies_books":
+        return {
+          replyText: `Хорошая книга или глубокий фильм — это всегда пища для размышлений! Какой жанр тебе ближе: захватывающие драмы, исторические романы или что-то лёгкое?`,
+          translationPt: `Um bom livro ou um filme profundo é sempre alimento para reflexão! Qual gênero te agrada mais: dramas envolventes, romances históricos ou algo mais leve?`,
+        };
+      case "question_pronunciation":
+        return {
+          replyText: `В русском языке правильное ударение играет решающую роль! Какое слово или звук вызывает у тебя сомнения? Давай разберём его медленно и чётко.`,
+          translationPt: `Na língua russa a acentuação correta tem papel decisivo! Qual palavra ou som gera dúvidas em você? Vamos destrinchá-lo devagar e com clareza.`,
         };
       case "affirmation_lets_go":
         return {
@@ -1667,6 +1723,21 @@ export function generateLocalTutorReply(
               replyText: `Hallo nochmals! Schön, dass wir weiter Deutsch üben. Woran denkst du gerade?`,
               translationPt: `Olá novamente! Que bom continuarmos praticando alemão. No que você está pensando agora?`,
             };
+      case "topic_history":
+        return {
+          replyText: `Geschichte ist ein ungeheuer spannendes Thema! Von den alten Burgen über den Mauerfall bis zur Gegenwart. Welche Epoche interessiert dich am meisten?`,
+          translationPt: `História é um assunto incrivelmente empolgante! Dos castelos antigos à queda do Muro até o presente. Qual época mais te interessa?`,
+        };
+      case "topic_city":
+        return {
+          replyText: `${activeTutor.city} ist eine vielseitige Stadt mit großartigen Cafés, Museen und historischem Charme! Was möchtest du gerne über das Leben hier in ${activeTutor.city} erfahren?`,
+          translationPt: `${activeTutor.city} é uma cidade versátil com ótimos cafés, museus e charme histórico! O que você gostaria de saber sobre a vida aqui em ${activeTutor.city}?`,
+        };
+      case "topic_faith":
+        return {
+          replyText: `Gott sei Dank! Dankbarkeit und innerer Frieden geben uns so viel Kraft für den Alltag. Wie startest du morgens am liebsten in den Tag?`,
+          translationPt: `Graças a Deus! Gratidão e paz interior nos dão tanta força para o dia a dia. Como você prefere começar suas manhãs?`,
+        };
       case "topic_music":
         return {
           replyText: `Musik und Meditation sind einfach herrlich zum Abschalten! Welche Musik hilft dir am besten: sanfte Klänge, klassische Stücke oder etwas mit gutem Beat?`,
@@ -1681,6 +1752,21 @@ export function generateLocalTutorReply(
         return {
           replyText: `Das ist wirklich ein traumhaftes Reiseziel! Warst du schon mal dort oder steht es ganz oben auf deiner Wunschliste?`,
           translationPt: `Esse é realmente um destino dos sonhos! Você já esteve lá ou está no topo da sua lista de desejos?`,
+        };
+      case "topic_fitness_health":
+        return {
+          replyText: `Sport und regelmäßiges Training halten Körper und Geist fit! Machst du lieber Krafttraining im Gym, gehst du joggen oder magst du Outdoor-Aktivitäten?`,
+          translationPt: `Esporte e treinos regulares mantêm o corpo e a mente em forma! Você prefere musculação na academia, corrida ou atividades ao ar livre?`,
+        };
+      case "topic_movies_books":
+        return {
+          replyText: `Ein packendes Buch oder ein guter Film sind perfekt, um den Tag ausklingen zu lassen! Was schaust oder liest du zurzeit am liebsten?`,
+          translationPt: `Um livro empolgante ou um bom filme são perfeitos para fechar o dia! O que você mais gosta de assistir ou ler ultimamente?`,
+        };
+      case "question_pronunciation":
+        return {
+          replyText: `Die deutsche Aussprache wird mit etwas Übung ganz natürlich! Welches Wort oder welcher Laut bereitet dir noch Kopfzerbrechen? Lass es uns gemeinsam üben!`,
+          translationPt: `A pronúncia alemã se torna bem natural com um pouco de prática! Qual palavra ou som ainda te dá nó na cabeça? Vamos praticar juntos!`,
         };
       case "affirmation_lets_go":
         return {
@@ -1833,6 +1919,21 @@ export function generateLocalTutorReply(
               replyText: `¡Hola de nuevo! Qué bien seguir charlando en español. ¿De qué te apetece hablar ahora?`,
               translationPt: `Olá de novo! Que bom continuar conversando em espanhol. Sobre o que você tem vontade de falar agora?`,
             };
+      case "topic_history":
+        return {
+          replyText: `¡La historia es fascinante! Desde las civilizaciones antiguas hasta los acontecimientos que cambiaron el mundo. ¿Qué época histórica te apasiona más?`,
+          translationPt: `A história é fascinante! Desde civilizações antigas até acontecimentos que mudaram o mundo. Qual época histórica te apaixona mais?`,
+        };
+      case "topic_city":
+        return {
+          replyText: `¡${activeTutor.city} tiene una magia única! Calles llenas de vida, terrazas soleadas y rincones con siglos de historia. ¿Qué te gustaría saber sobre vivir en ${activeTutor.city}?`,
+          translationPt: `${activeTutor.city} tem uma magia única! Ruas cheias de vida, calçadas ensolaradas e cantos com séculos de história. O que você gostaria de saber sobre viver em ${activeTutor.city}?`,
+        };
+      case "topic_faith":
+        return {
+          replyText: `¡Gracias a Dios! La gratitud sincera y la fe en el corazón llenan el día de paz y optimismo. ¿Cómo te gusta empezar tus mañanas?`,
+          translationPt: `Graças a Deus! A gratidão sincera e a fé no coração enchem o dia de paz e otimismo. Como você gosta de começar suas manhãs?`,
+        };
       case "topic_music":
         return {
           replyText: `¡La música y la meditación son fantásticas para desconectar y recargar pilas! ¿Qué tipo de música te gusta escuchar cuando buscas relajarte?`,
@@ -1847,6 +1948,21 @@ export function generateLocalTutorReply(
         return {
           replyText: `¡Es un destino simplemente maravilloso! ¿Ya has tenido la oportunidad de estar allí o es un viaje que tienes pendiente?`,
           translationPt: `É um destino simplesmente maravilhoso! Você já teve a oportunidade de estar lá ou é uma viagem pendente?`,
+        };
+      case "topic_fitness_health":
+        return {
+          replyText: `¡El entrenamiento y la actividad física son la clave para la salud y la vitalidad! ¿Prefieres entrenar fuerza en el gimnasio, correr o hacer deportes al aire libre?`,
+          translationPt: `O treino e a atividade física são a chave para a saúde e a vitalidade! Você prefere musculação na academia, corrida ou esportes ao ar livre?`,
+        };
+      case "topic_movies_books":
+        return {
+          replyText: `¡Un buen libro o una película inspiradora siempre nutren la imaginación! ¿Qué género disfrutas más: historias de suspense, cine clásico o novelas históricas?`,
+          translationPt: `Um bom livro ou um filme inspirador sempre alimentam a imaginação! Que gênero você mais curte: histórias de suspense, cinema clássico ou romances históricos?`,
+        };
+      case "question_pronunciation":
+        return {
+          replyText: `¡En español cada letra tiene un sonido muy claro y rítmico! ¿Qué palabra o sonido en particular te genera dudas? Vamos a pronunciarla juntos despacio.`,
+          translationPt: `Em espanhol cada letra tem um som muito claro e rítmico! Que palavra ou som em particular te gera dúvidas? Vamos pronunciar juntos devagar.`,
         };
       case "affirmation_lets_go":
         return {
@@ -1999,6 +2115,21 @@ export function generateLocalTutorReply(
               replyText: `Ciao di nuovo! Che bello proseguire la nostra chiacchierata in italiano. A cosa stai pensando in questo momento?`,
               translationPt: `Olá de novo! Que bom continuar nosso bate-papo em italiano. No que você está pensando neste momento?`,
             };
+      case "topic_history":
+        return {
+          replyText: `La storia qui in Italia si respira in ogni pietra! Dagli antichi Romani al Rinascimento, è un viaggio continuo nel tempo. Quale periodo storico ti affascina di più?`,
+          translationPt: `A história aqui na Itália se respira em cada pedra! Dos antigos romanos ao Renascimento, é uma contínua viagem no tempo. Qual período histórico mais te fascina?`,
+        };
+      case "topic_city":
+        return {
+          replyText: `${activeTutor.city} è una città dal fascino irresistibile, tra piazze spettacolari, vicoli medievali e profumo di caffè! Cosa vorresti scoprire della vita a ${activeTutor.city}?`,
+          translationPt: `${activeTutor.city} é uma cidade de charme irresistível, entre praças espetaculares, ruelas medievais e aroma de café! O que você gostaria de descobrir sobre a vida em ${activeTutor.city}?`,
+        };
+      case "topic_faith":
+        return {
+          replyText: `Grazie a Dio! La fede autentica e la gratitudine nel cuore donano una grande serenità. Con quale spirito ami iniziare la tua giornata?`,
+          translationPt: `Graças a Deus! A fé autêntica e a gratidão no coração proporcionam grande serenidade. Com qual espírito você gosta de começar o seu dia?`,
+        };
       case "topic_music":
         return {
           replyText: `La musica e la meditazione sono perfette per rigenerarsi e staccare la spina! Che genere di musica preferisci ascoltare per rilassarti?`,
@@ -2013,6 +2144,21 @@ export function generateLocalTutorReply(
         return {
           replyText: `È davvero una meta fantastica per un viaggio! Ci sei già stato o è una delle tue prossime tappe dei sogni?`,
           translationPt: `É realmente um destino fantástico para uma viagem! Você já esteve lá ou é uma das suas próximas paradas dos sonhos?`,
+        };
+      case "topic_fitness_health":
+        return {
+          replyText: `L'allenamento fisico e lo sport sono fondamentali per sentirsi pieni di energia! Preferisci la palestra, la corsa all'aperto o sport di squadra?`,
+          translationPt: `O treino físico e o esporte são fundamentais para nos sentirmos cheios de energia! Prefere musculação na academia, corrida ao ar livre ou esportes coletivos?`,
+        };
+      case "topic_movies_books":
+        return {
+          replyText: `Un bel libro o un capolavoro del cinema italiano sono perfetti per nutrire l'anima! Cosa ti piace guardare o leggere quando hai tempo per te?`,
+          translationPt: `Um belo livro ou uma obra-prima do cinema italiano são perfeitos para nutrir a alma! O que você gosta de assistir ou ler quando tem tempo para você?`,
+        };
+      case "question_pronunciation":
+        return {
+          replyText: `L'italiano ha una musicalità meravigliosa con vocali aperte e consonanti doppie ben scandite! Quale parola vorresti pronunciare alla perfezione insieme a me?`,
+          translationPt: `O italiano tem uma musicalidade maravilhosa com vogais abertas e consoantes duplas bem articuladas! Qual palavra você gostaria de pronunciar com perfeição junto comigo?`,
         };
       case "affirmation_lets_go":
         return {
@@ -2165,6 +2311,21 @@ export function generateLocalTutorReply(
               replyText: `Rebonjour ! C'est un réel plaisir de poursuivre notre échange en français. À quoi pensez-vous en ce moment ?`,
               translationPt: `Olá novamente! É um prazer continuar nossa conversa em francês. No que você está pensando neste momento?`,
             };
+      case "topic_history":
+        return {
+          replyText: `L'histoire est un domaine captivant ! Des châteaux de la Renaissance aux grandes révolutions qui ont façonné le monde contemporain. Quelle période vous inspire le plus ?`,
+          translationPt: `A história é uma área cativante! Dos castelos da Renascença às grandes revoluções que moldaram o mundo contemporâneo. Qual período mais te inspira?`,
+        };
+      case "topic_city":
+        return {
+          replyText: `${activeTutor.city} possède une élégance incomparable avec ses avenues, ses cafés historiques et sa vie culturelle trépidante ! Qu'aimeriez-vous savoir sur la vie à ${activeTutor.city} ?`,
+          translationPt: `${activeTutor.city} possui uma elegância incomparável com suas avenidas, cafés históricos e vida cultural efervescente! O que você gostaria de saber sobre a vida em ${activeTutor.city}?`,
+        };
+      case "topic_faith":
+        return {
+          replyText: `Dieu merci ! La gratitude sincère et la paix intérieure apportent une force précieuse pour chaque journée. Comment aimez-vous débuter votre matinée ?`,
+          translationPt: `Graças a Deus! A gratidão sincera e a paz interior trazem uma força preciosa para cada dia. Como você gosta de começar sua manhã?`,
+        };
       case "topic_music":
         return {
           replyText: `La musique et la méditation sont idéales pour se ressourcer et apaiser l'esprit ! Quel genre musical préférez-vous pour vous détendre ?`,
@@ -2179,6 +2340,21 @@ export function generateLocalTutorReply(
         return {
           replyText: `C'est une destination absolument fascinante pour voyager ! Avez-vous déjà eu l'occasion d'y séjourner ou rêvez-vous d'y aller ?`,
           translationPt: `É um destino absolutamente fascinante para viajar! Você já teve a oportunidade de ficar lá ou sonha em ir?`,
+        };
+      case "topic_fitness_health":
+        return {
+          replyText: `L'activité physique et l'entraînement régulier sont essentiels pour l'équilibre du corps et de l'esprit ! Préférez-vous le renforcement musculaire, la course ou la marche rapide ?`,
+          translationPt: `A atividade física e o treino regular são essenciais para o equilíbrio do corpo e da mente! Você prefere musculação, corrida ou caminhada rápida?`,
+        };
+      case "topic_movies_books":
+        return {
+          replyText: `La littérature et le cinéma français regorgent de chefs-d'œuvre émouvants ! Quel genre d'œuvres préférez-vous découvrir pendant vos moments de détente ?`,
+          translationPt: `A literatura e o cinema francês são repletos de obras-primas comoventes! Que gênero de obras você prefere descobrir durante seus momentos de descanso?`,
+        };
+      case "question_pronunciation":
+        return {
+          replyText: `La prononciation française avec ses voyelles nasales et son rythme fluide s'acquiert très bien avec la pratique ! Quel son ou quel mot souhaitez-vous perfectionner ?`,
+          translationPt: `A pronúncia francesa com suas vogais nasais e ritmo fluido se adquire muito bem com a prática! Qual som ou palavra você deseja aperfeiçoar?`,
         };
       case "affirmation_lets_go":
         return {
@@ -2331,6 +2507,21 @@ export function generateLocalTutorReply(
               replyText: `Konnichiwa! Mata o-hanashi dekite ureshii desu. Ima nani o kangaete imasu ka?`,
               translationPt: `Olá! Fico feliz em conversarmos novamente. No que você está pensando agora?`,
             };
+      case "topic_history":
+        return {
+          replyText: `Rekishi wa hontou ni fukai wadai desu ne! Samurai no jidai ya Edo no bunka nado, kyomi bukai koto ga takusan arimasu. Donna jidai ga suki desu ka?`,
+          translationPt: `História é um assunto realmente profundo! A era dos samurais, a cultura Edo, há muitas coisas fascinantes. De qual época você mais gosta?`,
+        };
+      case "topic_city":
+        return {
+          replyText: `${activeTutor.city} wa dentou to gendai ga chouwa shita totemo miryokuteki na machi desu! ${activeTutor.city} no seikatsu ni tsuite, nani o shiritai desu ka?`,
+          translationPt: `${activeTutor.city} é uma cidade muito charmosa onde tradição e modernidade se harmonizam! Sobre a vida em ${activeTutor.city}, o que você gostaria de saber?`,
+        };
+      case "topic_faith":
+        return {
+          replyText: `Kamisama ni kansha desu ne! Kokoro no kansha to heian wa mainichi ni ookina chikara o ataete kuremasu. Asa wa donna kimochi de hajimemasu ka?`,
+          translationPt: `Gratidão a Deus! Gratidão no coração e paz trazem grande força para o dia a dia. Com que espírito você gosta de começar suas manhãs?`,
+        };
       case "topic_music":
         return {
           replyText: `Ongaku ya meisou wa kokoro o rirakkusu saseru no ni saikou desu ne! Donna ongaku o kiku no ga suki desu ka?`,
@@ -2345,6 +2536,21 @@ export function generateLocalTutorReply(
         return {
           replyText: `Sore wa totemo suteki na ryokou-saki desu ne! Mou itta koto ga arimasu ka, soretomo korekara ikitai desu ka?`,
           translationPt: `Esse é um destino de viagem muito maravilhoso! Você já foi até lá ou ainda quer ir?`,
+        };
+      case "topic_fitness_health":
+        return {
+          replyText: `Undou to toreeningu wa karada to kokoro o genki ni tamotsu no ni saikou desu! Jimu de no toreeningu ya jogging nado, donna undou o shite imasu ka?`,
+          translationPt: `Exercícios e treino físico são o máximo para manter corpo e mente saudáveis! Treino na academia, corrida... que tipo de exercício você costuma fazer?`,
+        };
+      case "topic_movies_books":
+        return {
+          replyText: `Subarashii eiga ya hon wa atarashii shiten o ataete kuremasu ne! Saikin, donna sakuhin o mimashita ka, aruiwa yomimashita ka?`,
+          translationPt: `Ótimos filmes e livros nos dão novas perspectivas! Recentemente, que tipo de obra você assistiu ou leu?`,
+        };
+      case "question_pronunciation":
+        return {
+          replyText: `Nihongo no hatsuon wa bointo kouon ga kirei de, renshuu sureba sugu ni tsutawarimasu yo! Doko no kotoba ga ki ni narimasu ka?`,
+          translationPt: `A pronúncia japonesa tem vogais e tons bem limpos, e praticando você logo se faz entender! Qual palavra você quer treinar comigo?`,
         };
       case "affirmation_lets_go":
         return {
@@ -2447,6 +2653,21 @@ export function generateLocalTutorReply(
           replyText: `Eucharistô soi apò kardías! Ho Theòs phylássê se kaì tên hodón sou.`,
           translationPt: `Agradeço-te de coração! Que Deus guarde a ti e aos teus caminhos.`,
         };
+      case "topic_history":
+        return {
+          replyText: `He historia tôn archaíôn kairôn sophían didáskei! Poían períodoñ tês archaiótêtos boúlei manthánein;`,
+          translationPt: `A história dos tempos antigos ensina sabedoria! Qual período da antiguidade desejas aprender?`,
+        };
+      case "topic_city":
+        return {
+          replyText: `${activeTutor.city} pólistin archaía kaì kálleï pollôi kekosmêméne! Tí theleis eidénai perì tês póleos taútês;`,
+          translationPt: `${activeTutor.city} é uma cidade antiga e adornada com muita beleza! O que desejas saber sobre esta cidade?`,
+        };
+      case "topic_faith":
+        return {
+          replyText: `Dóxa tôi Theôi! He pístis kaì he elpìs stêrízousin tên kardían. Pôs árcheis tên heméran sou;`,
+          translationPt: `Glória a Deus! A fé e a esperança firmam o coração. Como inicias o teu dia?`,
+        };
       case "topic_music":
         return {
           replyText: `He mousikè kaì he hymnodía anapaúousin tên kardían. Tí euphraínei se;`,
@@ -2461,6 +2682,21 @@ export function generateLocalTutorReply(
         return {
           replyText: `Thaumastòs tópos eis poreían! Eporeúthês ekeî é théleis poreúesthai;`,
           translationPt: `Lugar maravilhoso para uma jornada! Você foi lá ou deseja ir?`,
+        };
+      case "topic_fitness_health":
+        return {
+          replyText: `He gumnasía toû sómatos kaì he enkráteia óphelos échousin! Poíoi agônes aréskousí soi;`,
+          translationPt: `O exercício do corpo e o domínio próprio têm grande proveito! Que tipo de disciplina ou exercício te agrada?`,
+        };
+      case "topic_movies_books":
+        return {
+          replyText: `He anágnosis tês sophías photízei toùs ophthalmóus! Tí anaginóskeis nûn;`,
+          translationPt: `A leitura da sabedoria ilumina os olhos! O que estás lendo agora?`,
+        };
+      case "question_pronunciation":
+        return {
+          replyText: `He prophorà tês koinês hellênikês akribôs laleîtai metà zêlou! Poîan léxin theleis akousai;`,
+          translationPt: `A pronúncia do grego koiné é falada com zelo e clareza! Qual palavra desejas ouvir e pronunciar?`,
         };
       case "affirmation_lets_go":
         return {
@@ -2614,6 +2850,21 @@ export function generateLocalTutorReply(
         replyText: `That sounds like an amazing place to travel to! Have you already spent time there, or is it high up on your travel bucket list?`,
         translationPt: `Isso soa como um lugar incrível para viajar! Você já passou algum tempo lá ou está no topo da sua lista de viagens dos sonhos?`,
       };
+    case "topic_fitness_health":
+      return {
+        replyText: `Staying active and hitting the gym is such a game changer for your energy! Do you lean more towards strength training, endurance running, or functional conditioning?`,
+        translationPt: `Manter-se ativo e ir para a academia muda totalmente o nível de energia! Você tende mais para musculação pesada, corrida de resistência ou condicionamento funcional?`,
+      };
+    case "topic_movies_books":
+      return {
+        replyText: `A great film or an immersive book is the best way to decompress! Are you more into suspenseful thrillers, sci-fi, or character-driven dramas?`,
+        translationPt: `Um ótimo filme ou um livro envolvente é a melhor maneira de desacelerar! Você curte mais thrillers de suspense, ficção científica ou dramas com ótimos personagens?`,
+      };
+    case "question_pronunciation":
+      return {
+        replyText: `Mastering English pronunciation comes down to rhythm, reductions, and connected speech! What specific word or sound is tripping you up? Let's break it down together!`,
+        translationPt: `Dominar a pronúncia em inglês se resume a ritmo, reduções e fala conectada! Qual palavra ou som específico está te travando? Vamos destrinchar juntos!`,
+      };
     case "affirmation_lets_go":
       return {
         replyText: `Awesome, let's dive right in! What specific topic or real-life scenario would you love to tackle first?`,
@@ -2687,11 +2938,16 @@ export async function tutorChat(
   tutorPersona?: TutorPersona,
   learnerMemory?: LearnerProfileMemory,
   isPortugueseInput?: boolean,
-  aiModelPreference?: ("pro" | "flash") | undefined,
+  aiModelPreference?: AiModelId | undefined,
   conversationMode?: ConversationMode
 ): Promise<TutorChatResponse> {
   const activeTutor = tutorPersona || DEFAULT_TUTOR;
-  const preferredModel = aiModelPreference === "flash" ? "gemini-2.5-flash" : "gemini-2.5-pro";
+  const preferredModel =
+    aiModelPreference === "flash"
+      ? "gemini-2.5-flash"
+      : aiModelPreference === "pro"
+      ? "gemini-2.5-pro"
+      : aiModelPreference || "gemini-2.5-pro";
   const hasTargetNativeScript =
     (activeTutor.language === "ru" && /[а-яА-ЯёЁ]/.test(userInput)) ||
     (activeTutor.language === "el-koine" && /[α-ωΑ-Ω]/.test(userInput)) ||
@@ -2834,8 +3090,11 @@ Response schema:
 
 Respond in strictly valid JSON format matching that exact structure.`;
 
-      const historyFormatted = history
-        .slice(-6)
+      // @eco: Compressão de contexto para economia inteligente de tokens e preservação de memória
+      const compressedHistory = compressContextForAgent(history, 8);
+      const compressionTokensSaved = Math.max(0, (history.length - compressedHistory.length) * 45);
+
+      const historyFormatted = compressedHistory
         .map((m) => `${m.sender === "user" ? "User" : activeTutor.name}: ${m.text}`)
         .join("\n");
 
@@ -2895,7 +3154,7 @@ Respond in strictly valid JSON format matching that exact structure.`;
           }))
         : getDynamicSuggestions(activeTutor.language, userTranslatedText, activeTutor);
 
-      return {
+      const geminiResult: TutorChatResponse = {
         replyText,
         phonetic,
         translationPt,
@@ -2906,6 +3165,11 @@ Respond in strictly valid JSON format matching that exact structure.`;
         userTranslationPt,
         suggestedReplies,
       };
+
+      // @eco: Registra economia de tokens obtida pela compressão inteligente de contexto
+      recordTokenSavings(0, compressionTokensSaved);
+
+      return geminiResult;
     } catch (e) {
       console.warn("Falha no Gemini, utilizando motor inteligente local:", e);
     }
@@ -3522,7 +3786,8 @@ export async function scenarioChat(
   scenario: Scenario,
   userInput: string,
   history: ChatMessage[],
-  apiKey?: string
+  apiKey?: string,
+  aiModelPreference?: AiModelId
 ): Promise<ScenarioChatResult> {
   if (apiKey) {
     try {
@@ -3535,13 +3800,13 @@ Provide your response strictly in JSON:
   "suggestedReplies": ["Option 1 in English", "Option 2 in English", "Option 3 in English"]
 }`;
 
-      const historyFormatted = history
-        .slice(-6)
+      const compressedHistory = compressContextForAgent(history, 6);
+      const historyFormatted = compressedHistory
         .map((m) => `${m.sender === "user" ? scenario.roleUser : scenario.roleAi}: ${m.text}`)
         .join("\n");
 
       const prompt = `Context: ${scenario.description}\n${historyFormatted}\n${scenario.roleUser}: "${userInput}"\n\nGenerate in-character response:`;
-      const responseRaw = await callGeminiRaw(apiKey, prompt, systemPrompt);
+      const responseRaw = await callGeminiRaw(apiKey, prompt, systemPrompt, aiModelPreference);
 
       const cleaned = responseRaw.replace(/```json/g, "").replace(/```/g, "").trim();
       const parsed = JSON.parse(cleaned);

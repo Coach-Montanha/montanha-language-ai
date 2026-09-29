@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { UserProgress, SupportedLanguage } from "@/types/language";
+import { UserProgress, SupportedLanguage, AiModelId } from "@/types/language";
 import { TUTORS, getTutorById, getTutorsByLanguage, getDefaultTutorForLanguage } from "@/data/tutors";
 import { SUPPORTED_LANGUAGES, getLanguageById } from "@/data/languages";
-import { speakText, stopSpeaking } from "@/services/speech";
+import { speakText, stopSpeaking, getAvailableVoices } from "@/services/speech";
 import { exportFullBackupData, importFullBackupData } from "@/services/storage";
 import { clearAnalysisCache } from "@/services/ai-cache";
 import {
@@ -52,6 +52,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [apiKey, setApiKey] = useState(progress.geminiApiKey || "");
   const [speed, setSpeed] = useState(progress.audioSpeed || 0.85);
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>(progress.selectedVoiceName || "");
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>(
     progress.selectedLanguage || "en"
   );
@@ -59,8 +61,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     progress.selectedTutorId || getDefaultTutorForLanguage(progress.selectedLanguage || "en").id
   );
   const [fontSize, setFontSize] = useState<"sm" | "md" | "lg" | "xl">(progress.fontSize || "md");
-  const [aiModelPreference, setAiModelPreference] = useState<"pro" | "flash">(
-    progress.aiModelPreference || "pro"
+  const [aiModelPreference, setAiModelPreference] = useState<AiModelId>(
+    progress.aiModelPreference || "gemini-2.5-pro"
   );
   const [design, setDesign] = useState<"classic" | "midnight" | "focus">(
     progress.design ||
@@ -86,6 +88,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const currentTutor = getTutorById(selectedTutorId);
   const currentLang = getLanguageById(selectedLanguage);
   const availableTutors = getTutorsByLanguage(selectedLanguage);
+
+  // Carrega e sincroniza as vozes disponíveis para o idioma selecionado
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = getAvailableVoices(currentTutor.speechLangCode || currentLang.speechLangCode);
+      setAvailableVoices(voices);
+    };
+    loadVoices();
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+    return () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, [selectedLanguage, selectedTutorId, currentTutor.speechLangCode, currentLang.speechLangCode]);
 
   const handleLanguageChange = (langId: SupportedLanguage) => {
     setSelectedLanguage(langId);
@@ -121,6 +140,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       ...progress,
       geminiApiKey: apiKey.trim() ? apiKey.trim() : undefined,
       audioSpeed: speed,
+      selectedVoiceName: selectedVoiceName || undefined,
       selectedLanguage,
       selectedTutorId,
       fontSize,
@@ -135,14 +155,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onOpenChange(false);
   };
 
-  const handleTestAudio = () => {
+  const handleTestAudio = (customVoice?: string) => {
     stopSpeaking();
+    const voiceToUse = customVoice !== undefined ? customVoice : selectedVoiceName;
     speakText(currentTutor.samplePhrase, {
       rate: speed,
       gender: currentTutor.gender,
       pitch: currentTutor.speechPitch,
       lang: currentTutor.speechLangCode || currentLang.speechLangCode,
       preferredVoiceKeywords: currentTutor.preferredVoiceKeywords,
+      voiceName: voiceToUse || undefined,
     });
   };
 
@@ -435,7 +457,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* 4. Velocidade da Fala / Comunicação */}
+          {/* 4. Voz do Tutor & Timbre Nativo */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="voice-select" className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
+                <Volume2 className="h-4 w-4 text-primary" />
+                Voz do Tutor &amp; Timbre Nativo
+              </Label>
+              <span className="text-[11px] text-muted-foreground font-medium">
+                {availableVoices.length > 0 ? `${availableVoices.length} vozes disponíveis` : "Voz do sistema"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <select
+                id="voice-select"
+                value={selectedVoiceName}
+                onChange={(e) => setSelectedVoiceName(e.target.value)}
+                className="w-full bg-card text-foreground border border-border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-primary font-medium"
+              >
+                <option value="">
+                  Padrão do Tutor ({currentTutor.name} &bull; {currentTutor.gender === "female" ? "Feminina" : "Masculina"})
+                </option>
+                {availableVoices.map((v) => (
+                  <option key={v.name} value={v.name}>
+                    {v.name} {v.lang ? `(${v.lang})` : ""} {v.default ? "★" : ""}
+                  </option>
+                ))}
+              </select>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleTestAudio(selectedVoiceName)}
+                className="h-9 px-3 text-xs gap-1.5 shrink-0"
+                title="Ouvir demonstração com a voz selecionada"
+              >
+                <Volume2 className="h-3.5 w-3.5 text-primary" />
+                Ouvir
+              </Button>
+            </div>
+          </div>
+
+          {/* 5. Velocidade da Fala / Comunicação */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5">
@@ -445,11 +509,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleTestAudio}
+                onClick={() => handleTestAudio()}
                 className="h-7 text-xs gap-1"
                 title="Testar voz do tutor na velocidade selecionada"
               >
-                <Volume2 className="h-3 w-3" /> Testar Voz
+                <Volume2 className="h-3 w-3" /> Testar Velocidade
               </Button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -482,7 +546,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* 5. Tamanho da Fonte para Leitura Facilitada */}
+          {/* 6. Tamanho da Fonte para Leitura Facilitada */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5">
@@ -529,7 +593,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* 6. Modo de Inteligência Artificial */}
+          {/* 7. Modo de Inteligência Artificial */}
           <div className="space-y-3 rounded-xl border border-border bg-card/60 p-3.5">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-1.5">
@@ -545,55 +609,116 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             {/* Seletor de Modelo */}
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground font-medium">Modelo da Inteligência Artificial:</Label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* 1: Gemini 2.5 Pro */}
                 <button
                   type="button"
-                  onClick={() => setAiModelPreference("pro")}
+                  onClick={() => setAiModelPreference("gemini-2.5-pro")}
                   className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                    aiModelPreference === "pro"
+                    aiModelPreference === "gemini-2.5-pro" || aiModelPreference === "pro"
                       ? "border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/20 shadow-xs"
                       : "border-border bg-card/40 hover:bg-muted/40"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-foreground flex items-center gap-1">
-                      🎯 Gemini Pro
+                      👑 Gemini 2.5 Pro
                       <Badge variant="outline" className="text-[9px] px-1 py-0 border-emerald-500/40 text-emerald-500">
-                        Alta Precisão
+                        Recomendado
                       </Badge>
                     </span>
-                    {aiModelPreference === "pro" && (
+                    {(aiModelPreference === "gemini-2.5-pro" || aiModelPreference === "pro") && (
                       <span className="h-3.5 w-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px]">
                         <Check className="h-2 w-2" />
                       </span>
                     )}
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                    Raciocínio profundo, correções impecáveis e respostas com tom cultural autêntico.
+                    Raciocínio profundo, precisão gramatical cirúrgica e tom cultural nativo autêntico.
                   </p>
                 </button>
 
+                {/* 2: Gemini 2.5 Flash */}
                 <button
                   type="button"
-                  onClick={() => setAiModelPreference("flash")}
+                  onClick={() => setAiModelPreference("gemini-2.5-flash")}
                   className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                    aiModelPreference === "flash"
+                    aiModelPreference === "gemini-2.5-flash" || aiModelPreference === "flash"
                       ? "border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/20 shadow-xs"
                       : "border-border bg-card/40 hover:bg-muted/40"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-foreground flex items-center gap-1">
-                      ⚡ Gemini Flash
+                      ⚡ Gemini 2.5 Flash
+                      <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-500/40 text-amber-500">
+                        Ultra-rápido
+                      </Badge>
                     </span>
-                    {aiModelPreference === "flash" && (
+                    {(aiModelPreference === "gemini-2.5-flash" || aiModelPreference === "flash") && (
                       <span className="h-3.5 w-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px]">
                         <Check className="h-2 w-2" />
                       </span>
                     )}
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
-                    Respostas ultra-rápidas e economiza dados em conexões lentas.
+                    Velocidade máxima e baixa latência para conversação contínua e sem pausas.
+                  </p>
+                </button>
+
+                {/* 3: Gemini 1.5 Pro */}
+                <button
+                  type="button"
+                  onClick={() => setAiModelPreference("gemini-1.5-pro")}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    aiModelPreference === "gemini-1.5-pro"
+                      ? "border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/20 shadow-xs"
+                      : "border-border bg-card/40 hover:bg-muted/40"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1">
+                      🎯 Gemini 1.5 Pro
+                      <Badge variant="outline" className="text-[9px] px-1 py-0 border-blue-500/40 text-blue-500">
+                        Contexto Amplo
+                      </Badge>
+                    </span>
+                    {aiModelPreference === "gemini-1.5-pro" && (
+                      <span className="h-3.5 w-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px]">
+                        <Check className="h-2 w-2" />
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                    Memória contextual extensa para lições aprofundadas, debates e redações longas.
+                  </p>
+                </button>
+
+                {/* 4: Gemini 1.5 Flash */}
+                <button
+                  type="button"
+                  onClick={() => setAiModelPreference("gemini-1.5-flash")}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    aiModelPreference === "gemini-1.5-flash"
+                      ? "border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/20 shadow-xs"
+                      : "border-border bg-card/40 hover:bg-muted/40"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1">
+                      🚀 Gemini 1.5 Flash
+                      <Badge variant="outline" className="text-[9px] px-1 py-0 border-purple-500/40 text-purple-500">
+                        Super Leve
+                      </Badge>
+                    </span>
+                    {aiModelPreference === "gemini-1.5-flash" && (
+                      <span className="h-3.5 w-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px]">
+                        <Check className="h-2 w-2" />
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                    Processamento eficiente e econômico em conexões móveis lentas.
                   </p>
                 </button>
               </div>

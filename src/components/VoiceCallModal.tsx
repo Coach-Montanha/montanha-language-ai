@@ -99,6 +99,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         gender: activeTutor.gender,
         lang: activeTutor.speechLangCode || langDef.speechLangCode,
         preferredVoiceKeywords: activeTutor.preferredVoiceKeywords,
+        voiceName: progress.selectedVoiceName,
         onEnd: () => {
           if (activeCallRef.current && !isMuted) {
             startListeningSession(initialHistory);
@@ -175,7 +176,10 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             spokenText,
             updatedHistory,
             progress.geminiApiKey,
-            activeTutor
+            activeTutor,
+            undefined,
+            undefined,
+            progress.aiModelPreference
           );
           const responseText = tutorResult.replyText;
 
@@ -200,6 +204,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             gender: activeTutor.gender,
             lang: activeTutor.speechLangCode || langDef.speechLangCode,
             preferredVoiceKeywords: activeTutor.preferredVoiceKeywords,
+            voiceName: progress.selectedVoiceName,
             onEnd: () => {
               if (activeCallRef.current && !isMuted) {
                 startListeningSession(nextHistory);

@@ -1,5 +1,19 @@
 import React, { useEffect, useRef } from "react";
-import { MessageSquareText, Compass, SpellCheck, Layers, Split, Timer, CheckCircle2, Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import {
+  MessageSquareText,
+  Compass,
+  SpellCheck,
+  Layers,
+  Split,
+  Timer,
+  CheckCircle2,
+  Sparkles,
+  Zap,
+  Globe,
+  PlusCircle,
+  Shield,
+} from "lucide-react";
 import { TabType } from "@/types/language";
 
 interface LeftSidebarProps {
@@ -106,6 +120,51 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             </button>
           );
         })}
+      </div>
+
+      {/* Rodapé: Navegação no Ecossistema Montanha */}
+      <div className="mt-auto pt-4 border-t border-border/60 flex flex-col gap-1">
+        <div className="px-3 pb-1 flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+            <Globe className="h-3 w-3 text-primary" />
+            Ecossistema
+          </span>
+          <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+            @eco
+          </span>
+        </div>
+
+        <Link
+          to="/boost"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
+        >
+          <Zap className="h-3.5 w-3.5 text-amber-500" />
+          <span>Booster Fluência</span>
+        </Link>
+
+        <Link
+          to="/eco"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+        >
+          <Globe className="h-3.5 w-3.5 text-indigo-400" />
+          <span>Hub Ecossistema</span>
+        </Link>
+
+        <Link
+          to="/create"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+        >
+          <PlusCircle className="h-3.5 w-3.5 text-emerald-500" />
+          <span>Criador de Lições</span>
+        </Link>
+
+        <Link
+          to="/master-admin"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+        >
+          <Shield className="h-3.5 w-3.5 text-rose-400" />
+          <span>SuperAdmin</span>
+        </Link>
       </div>
     </aside>
   );

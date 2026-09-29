@@ -15,7 +15,7 @@ import {
   missionToScenario,
 } from "@/data/missions";
 import { getLanguageById } from "@/data/languages";
-import { getTutorsForLanguage } from "@/data/tutors";
+import { getTutorsForLanguage, getDefaultTutorForLanguage } from "@/data/tutors";
 import { generateProceduralWeek } from "@/services/procedural-missions";
 import { scenarioChat, generatePhoneticGuide } from "@/services/ai-engine";
 import {
@@ -96,7 +96,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
   const currentLanguage: SupportedLanguage = progress.selectedLanguage || "en";
   const langDef = getLanguageById(currentLanguage);
   const tutors = getTutorsForLanguage(currentLanguage);
-  const activeTutor = tutors[0] || { name: "Tutor", gender: "male" };
+  const activeTutor = tutors[0] || getDefaultTutorForLanguage(currentLanguage);
 
   const [activeSoundscape, setActiveSoundscape] = useState<SoundscapeType | null>(null);
 
@@ -246,6 +246,8 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
       rate: progress.audioSpeed,
       lang: langDef.speechLangCode,
       gender: activeTutor.gender,
+      preferredVoiceKeywords: activeTutor.preferredVoiceKeywords,
+      voiceName: progress.selectedVoiceName,
     });
   };
 
@@ -311,7 +313,8 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
         activeScenario,
         query,
         newHistory,
-        progress.geminiApiKey
+        progress.geminiApiKey,
+        progress.aiModelPreference
       );
 
       const aiMsg: ChatMessage = {
@@ -327,6 +330,8 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
         rate: progress.audioSpeed,
         lang: langDef.speechLangCode,
         gender: activeTutor.gender,
+        preferredVoiceKeywords: activeTutor.preferredVoiceKeywords,
+        voiceName: progress.selectedVoiceName,
       });
 
       if (res.structuredSuggestions && res.structuredSuggestions.length > 0) {
@@ -407,6 +412,8 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
       rate: speedOverride ?? progress.audioSpeed,
       lang: langDef.speechLangCode,
       gender: activeTutor.gender,
+      preferredVoiceKeywords: activeTutor.preferredVoiceKeywords,
+      voiceName: progress.selectedVoiceName,
     });
   };
 

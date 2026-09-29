@@ -240,6 +240,7 @@ function SmartLanguageApp() {
         audioSpeed={progress.audioSpeed}
         onSprintComplete={handleDailySprintComplete}
         language={progress.selectedLanguage || "en"}
+        selectedVoiceName={progress.selectedVoiceName}
       />
 
       {/* Modal: Configurações (Voz, Velocidade, IA e Chave API) */}

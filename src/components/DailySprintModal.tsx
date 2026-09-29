@@ -52,7 +52,8 @@ interface DailySprintModalProps {
   onOpenChange: (open: boolean) => void;
   audioSpeed: number;
   onSprintComplete: () => void;
-  language?: SupportedLanguage;
+  language?: SupportedLanguage | undefined;
+  selectedVoiceName?: string | undefined;
 }
 
 export const DailySprintModal: React.FC<DailySprintModalProps> = ({
@@ -61,6 +62,7 @@ export const DailySprintModal: React.FC<DailySprintModalProps> = ({
   audioSpeed,
   onSprintComplete,
   language = "en",
+  selectedVoiceName,
 }) => {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -128,6 +130,8 @@ export const DailySprintModal: React.FC<DailySprintModalProps> = ({
       rate: audioSpeed,
       lang: langDef.speechLangCode,
       gender: activeTutor.gender,
+      preferredVoiceKeywords: activeTutor.preferredVoiceKeywords,
+      voiceName: selectedVoiceName,
     });
   };
 

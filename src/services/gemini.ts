@@ -11,9 +11,22 @@ export async function callGeminiRaw(
   systemInstruction?: string,
   preferredModel?: string
 ): Promise<string> {
-  const models = preferredModel
-    ? [preferredModel, "gemini-2.5-pro", "gemini-1.5-pro", "gemini-2.5-flash", "gemini-1.5-flash"]
-    : ["gemini-2.5-pro", "gemini-1.5-pro", "gemini-2.5-flash", "gemini-1.5-flash"];
+  const normalizedPreferred =
+    preferredModel === "pro"
+      ? "gemini-2.5-pro"
+      : preferredModel === "flash"
+      ? "gemini-2.5-flash"
+      : preferredModel || "gemini-2.5-pro";
+
+  const allModels = [
+    normalizedPreferred,
+    "gemini-2.5-pro",
+    "gemini-2.5-flash",
+    "gemini-1.5-pro",
+    "gemini-1.5-flash",
+  ];
+  // Remove duplicates while keeping order
+  const models = allModels.filter((m, idx) => allModels.indexOf(m) === idx);
 
   const body: {
     contents: Array<{ role: string; parts: Array<{ text: string }> }>;
