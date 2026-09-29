@@ -136,6 +136,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
         <Link
           to="/boost"
+          activeProps={{ className: "bg-amber-500/15 text-amber-500 font-bold" }}
           className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
         >
           <Zap className="h-3.5 w-3.5 text-amber-500" />
@@ -144,6 +145,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
         <Link
           to="/eco"
+          activeProps={{ className: "bg-indigo-500/15 text-indigo-400 font-bold" }}
           className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
         >
           <Globe className="h-3.5 w-3.5 text-indigo-400" />
@@ -152,6 +154,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
         <Link
           to="/create"
+          activeProps={{ className: "bg-emerald-500/15 text-emerald-500 font-bold" }}
           className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
         >
           <PlusCircle className="h-3.5 w-3.5 text-emerald-500" />
@@ -160,6 +163,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
         <Link
           to="/master-admin"
+          activeProps={{ className: "bg-rose-500/15 text-rose-400 font-bold" }}
           className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
         >
           <Shield className="h-3.5 w-3.5 text-rose-400" />

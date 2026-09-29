@@ -16,11 +16,12 @@ import {
   isSpeechRecognitionSupported,
 } from "@/services/speech";
 import { tutorChat } from "@/services/ai-engine";
-import { addXP } from "@/services/storage";
+import { addXP, loadLearnerMemory, updateLearnerMemoryFromInteraction } from "@/services/storage";
 import {
   playMicStartSound,
   playMicStopSound,
   playSuccessSound,
+  playCorrectionChime,
 } from "@/services/audio-effects";
 import {
   PhoneOff,
@@ -171,17 +172,30 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         });
 
         try {
-          // IA responde diretamente ao contexto falado
+          const learnerMemory = loadLearnerMemory(activeTutor.language);
+          // IA responde diretamente ao contexto falado sem duplicar última mensagem
           const tutorResult = await tutorChat(
             spokenText,
-            updatedHistory,
+            conversationHistory,
             progress.geminiApiKey,
             activeTutor,
-            undefined,
+            learnerMemory,
             undefined,
             progress.aiModelPreference
           );
           const responseText = tutorResult.replyText;
+
+          // Atualiza a memória de aprendizado com a fala do aluno
+          updateLearnerMemoryFromInteraction(
+            activeTutor.language,
+            activeTutor.id,
+            spokenText,
+            tutorResult.correction
+          );
+
+          if (tutorResult.correction?.hasError) {
+            playCorrectionChime();
+          }
 
           if (!activeCallRef.current) return;
 

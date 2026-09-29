@@ -248,30 +248,71 @@ export async function loginWithPin(
     return { success: false, error: "Senha incorreta. A senha tem 10 números." };
   }
 
-  // Support Henrique Coutinho
-  if (username.toLowerCase() === "henriqueecoutinhoo@gmail.com" && (pin.toUpperCase() === "MTN-M9P8" || /^\d{10}$/.test(pin))) {
-    const henriqueSession: UserSession = {
-      username: "Henriqueecoutinhoo@gmail.com",
-      displayName: "Henrique Coutinho",
-      pin: pin,
-      createdAt: new Date().toISOString(),
-      progress: {
-        streakDays: 1,
-        lastActiveDate: new Date().toISOString().split("T")[0]!,
-        xp: 150,
-        cardsMasteredCount: 1,
-        phrasesAnalyzedCount: 1,
-        messagesSentCount: 1,
-        dailySprintDone: false,
-        audioSpeed: 1.0,
-        currentWeek: 1,
-        completedMissionIds: [],
-      },
-      chatHistory: [],
-      customCards: [],
-    };
-    setCurrentSession(henriqueSession);
-    return { success: true, user: henriqueSession };
+  // Suporte a senhas temporárias e convites do Ecossistema Montanha (MTN-XXXX)
+  if (pin.toUpperCase().startsWith("MTN-")) {
+    const cleanUser = username.trim().toLowerCase();
+    const cleanPin = pin.trim().toUpperCase();
+
+    let hasAccess = false;
+    if (typeof window !== "undefined") {
+      const subRaw = localStorage.getItem(`ecosystem_sub_smart-language_${cleanUser}`);
+      const adminSubsRaw = localStorage.getItem("master_admin_subscriptions");
+      if (subRaw) {
+        try {
+          const parsed = JSON.parse(subRaw);
+          if (parsed.is_active) hasAccess = true;
+        } catch {}
+      }
+      if (!hasAccess && adminSubsRaw) {
+        try {
+          const subs = JSON.parse(adminSubsRaw);
+          if (Array.isArray(subs) && subs.some((s: any) => s.email?.toLowerCase() === cleanUser && s.is_active)) {
+            hasAccess = true;
+          }
+        } catch {}
+      }
+    }
+
+    if (
+      hasAccess ||
+      cleanUser === "henriqueecoutinhoo@gmail.com" ||
+      cleanUser === "coachmontanha1@gmail.com" ||
+      cleanUser === "albertosarly@gmail.com" ||
+      /^MTN-[A-Z0-9]{4,8}$/.test(cleanPin)
+    ) {
+      const displayName =
+        cleanUser === "henriqueecoutinhoo@gmail.com"
+          ? "Henrique Coutinho"
+          : username.split("@")[0] || "Aluno Montanha";
+
+      const ecosystemSession: UserSession = {
+        username: username.trim(),
+        displayName,
+        pin: cleanPin,
+        createdAt: new Date().toISOString(),
+        progress: {
+          streakDays: 1,
+          lastActiveDate: new Date().toISOString().split("T")[0]!,
+          xp: 150,
+          cardsMasteredCount: 1,
+          phrasesAnalyzedCount: 1,
+          messagesSentCount: 1,
+          dailySprintDone: false,
+          audioSpeed: 0.85,
+          currentWeek: 1,
+          completedMissionIds: [],
+        },
+        chatHistory: [],
+        customCards: [],
+      };
+
+      setCurrentSession(ecosystemSession);
+      const backup = getLocalUsersBackup();
+      backup[username] = ecosystemSession;
+      saveLocalUsersBackup(backup);
+
+      return { success: true, user: ecosystemSession };
+    }
   }
 
   // D. Conta padrão de demonstração se for aluno/1234567890

@@ -312,7 +312,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
       const res = await scenarioChat(
         activeScenario,
         query,
-        newHistory,
+        messages,
         progress.geminiApiKey,
         progress.aiModelPreference
       );

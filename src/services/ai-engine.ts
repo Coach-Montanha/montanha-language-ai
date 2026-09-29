@@ -16,6 +16,29 @@ import { PRESET_THEMES, getPresetThemesForLanguage } from "@/data/vocabulary";
 import { callGeminiRaw } from "./gemini";
 import { compressContextForAgent, recordTokenSavings } from "./ruflo-eco-engine";
 
+/**
+ * Extrai e converte JSON com segurança da resposta de modelos LLM,
+ * suportando blocos ```json, texto introdutório, conclusivo e espaços.
+ */
+export function safeExtractJson<T = any>(raw: string): T {
+  const cleaned = raw.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch {
+    const firstBrace = raw.indexOf("{");
+    const lastBrace = raw.lastIndexOf("}");
+    const firstBracket = raw.indexOf("[");
+    const lastBracket = raw.lastIndexOf("]");
+
+    if (firstBrace !== -1 && lastBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+      return JSON.parse(raw.substring(firstBrace, lastBrace + 1)) as T;
+    } else if (firstBracket !== -1 && lastBracket !== -1) {
+      return JSON.parse(raw.substring(firstBracket, lastBracket + 1)) as T;
+    }
+    throw new Error("Não foi possível extrair JSON válido da resposta do modelo.");
+  }
+}
+
 // Base de regras de correção instantânea com explicação de 1 linha em português
 interface CorrectionRule {
   pattern: RegExp;
@@ -150,9 +173,76 @@ const GRAMMAR_RULES: CorrectionRule[] = [
   },
 ];
 
-// Analisa e detecta erros comuns
-export function checkGrammarLocal(input: string): GrammarCorrection {
-  for (const rule of GRAMMAR_RULES) {
+const MULTI_LANG_RULES: Partial<Record<SupportedLanguage, CorrectionRule[]>> = {
+  es: [
+    {
+      pattern: /\byo\s+tengo\s+(\d+)\s+anos\b/i,
+      fix: (m) => m.replace(/anos/i, "años"),
+      explanation: "Em espanhol, idade usa 'años' com 'ñ' ('yo tengo ... años').",
+    },
+    {
+      pattern: /\bmuy\s+(mucho|muchos|mucha|muchas)\b/i,
+      fix: () => "muchísimo",
+      explanation: "Em espanhol não se diz 'muy mucho'. Use 'muchísimo' ou simplesmente 'mucho'.",
+    },
+    {
+      pattern: /\byo\s+soy\s+(cansado|cansada|enfermo|enferma)\b/i,
+      fix: (m) => m.replace(/soy/i, "estoy"),
+      explanation: "Para estados temporários como cansaço ou doença, use o verbo 'estar' ('estoy cansado').",
+    },
+    {
+      pattern: /\bme\s+gusta\s+los\b/i,
+      fix: () => "me gustan los",
+      explanation: "Quando o objeto que agrada está no plural, use 'me gustan los...'.",
+    },
+  ],
+  fr: [
+    {
+      pattern: /\bje\s+suis\s+(\d+)\s+ans\b/i,
+      fix: (m) => m.replace(/je\s+suis/i, "j'ai"),
+      explanation: "Em francês, idade usa o verbo avoir ('j'ai ... ans'), e não o verbo être.",
+    },
+    {
+      pattern: /\bje\s+suis\s+fini\b/i,
+      fix: () => "j'ai fini",
+      explanation: "Diz-se 'j'ai fini' (terminei) com o auxiliar avoir.",
+    },
+    {
+      pattern: /\bje\s+suis\s+(faim|soif|peur|chaud|froid)\b/i,
+      fix: (m) => m.replace(/je\s+suis/i, "j'ai"),
+      explanation: "Sensações físicas e medos em francês usam 'j'ai' ('j'ai faim', 'j'ai soif').",
+    },
+  ],
+  de: [
+    {
+      pattern: /\bich\s+habe\s+(\d+)\s+jahre\b/i,
+      fix: (m) => m.replace(/habe/i, "bin") + " alt",
+      explanation: "Em alemão, idade usa o verbo sein ('ich bin ... Jahre alt'), e não haben.",
+    },
+    {
+      pattern: /\bich\s+bin\s+warm\b/i,
+      fix: () => "mir ist warm",
+      explanation: "Diga 'mir ist warm' para dizer que está com calor; 'ich bin warm' tem outro significado.",
+    },
+  ],
+  it: [
+    {
+      pattern: /\bio\s+sono\s+(\d+)\s+anni\b/i,
+      fix: (m) => m.replace(/sono/i, "ho"),
+      explanation: "Em italiano, para expressar idade usa-se o verbo avere ('ho ... anni').",
+    },
+    {
+      pattern: /\bmolto\s+tanto\b/i,
+      fix: () => "moltissimo",
+      explanation: "Não se combina 'molto' e 'tanto'. Use 'moltissimo' ou simplesmente 'molto'.",
+    },
+  ],
+};
+
+// Analisa e detecta erros comuns no idioma alvo
+export function checkGrammarLocal(input: string, lang: SupportedLanguage = "en"): GrammarCorrection {
+  const specificRules = MULTI_LANG_RULES[lang] || [];
+  for (const rule of specificRules) {
     if (rule.pattern.test(input)) {
       const match = input.match(rule.pattern)?.[0] || "";
       const corrected = input.replace(rule.pattern, rule.fix(match));
@@ -162,6 +252,21 @@ export function checkGrammarLocal(input: string): GrammarCorrection {
         corrected: corrected,
         explanationPt: rule.explanation,
       };
+    }
+  }
+
+  if (lang === "en" || !MULTI_LANG_RULES[lang]) {
+    for (const rule of GRAMMAR_RULES) {
+      if (rule.pattern.test(input)) {
+        const match = input.match(rule.pattern)?.[0] || "";
+        const corrected = input.replace(rule.pattern, rule.fix(match));
+        return {
+          hasError: true,
+          original: input,
+          corrected: corrected,
+          explanationPt: rule.explanation,
+        };
+      }
     }
   }
 
@@ -1124,8 +1229,7 @@ Return ONLY a valid JSON object with this exact structure:
   "translationPt": "expressão clara em português brasileiro"
 }`;
       const responseRaw = await callGeminiRaw(apiKey, prompt);
-      const cleaned = responseRaw.replace(/```json/g, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
+      const parsed = safeExtractJson<{ translated: string; phonetic?: string; translationPt?: string }>(responseRaw);
       if (parsed && parsed.translated) {
         return {
           translated: parsed.translated,
@@ -2704,6 +2808,24 @@ export function generateLocalTutorReply(
           translationPt: `Vamos então! O que desejas ler e aprender agora?`,
         };
       default: {
+        if (conversationMode === "challenge") {
+          return {
+            replyText: `Próklêsis! Pôs an eípois «${userInput.trim()}» en têi koinêi hellênikêi metà dýo lexeôn; Dokímazon!`,
+            translationPt: `Desafio rápido! Como dirias "${userInput.trim()}" em grego koiné com duas palavras? Experimenta!`,
+          };
+        }
+        if (conversationMode === "debate") {
+          return {
+            replyText: `Lógos axiólogos perì «${userInput.trim()}»! All' eí tis tò enantíon légoi, pôs apokríneis;`,
+            translationPt: `Ponto de reflexão notável sobre "${userInput.trim()}"! Mas se alguém dissesse o contrário, como responderias?`,
+          };
+        }
+        if (conversationMode === "grammar") {
+          return {
+            replyText: `Perì «${userInput.trim()}»: en têi graphêi légetai «metà zêlou» kaì «en agápêi». Pôs chrêi toútois;`,
+            translationPt: `Sobre "${userInput.trim()}": no texto original usam-se expressões como "metà zêlou" (com zelo) e "en agápêi" (em amor). Como usarias isso?`,
+          };
+        }
         const greekOptions = [
           {
             replyText: `Kálon kaì thaumastón estin perì toútou! Tí laleîs eti;`,
@@ -3045,7 +3167,7 @@ Interaction Guidelines & Fluency System (80/20 Applied Linguistics):
    - Never break the conversational flow with rigid lecturing.
    - If the student makes an error, keep the conversation going smoothly in your reply, and populate the separate JSON "hasError", "corrected", and "explanationPt" fields with a concise 1-line encouraging tip in Brazilian Portuguese.
 7. ZERO REPETITION & DIRECT RELEVANCE: ABSOLUTELY NEVER use canned filler openings (e.g., "That's awesome!", "Your phrasing is sounding noticeably more natural!", "Interesting!"). Address what the student JUST SAID immediately in sentence #1.
-6. USER TRANSLATION & PHONETICS:${userIsPortuguese ? `
+8. USER TRANSLATION & PHONETICS:${userIsPortuguese ? `
    - The student typed or spoke in Brazilian Portuguese: "${userInput}".
    - "userTranslatedText": YOU MUST translate "${userInput}" into natural, communicative, authentic ${targetLangName}. NEVER leave it in Portuguese under any circumstance!
    - "userPhonetic": friendly phonetic transcription of "userTranslatedText" using Brazilian Portuguese syllables with hyphens (e.g. "[ uót táim dâz dã miu-zí-âm óupên ]").
@@ -3056,7 +3178,7 @@ Interaction Guidelines & Fluency System (80/20 Applied Linguistics):
    - "userPhonetic": friendly phonetic transcription of what the student said using Brazilian Portuguese syllables with hyphens and stress accents.
    - "userTranslationPt": accurate Brazilian Portuguese translation of what the student said.
    - "wasTranslated": false.`}
-7. EXPANDED DYNAMIC SUGGESTIONS (PROVIDE 5 TO 6 VARIED OPTIONS):
+9. EXPANDED DYNAMIC SUGGESTIONS (PROVIDE 5 TO 6 VARIED OPTIONS):
    - Provide 5 to 6 varied, natural suggested replies in "suggestedReplies" in ${targetLangName} that directly relate to what was just discussed or what you just asked!
    - Include diverse angles:
      * "agree": enthusiastic agreement / affirmation
@@ -3090,19 +3212,27 @@ Response schema:
 
 Respond in strictly valid JSON format matching that exact structure.`;
 
+      // Evita duplicar a última mensagem do usuário caso ela já esteja no histórico
+      const priorHistory =
+        history.length > 0 &&
+        history[history.length - 1]?.sender === "user" &&
+        history[history.length - 1]?.text.trim() === userInput.trim()
+          ? history.slice(0, -1)
+          : history;
+
       // @eco: Compressão de contexto para economia inteligente de tokens e preservação de memória
-      const compressedHistory = compressContextForAgent(history, 8);
+      const compressedHistory = compressContextForAgent(priorHistory, 8);
       const compressionTokensSaved = Math.max(0, (history.length - compressedHistory.length) * 45);
 
       const historyFormatted = compressedHistory
         .map((m) => `${m.sender === "user" ? "User" : activeTutor.name}: ${m.text}`)
         .join("\n");
 
-      const prompt = `Recent Conversation:\n${historyFormatted}\n\nUser ${userIsPortuguese ? "said in Portuguese" : "said"}: "${userInput}"\n\nGenerate ${activeTutor.name}'s interactive response with 5-6 suggested replies:`;
+      const modeReminder = conversationMode ? `\nActive Pedagogical Mode: ${conversationMode.toUpperCase()}` : "";
+      const prompt = `Recent Conversation:\n${historyFormatted}\n\nUser ${userIsPortuguese ? "said in Portuguese" : "said"}: "${userInput}"${modeReminder}\n\nGenerate ${activeTutor.name}'s interactive response with 5-6 suggested replies:`;
       const responseRaw = await callGeminiRaw(apiKey, prompt, systemPrompt, preferredModel);
 
-      const cleaned = responseRaw.replace(/```json/g, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
+      const parsed = safeExtractJson<any>(responseRaw);
 
       const correction: GrammarCorrection | undefined = parsed.hasError
         ? {
@@ -3176,7 +3306,7 @@ Respond in strictly valid JSON format matching that exact structure.`;
   }
 
   // Motor Inteligente Local (Offline / Sem API Key) com detecção semântica contextual rica por idioma
-  const localCorrection = checkGrammarLocal(userInput);
+  const localCorrection = checkGrammarLocal(userInput, activeTutor.language);
   const historyLen = history.length;
 
   if (userIsPortuguese) {
@@ -3800,7 +3930,15 @@ Provide your response strictly in JSON:
   "suggestedReplies": ["Option 1 in English", "Option 2 in English", "Option 3 in English"]
 }`;
 
-      const compressedHistory = compressContextForAgent(history, 6);
+      // Evita duplicar a última mensagem do usuário no histórico enviado ao modelo
+      const priorHistory =
+        history.length > 0 &&
+        history[history.length - 1]?.sender === "user" &&
+        history[history.length - 1]?.text.trim() === userInput.trim()
+          ? history.slice(0, -1)
+          : history;
+
+      const compressedHistory = compressContextForAgent(priorHistory, 6);
       const historyFormatted = compressedHistory
         .map((m) => `${m.sender === "user" ? scenario.roleUser : scenario.roleAi}: ${m.text}`)
         .join("\n");
@@ -3808,8 +3946,7 @@ Provide your response strictly in JSON:
       const prompt = `Context: ${scenario.description}\n${historyFormatted}\n${scenario.roleUser}: "${userInput}"\n\nGenerate in-character response:`;
       const responseRaw = await callGeminiRaw(apiKey, prompt, systemPrompt, aiModelPreference);
 
-      const cleaned = responseRaw.replace(/```json/g, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
+      const parsed = safeExtractJson<any>(responseRaw);
 
       return {
         replyText: parsed.replyText || "Certainly! Let me help you with that.",
@@ -3909,8 +4046,7 @@ Return ONLY a valid JSON array of objects with this structure:
   }
 ]`;
       const responseRaw = await callGeminiRaw(apiKey, prompt);
-      const cleaned = responseRaw.replace(/```json/g, "").replace(/```/g, "").trim();
-      const items = JSON.parse(cleaned);
+      const items = safeExtractJson<any[]>(responseRaw);
 
       if (Array.isArray(items) && items.length > 0) {
         return items.map((item, idx) => ({
@@ -4274,8 +4410,7 @@ Return ONLY a valid JSON object with this exact structure:
   "explanation": "Explicação da estrutura da frase em português"
 }`;
       const responseRaw = await callGeminiRaw(apiKey, prompt);
-      const cleaned = responseRaw.replace(/```json/g, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
+      const parsed = safeExtractJson<any>(responseRaw);
 
       if (parsed && Array.isArray(parsed.tokens)) {
         const tokens: WordToken[] = parsed.tokens.map((t: { word: string; partOfSpeech?: string; posBadge?: string; literalTranslation?: string; note?: string }) => {

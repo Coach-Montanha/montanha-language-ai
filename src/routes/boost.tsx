@@ -19,6 +19,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { DailySprintModal } from '@/components/DailySprintModal';
+import { loadUserProgress, saveUserProgress, addXP } from '@/services/storage';
+import { UserProgress } from '@/types/language';
 
 export const Route = createFileRoute('/boost')({
   component: BoostPage,
@@ -50,13 +53,27 @@ const SPRINT_CHALLENGES = [
 
 function BoostPage() {
   const [activeSprint, setActiveSprint] = useState<number | null>(null);
+  const [isSprintModalOpen, setIsSprintModalOpen] = useState(false);
+  const [progress, setProgress] = useState<UserProgress>(() => loadUserProgress());
 
   const startSprint = (index: number) => {
     const item = SPRINT_CHALLENGES[index];
     if (item) {
       setActiveSprint(index);
+      setIsSprintModalOpen(true);
       toast.success(`Iniciando ${item.title}! Prepare o microfone e foco total.`);
     }
+  };
+
+  const handleSprintComplete = () => {
+    const updated = addXP(50);
+    const completedState: UserProgress = {
+      ...updated,
+      dailySprintDone: true,
+    };
+    saveUserProgress(completedState);
+    setProgress(completedState);
+    toast.success("Parabéns! Sprint Booster concluído com sucesso (+50 XP)!");
   };
 
   return (
@@ -206,6 +223,16 @@ function BoostPage() {
           </div>
         </Card>
       </div>
+
+      {/* Modal Interativo do Sprint Booster */}
+      <DailySprintModal
+        open={isSprintModalOpen}
+        onOpenChange={setIsSprintModalOpen}
+        audioSpeed={progress.audioSpeed}
+        onSprintComplete={handleSprintComplete}
+        language={progress.selectedLanguage || "en"}
+        selectedVoiceName={progress.selectedVoiceName}
+      />
     </div>
   );
 }

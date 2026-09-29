@@ -110,6 +110,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setSelectedLanguage(langId);
     const defTutor = getDefaultTutorForLanguage(langId);
     setSelectedTutorId(defTutor.id);
+    setSelectedVoiceName("");
+  };
+
+  const handleTutorChange = (tutorId: string) => {
+    setSelectedTutorId(tutorId);
+    setSelectedVoiceName("");
   };
 
   const handleDesignChange = (newDesign: "classic" | "midnight" | "focus") => {
@@ -279,7 +285,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <button
                     key={tutor.id}
                     type="button"
-                    onClick={() => setSelectedTutorId(tutor.id)}
+                    onClick={() => handleTutorChange(tutor.id)}
                     className={`rounded-xl border p-2.5 text-left transition-all cursor-pointer flex flex-col justify-between ${
                       isSelected
                         ? "border-primary bg-primary/10 shadow-xs ring-2 ring-primary/20"

@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "@tanstack/react-router";
 import {
   Flame,
   Zap,
@@ -6,6 +7,9 @@ import {
   Sparkles,
   LogOut,
   ChevronDown,
+  Globe,
+  ShieldCheck,
+  PlusCircle,
   PhoneCall,
   Luggage,
   GraduationCap,
@@ -13,6 +17,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { UserProgress } from "@/types/language";
 import { getLanguageById } from "@/data/languages";
 
@@ -99,6 +111,50 @@ export const Header: React.FC<HeaderProps> = ({
             <Zap className="h-3.5 w-3.5 fill-violet-500 text-violet-500" />
             <span>{progress.xp} XP</span>
           </Badge>
+
+          {/* Menu de Navegação no Ecossistema Montanha (@eco / Boost) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 px-2 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer"
+                title="Acessar Ecossistema Montanha (@eco / Booster)"
+              >
+                <Globe className="h-3 w-3" />
+                <span className="hidden xs:inline">@eco</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 p-1.5 z-50">
+              <DropdownMenuLabel className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground px-2 py-1">
+                Ecossistema Montanha
+              </DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link to="/boost" className="flex items-center gap-2.5 px-2 py-1.5 text-xs font-semibold cursor-pointer">
+                  <Zap className="h-3.5 w-3.5 text-amber-500" />
+                  <span>Booster de Fluência</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/eco" className="flex items-center gap-2.5 px-2 py-1.5 text-xs font-semibold cursor-pointer">
+                  <Globe className="h-3.5 w-3.5 text-indigo-400" />
+                  <span>Hub Ecossistema</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/create" className="flex items-center gap-2.5 px-2 py-1.5 text-xs font-semibold cursor-pointer">
+                  <PlusCircle className="h-3.5 w-3.5 text-emerald-500" />
+                  <span>Criador de Lições</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/master-admin" className="flex items-center gap-2.5 px-2 py-1.5 text-xs font-semibold cursor-pointer">
+                  <ShieldCheck className="h-3.5 w-3.5 text-rose-400" />
+                  <span>Painel SuperAdmin</span>
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Botão de Configurações */}
           <Button

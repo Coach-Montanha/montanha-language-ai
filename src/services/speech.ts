@@ -40,6 +40,18 @@ export function initVoices(): void {
   }
 }
 
+export function getStoredVoiceName(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = localStorage.getItem("smart_language_progress");
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw);
+    return parsed?.selectedVoiceName || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function getAvailableVoices(targetLang?: string): SpeechSynthesisVoice[] {
   if (!isSpeechSynthesisSupported()) return [];
   if (cachedVoices.length === 0) {
@@ -76,9 +88,13 @@ export function speakText(text: string, options: SpeakOptions = {}): void {
       let matchedVoice: SpeechSynthesisVoice | undefined;
       let isConfirmedMaleVoice = false;
 
-      // 0. Tentar voz específica selecionada pelo usuário pelo nome exato (ex: no SettingsModal)
-      if (options.voiceName) {
-        matchedVoice = voices.find((v) => v.name.toLowerCase() === options.voiceName!.toLowerCase());
+      // 0. Tentar voz específica selecionada pelo usuário pelo nome exato (ou do progresso salvo)
+      const requestedVoiceName = options.voiceName || getStoredVoiceName();
+      if (requestedVoiceName) {
+        const found = voices.find((v) => v.name.toLowerCase() === requestedVoiceName.toLowerCase());
+        if (found && (found.lang.toLowerCase().startsWith(langPrefix) || langVoices.length === 0)) {
+          matchedVoice = found;
+        }
       }
 
       // 0b. Tentar encontrar voz combinando o idioma/sotaque + palavras-chave da voz do tutor

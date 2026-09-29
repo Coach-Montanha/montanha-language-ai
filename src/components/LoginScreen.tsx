@@ -92,12 +92,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [showEcosystem, setShowEcosystem] = useState(false);
 
   const handlePinChange = (val: string) => {
-    setPin(val.replace(/\D/g, "").slice(0, 10));
+    setPin(val.toUpperCase().slice(0, 12));
     setErrorMsg("");
   };
 
   const handleConfirmPinChange = (val: string) => {
-    setConfirmPin(val.replace(/\D/g, "").slice(0, 10));
+    setConfirmPin(val.toUpperCase().slice(0, 12));
     setErrorMsg("");
   };
 
@@ -106,12 +106,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setErrorMsg("");
 
     if (!username.trim()) {
-      setErrorMsg("Por favor, digite seu nome de usuário.");
+      setErrorMsg("Por favor, digite seu nome de usuário ou e-mail.");
       return;
     }
 
-    if (!/^\d{10}$/.test(pin)) {
-      setErrorMsg("A senha deve conter exatamente 10 dígitos numéricos.");
+    const isTenDigitPin = /^\d{10}$/.test(pin);
+    const isMtnCode = /^MTN-[A-Z0-9]{4,8}$/i.test(pin);
+    if (!isTenDigitPin && !isMtnCode && pin.length < 4) {
+      setErrorMsg("A senha deve conter 10 dígitos numéricos ou código de acesso MTN-XXXX.");
       return;
     }
 
@@ -283,14 +285,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
                   <KeyRound className="h-3.5 w-3.5 text-indigo-400" />
-                  <span>{mode === "reset" ? "Novo PIN (10 números)" : "Senha PIN (10 dígitos)"}</span>
+                  <span>{mode === "reset" ? "Novo PIN (10 números)" : "Senha ou Código"}</span>
                 </label>
                 <div className="flex items-center gap-2">
                   <Badge
                     variant="outline"
                     className="text-[9px] bg-indigo-500/20 text-indigo-300 border-indigo-500/40 font-bold"
                   >
-                    10 números
+                    {pin.startsWith("MTN-") ? "Acesso MTN" : "10 dígitos ou MTN-XXXX"}
                   </Badge>
                   {mode === "login" && (
                     <button
@@ -307,31 +309,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 </div>
               </div>
 
-              {/* Campo numérico com indicador visual de 10 dígitos */}
+              {/* Campo de senha ou código de acesso do ecossistema */}
               <div className="relative">
                 <Input
-                  type="password"
+                  type={pin.startsWith("MTN-") ? "text" : "password"}
                   data-testid="input-pin"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={10}
-                  placeholder="••••••••••"
+                  maxLength={12}
+                  placeholder={mode === "reset" ? "••••••••••" : "10 dígitos ou MTN-XXXX"}
                   value={pin}
                   onChange={(e) => handlePinChange(e.target.value)}
-                  className="h-11 text-center font-mono text-sm tracking-[0.3em] bg-slate-900/90 border-indigo-500/40 text-white rounded-xl focus-visible:ring-indigo-500"
+                  className="h-11 text-center font-mono text-sm tracking-[0.2em] bg-slate-900/90 border-indigo-500/40 text-white rounded-xl focus-visible:ring-indigo-500 uppercase"
                   required
                 />
-              </div>
-
-              <div className="flex justify-center gap-1.5 pt-1">
-                {[...Array(10).keys()].map((idx) => (
-                  <span
-                    key={idx}
-                    className={`h-2 w-2 rounded-full transition-all ${
-                      pin.length > idx ? "bg-indigo-500 scale-110 shadow-[0_0_8px_rgba(99,102,241,0.8)]" : "bg-slate-800"
-                    }`}
-                  />
-                ))}
               </div>
             </div>
 
