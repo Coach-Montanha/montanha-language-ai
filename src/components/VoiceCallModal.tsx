@@ -17,6 +17,9 @@ import {
 } from "@/services/speech";
 import { tutorChat } from "@/services/ai-engine";
 import { addXP, loadLearnerMemory, updateLearnerMemoryFromInteraction } from "@/services/storage";
+import { ensureGamificationProgress } from "@/services/gamification";
+import { ModularAvatar } from "@/components/avatar/ModularAvatar";
+import { AvatarAnimationState } from "@/types/avatar";
 import {
   playMicStartSound,
   playMicStopSound,
@@ -61,6 +64,16 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
   const [showSubtitles, setShowSubtitles] = useState(true);
   const [audioSpeed, setAudioSpeed] = useState<number>(progress.audioSpeed || 1.0);
   const [callDuration, setCallDuration] = useState(0);
+
+  const preparedProgress = ensureGamificationProgress(progress);
+  const avatarAnimState: AvatarAnimationState =
+    callState === "speaking"
+      ? "speaking"
+      : callState === "listening"
+      ? "listening"
+      : callState === "processing"
+      ? "thinking"
+      : "idle";
 
   const [lastTutorText, setLastTutorText] = useState("");
   const [lastUserText, setLastUserText] = useState("");
@@ -338,9 +351,13 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
               </>
             )}
 
-            {/* Avatar do Tutor */}
-            <div className="relative h-28 w-28 rounded-full bg-zinc-900 border-2 border-zinc-700 flex items-center justify-center text-6xl shadow-2xl z-10">
-              {activeTutor.avatar}
+            {/* Avatar do Tutor Modular RPG */}
+            <div className="relative h-28 w-28 rounded-3xl bg-zinc-900 border-2 border-zinc-700 flex items-center justify-center p-1.5 shadow-2xl z-10 overflow-hidden">
+              <ModularAvatar
+                config={preparedProgress.equippedAvatar}
+                state={avatarAnimState}
+                size="md"
+              />
             </div>
           </div>
 

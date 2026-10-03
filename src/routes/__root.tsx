@@ -167,7 +167,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           },
           author: {
             "@type": "Organization",
-            name: "Ecossistema Montanha",
+            name: "Montanha Language AI",
             url: "https://montanha-language-ai.vercel.app/",
           },
         }),

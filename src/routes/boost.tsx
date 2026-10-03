@@ -105,9 +105,9 @@ function BoostPage() {
 
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline" className="border-slate-700 hover:border-indigo-500/50 hover:bg-indigo-500/10 text-xs font-bold">
-                <Link to="/eco">
+                <Link to="/">
                   <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
-                  Hub Ecossistema
+                  Voltar ao App
                 </Link>
               </Button>
               <Button asChild className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold">

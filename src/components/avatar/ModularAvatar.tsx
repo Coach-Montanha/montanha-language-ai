@@ -20,6 +20,15 @@ const SIZE_MAP = {
   xl: 260,
 };
 
+interface SvgContext {
+  goldGrad: string;
+  cyberGrad: string;
+  purpleGrad: string;
+  fireGrad: string;
+  auraGlow: string;
+  glowEffect: string;
+}
+
 export const ModularAvatar: React.FC<ModularAvatarProps> = ({
   config = DEFAULT_AVATAR_CONFIG,
   state = "idle",
@@ -35,6 +44,23 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
   const primaryColor = config?.primaryColor || "#3b82f6";
   const secondaryColor = config?.secondaryColor || "#f59e0b";
   const equipped = config?.equipped || {};
+
+  const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
+  const goldGradId = `goldGrad_${uid}`;
+  const cyberGradId = `cyberGrad_${uid}`;
+  const purpleGradId = `purpleGrad_${uid}`;
+  const fireGradId = `fireGrad_${uid}`;
+  const auraGlowId = `auraGlow_${uid}`;
+  const glowEffectId = `glowEffect_${uid}`;
+
+  const ctx: SvgContext = {
+    goldGrad: `url(#${goldGradId})`,
+    cyberGrad: `url(#${cyberGradId})`,
+    purpleGrad: `url(#${purpleGradId})`,
+    fireGrad: `url(#${fireGradId})`,
+    auraGlow: `url(#${auraGlowId})`,
+    glowEffect: `url(#${glowEffectId})`,
+  };
 
   // Classes de animação baseadas no estado
   const getStateAnimationClass = () => {
@@ -70,28 +96,28 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* Gradientes e Filtros */}
-          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          {/* Gradientes e Filtros Dinamicamente Isolados */}
+          <linearGradient id={goldGradId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#fbbf24" />
             <stop offset="100%" stopColor="#d97706" />
           </linearGradient>
-          <linearGradient id="cyberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={cyberGradId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#06b6d4" />
             <stop offset="100%" stopColor="#3b82f6" />
           </linearGradient>
-          <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={purpleGradId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#a855f7" />
             <stop offset="100%" stopColor="#6366f1" />
           </linearGradient>
-          <linearGradient id="fireGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={fireGradId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#ef4444" />
             <stop offset="100%" stopColor="#f97316" />
           </linearGradient>
-          <radialGradient id="auraGlow" cx="50%" cy="50%" r="50%">
+          <radialGradient id={auraGlowId} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor={primaryColor} stopOpacity="0.45" />
             <stop offset="100%" stopColor={primaryColor} stopOpacity="0" />
           </radialGradient>
-          <filter id="glowEffect" x="-20%" y="-20%" width="140%" height="140%">
+          <filter id={glowEffectId} x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="4" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
@@ -100,37 +126,37 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
         {/* ============================================================ */}
         {/* 1. CAMADA DE AURA / BACKGROUND */}
         {/* ============================================================ */}
-        {renderAuraLayer(equipped.aura, primaryColor, state)}
+        {renderAuraLayer(equipped.aura, primaryColor, state, ctx)}
 
         {/* ============================================================ */}
         {/* 2. CAMADA DE CORPO BASE / ARQUÉTIPO (Humano, Animal, Monstro) */}
         {/* ============================================================ */}
-        {renderBaseArchetype(archetype, subType, primaryColor, secondaryColor, state)}
+        {renderBaseArchetype(archetype, subType, primaryColor, secondaryColor, state, ctx)}
 
         {/* ============================================================ */}
         {/* 3. CAMADA DE ROUPA / ARMADURA (BODY) */}
         {/* ============================================================ */}
-        {renderBodyApparel(equipped.body, primaryColor, secondaryColor)}
+        {renderBodyApparel(equipped.body, primaryColor, secondaryColor, ctx)}
 
         {/* ============================================================ */}
         {/* 4. CAMADA DE ROSTO / OLHOS / MÁSCARA (EYES) */}
         {/* ============================================================ */}
-        {renderEyewear(equipped.eyes, state)}
+        {renderEyewear(equipped.eyes, state, ctx)}
 
         {/* ============================================================ */}
         {/* 5. CAMADA DE CABEÇA / CHAPÉU / ELMO (HEAD) */}
         {/* ============================================================ */}
-        {renderHeadwear(equipped.head, primaryColor, secondaryColor)}
+        {renderHeadwear(equipped.head, primaryColor, secondaryColor, ctx)}
 
         {/* ============================================================ */}
         {/* 6. CAMADA DE ITEM DE MÃO (HAND) */}
         {/* ============================================================ */}
-        {renderHandItem(equipped.hand, state)}
+        {renderHandItem(equipped.hand, state, ctx)}
 
         {/* ============================================================ */}
         {/* 7. EFEITOS DE ESTADO (Fala, Escuta, Celebração, Pensamento) */}
         {/* ============================================================ */}
-        {renderStateOverlays(state)}
+        {renderStateOverlays(state, ctx)}
       </svg>
 
       {/* Mini badge de nível no canto */}
@@ -146,9 +172,19 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
 // =========================================================================
 // 1. AURA LAYER
 // =========================================================================
-function renderAuraLayer(auraId?: string, primaryColor: string = "#3b82f6", state: string = "idle") {
+function renderAuraLayer(
+  auraId?: string,
+  primaryColor: string = "#3b82f6",
+  state: string = "idle",
+  ctx?: SvgContext
+) {
+  const glow = ctx?.glowEffect || "url(#glowEffect)";
+  const aura = ctx?.auraGlow || "url(#auraGlow)";
+  const purple = ctx?.purpleGrad || "url(#purpleGrad)";
+  const cyber = ctx?.cyberGrad || "url(#cyberGrad)";
+
   if (!auraId) {
-    return <circle cx="100" cy="100" r="85" fill="url(#auraGlow)" />;
+    return <circle cx="100" cy="100" r="85" fill={aura} />;
   }
 
   switch (auraId) {
@@ -164,7 +200,7 @@ function renderAuraLayer(auraId?: string, primaryColor: string = "#3b82f6", stat
       );
     case "aura_thunder_storm":
       return (
-        <g filter="url(#glowEffect)">
+        <g filter={glow}>
           <circle cx="100" cy="100" r="90" fill="#38bdf8" fillOpacity="0.15" />
           <path d="M 35 70 L 48 95 L 40 100 L 52 130" stroke="#38bdf8" strokeWidth="3" fill="none" strokeLinecap="round" />
           <path d="M 165 65 L 152 90 L 160 95 L 148 125" stroke="#0ea5e9" strokeWidth="3" fill="none" strokeLinecap="round" />
@@ -182,7 +218,7 @@ function renderAuraLayer(auraId?: string, primaryColor: string = "#3b82f6", stat
       );
     case "aura_mystic_flame":
       return (
-        <g filter="url(#glowEffect)">
+        <g filter={glow}>
           <circle cx="100" cy="100" r="88" fill="#3b82f6" fillOpacity="0.2" />
           <path d="M 30 110 Q 25 80 45 65 Q 40 85 55 95 Z" fill="#60a5fa" />
           <path d="M 170 110 Q 175 80 155 65 Q 160 85 145 95 Z" fill="#60a5fa" />
@@ -201,13 +237,13 @@ function renderAuraLayer(auraId?: string, primaryColor: string = "#3b82f6", stat
       );
     case "aura_cosmic_portal":
       return (
-        <g filter="url(#glowEffect)">
-          <circle cx="100" cy="100" r="95" stroke="url(#purpleGrad)" strokeWidth="4" strokeDasharray="14 10" fill="url(#purpleGrad)" fillOpacity="0.15" />
-          <circle cx="100" cy="100" r="85" stroke="url(#cyberGrad)" strokeWidth="2" strokeDasharray="8 6" fill="none" />
+        <g filter={glow}>
+          <circle cx="100" cy="100" r="95" stroke={purple} strokeWidth="4" strokeDasharray="14 10" fill={purple} fillOpacity="0.15" />
+          <circle cx="100" cy="100" r="85" stroke={cyber} strokeWidth="2" strokeDasharray="8 6" fill="none" />
         </g>
       );
     default:
-      return <circle cx="100" cy="100" r="85" fill="url(#auraGlow)" />;
+      return <circle cx="100" cy="100" r="85" fill={aura} />;
   }
 }
 
@@ -219,9 +255,12 @@ function renderBaseArchetype(
   subType: string,
   primaryColor: string,
   secondaryColor: string,
-  state: string
+  state: string,
+  ctx?: SvgContext
 ) {
   const isSpeaking = state === "speaking";
+  const glow = ctx?.glowEffect || "url(#glowEffect)";
+  const fire = ctx?.fireGrad || "url(#fireGrad)";
 
   if (archetype === "animal") {
     if (subType === "owl" || subType.includes("owl")) {
@@ -351,10 +390,10 @@ function renderBaseArchetype(
           {/* Cabeça de Golem */}
           <rect x="62" y="55" width="76" height="65" rx="14" fill="#475569" stroke="#64748b" strokeWidth="2" />
           {/* Cristal na Testa */}
-          <polygon points="100,50 108,62 100,74 92,62" fill="#38bdf8" filter="url(#glowEffect)" />
+          <polygon points="100,50 108,62 100,74 92,62" fill="#38bdf8" filter={glow} />
           {/* Olhos de Cristal Luminosos */}
-          <rect x="76" y="80" width="14" height="8" rx="2" fill="#00f2fe" filter="url(#glowEffect)" />
-          <rect x="110" y="80" width="14" height="8" rx="2" fill="#00f2fe" filter="url(#glowEffect)" />
+          <rect x="76" y="80" width="14" height="8" rx="2" fill="#00f2fe" filter={glow} />
+          <rect x="110" y="80" width="14" height="8" rx="2" fill="#00f2fe" filter={glow} />
           {/* Runa na boca */}
           <line x1="88" y1="104" x2="112" y2="104" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
         </g>
@@ -366,13 +405,13 @@ function renderBaseArchetype(
       return (
         <g id="archetype-elemental">
           {/* Corpo Fluido de Energia */}
-          <circle cx="100" cy="120" r="55" fill="url(#fireGrad)" filter="url(#glowEffect)" opacity="0.9" />
-          <circle cx="100" cy="85" r="44" fill="#fb923c" filter="url(#glowEffect)" />
+          <circle cx="100" cy="120" r="55" fill={fire} filter={glow} opacity="0.9" />
+          <circle cx="100" cy="85" r="44" fill="#fb923c" filter={glow} />
           {/* Halo ao redor da cabeça */}
           <circle cx="100" cy="85" r="52" stroke="#fed7aa" strokeWidth="3" strokeDasharray="10 8" fill="none" className="animate-spin origin-[100px_85px]" />
           {/* Olhos Radiantes Brancos */}
-          <ellipse cx="82" cy="82" rx="7" ry="10" fill="#fff" filter="url(#glowEffect)" />
-          <ellipse cx="118" cy="82" rx="7" ry="10" fill="#fff" filter="url(#glowEffect)" />
+          <ellipse cx="82" cy="82" rx="7" ry="10" fill="#fff" filter={glow} />
+          <ellipse cx="118" cy="82" rx="7" ry="10" fill="#fff" filter={glow} />
           {/* Sorriso radiante */}
           <path d={isSpeaking ? "M 88 98 Q 100 114 112 98 Z" : "M 90 98 Q 100 105 110 98"} stroke="#fff" strokeWidth="3" fill={isSpeaking ? "#fff" : "none"} strokeLinecap="round" />
         </g>
@@ -442,11 +481,15 @@ function renderBaseArchetype(
   );
 }
 
-// =========================================================================
-// 3. BODY APPAREL LAYER (ROUPAS & ARMADURAS)
-// =========================================================================
-function renderBodyApparel(bodyId?: string, primaryColor: string = "#3b82f6", secondaryColor: string = "#f59e0b") {
+function renderBodyApparel(
+  bodyId?: string,
+  primaryColor: string = "#3b82f6",
+  secondaryColor: string = "#f59e0b",
+  ctx?: SvgContext
+) {
   if (!bodyId) return null;
+  const glow = ctx?.glowEffect || "url(#glowEffect)";
+  const gold = ctx?.goldGrad || "url(#goldGrad)";
 
   switch (bodyId) {
     case "starter_adventurer_robe":
@@ -473,7 +516,7 @@ function renderBodyApparel(bodyId?: string, primaryColor: string = "#3b82f6", se
         <g id="apparel-mage">
           <path d="M 46 135 Q 100 120 154 135 L 160 185 L 40 185 Z" fill="#6b21a8" />
           <path d="M 90 135 L 100 175 L 110 135 Z" fill="#a855f7" />
-          <circle cx="100" cy="142" r="5" fill="#fbbf24" filter="url(#glowEffect)" />
+          <circle cx="100" cy="142" r="5" fill="#fbbf24" filter={glow} />
           {/* Borda dourada bordada */}
           <path d="M 46 182 L 160 182" stroke="#fbbf24" strokeWidth="3" strokeDasharray="4 2" />
         </g>
@@ -483,8 +526,8 @@ function renderBodyApparel(bodyId?: string, primaryColor: string = "#3b82f6", se
         <g id="apparel-cyber">
           <path d="M 48 135 Q 100 122 152 135 L 158 185 L 42 185 Z" fill="#0f172a" />
           {/* Linhas neon ciano */}
-          <path d="M 60 140 L 70 185" stroke="#00f2fe" strokeWidth="3" filter="url(#glowEffect)" />
-          <path d="M 140 140 L 130 185" stroke="#00f2fe" strokeWidth="3" filter="url(#glowEffect)" />
+          <path d="M 60 140 L 70 185" stroke="#00f2fe" strokeWidth="3" filter={glow} />
+          <path d="M 140 140 L 130 185" stroke="#00f2fe" strokeWidth="3" filter={glow} />
           <rect x="92" y="145" width="16" height="40" rx="3" fill="#1e293b" stroke="#38bdf8" strokeWidth="2" />
         </g>
       );
@@ -511,8 +554,8 @@ function renderBodyApparel(bodyId?: string, primaryColor: string = "#3b82f6", se
       );
     case "body_golden_armor":
       return (
-        <g id="apparel-golden-armor" filter="url(#glowEffect)">
-          <path d="M 48 132 Q 100 118 152 132 L 160 185 L 40 185 Z" fill="url(#goldGrad)" stroke="#78350f" strokeWidth="1.5" />
+        <g id="apparel-golden-armor" filter={glow}>
+          <path d="M 48 132 Q 100 118 152 132 L 160 185 L 40 185 Z" fill={gold} stroke="#78350f" strokeWidth="1.5" />
           <circle cx="100" cy="155" r="12" fill="#e11d48" stroke="#fbbf24" strokeWidth="2" />
           {/* Ombreiras */}
           <ellipse cx="45" cy="142" rx="14" ry="10" fill="#f59e0b" />
@@ -527,8 +570,9 @@ function renderBodyApparel(bodyId?: string, primaryColor: string = "#3b82f6", se
 // =========================================================================
 // 4. EYEWEAR LAYER (ÓCULOS, MÁSCARAS, VISEIRAS)
 // =========================================================================
-function renderEyewear(eyesId?: string, state: string = "idle") {
+function renderEyewear(eyesId?: string, state: string = "idle", ctx?: SvgContext) {
   if (!eyesId) return null;
+  const glow = ctx?.glowEffect || "url(#glowEffect)";
 
   switch (eyesId) {
     case "starter_glasses":
@@ -549,7 +593,7 @@ function renderEyewear(eyesId?: string, state: string = "idle") {
       );
     case "eyes_cyber_visor":
       return (
-        <g id="eyewear-cyber-visor" filter="url(#glowEffect)">
+        <g id="eyewear-cyber-visor" filter={glow}>
           <path d="M 64 80 L 136 80 L 130 96 L 70 96 Z" fill="#00f2fe" opacity="0.85" stroke="#38bdf8" strokeWidth="1.5" />
           <line x1="72" y1="88" x2="128" y2="88" stroke="#fff" strokeWidth="1.5" strokeDasharray="4 2" />
         </g>
@@ -586,7 +630,7 @@ function renderEyewear(eyesId?: string, state: string = "idle") {
       return (
         <g id="eyewear-blindfold">
           <rect x="60" y="80" width="80" height="18" rx="4" fill="#475569" stroke="#94a3b8" strokeWidth="1.5" />
-          <circle cx="100" cy="89" r="4" fill="#38bdf8" filter="url(#glowEffect)" />
+          <circle cx="100" cy="89" r="4" fill="#38bdf8" filter={glow} />
         </g>
       );
     default:
@@ -597,8 +641,15 @@ function renderEyewear(eyesId?: string, state: string = "idle") {
 // =========================================================================
 // 5. HEADWEAR LAYER (CHAPÉUS, COROAS, FONES)
 // =========================================================================
-function renderHeadwear(headId?: string, primaryColor: string = "#3b82f6", secondaryColor: string = "#f59e0b") {
+function renderHeadwear(
+  headId?: string,
+  primaryColor: string = "#3b82f6",
+  secondaryColor: string = "#f59e0b",
+  ctx?: SvgContext
+) {
   if (!headId) return null;
+  const glow = ctx?.glowEffect || "url(#glowEffect)";
+  const gold = ctx?.goldGrad || "url(#goldGrad)";
 
   switch (headId) {
     case "starter_cap":
@@ -616,12 +667,12 @@ function renderHeadwear(headId?: string, primaryColor: string = "#3b82f6", secon
           <ellipse cx="100" cy="65" rx="55" ry="12" fill="#4c1d95" />
           <path d="M 65 64 Q 100 10 135 15 Q 120 40 135 64 Z" fill="#6d28d9" />
           <rect x="75" y="58" width="50" height="7" fill="#fbbf24" />
-          <circle cx="135" cy="15" r="4" fill="#fef08a" filter="url(#glowEffect)" />
+          <circle cx="135" cy="15" r="4" fill="#fef08a" filter={glow} />
         </g>
       );
     case "head_gamer_headset":
       return (
-        <g id="headwear-headset" filter="url(#glowEffect)">
+        <g id="headwear-headset" filter={glow}>
           {/* Arco dos fones */}
           <path d="M 52 90 Q 50 35 100 35 Q 150 35 148 90" stroke="#0f172a" strokeWidth="6" fill="none" strokeLinecap="round" />
           <path d="M 52 90 Q 50 35 100 35 Q 150 35 148 90" stroke="#00f2fe" strokeWidth="2" fill="none" strokeLinecap="round" />
@@ -670,15 +721,15 @@ function renderHeadwear(headId?: string, primaryColor: string = "#3b82f6", secon
       );
     case "head_dragon_horns":
       return (
-        <g id="headwear-dragon-horns" filter="url(#glowEffect)">
+        <g id="headwear-dragon-horns" filter={glow}>
           <path d="M 72 58 Q 50 15 30 25 Q 55 42 78 65" fill="#f97316" stroke="#c2410c" strokeWidth="1.5" />
           <path d="M 128 58 Q 150 15 170 25 Q 145 42 122 65" fill="#f97316" stroke="#c2410c" strokeWidth="1.5" />
         </g>
       );
     case "head_golden_crown":
       return (
-        <g id="headwear-crown" filter="url(#glowEffect)">
-          <polygon points="62,65 60,35 78,50 100,25 122,50 140,35 138,65" fill="url(#goldGrad)" stroke="#b45309" strokeWidth="1.5" />
+        <g id="headwear-crown" filter={glow}>
+          <polygon points="62,65 60,35 78,50 100,25 122,50 140,35 138,65" fill={gold} stroke="#b45309" strokeWidth="1.5" />
           <circle cx="60" cy="35" r="3" fill="#ef4444" />
           <circle cx="100" cy="25" r="4" fill="#3b82f6" />
           <circle cx="140" cy="35" r="3" fill="#10b981" />
@@ -692,8 +743,10 @@ function renderHeadwear(headId?: string, primaryColor: string = "#3b82f6", secon
 // =========================================================================
 // 6. HAND ITEM LAYER (ITENS DE MÃO)
 // =========================================================================
-function renderHandItem(handId?: string, state: string = "idle") {
+function renderHandItem(handId?: string, state: string = "idle", ctx?: SvgContext) {
   if (!handId) return null;
+  const glow = ctx?.glowEffect || "url(#glowEffect)";
+  const gold = ctx?.goldGrad || "url(#goldGrad)";
 
   switch (handId) {
     case "starter_quill":
@@ -705,7 +758,7 @@ function renderHandItem(handId?: string, state: string = "idle") {
       );
     case "hand_magic_wand":
       return (
-        <g id="hand-wand" filter="url(#glowEffect)">
+        <g id="hand-wand" filter={glow}>
           <line x1="145" y1="155" x2="175" y2="115" stroke="#78350f" strokeWidth="3" strokeLinecap="round" />
           <polygon points="175,115 177,108 184,115 177,117" fill="#fbbf24" />
           <circle cx="176" cy="113" r="4" fill="#38bdf8" />
@@ -721,8 +774,8 @@ function renderHandItem(handId?: string, state: string = "idle") {
       );
     case "hand_golden_mic":
       return (
-        <g id="hand-golden-mic" filter="url(#glowEffect)">
-          <rect x="155" y="125" width="10" height="18" rx="5" fill="url(#goldGrad)" stroke="#78350f" strokeWidth="1" />
+        <g id="hand-golden-mic" filter={glow}>
+          <rect x="155" y="125" width="10" height="18" rx="5" fill={gold} stroke="#78350f" strokeWidth="1" />
           <line x1="160" y1="143" x2="160" y2="160" stroke="#475569" strokeWidth="3" strokeLinecap="round" />
           {/* Ondas sonoras emitidas */}
           <path d="M 170 128 Q 175 134 170 140" stroke="#f59e0b" strokeWidth="2" fill="none" />
@@ -731,7 +784,7 @@ function renderHandItem(handId?: string, state: string = "idle") {
       );
     case "hand_crystal_staff":
       return (
-        <g id="hand-staff" filter="url(#glowEffect)">
+        <g id="hand-staff" filter={glow}>
           <line x1="152" y1="180" x2="168" y2="85" stroke="#78350f" strokeWidth="4" strokeLinecap="round" />
           <circle cx="168" cy="80" r="10" fill="#38bdf8" stroke="#0284c7" strokeWidth="2" opacity="0.9" />
           <circle cx="166" cy="78" r="4" fill="#fff" />
@@ -746,7 +799,7 @@ function renderHandItem(handId?: string, state: string = "idle") {
       );
     case "hand_beam_sword":
       return (
-        <g id="hand-beam-sword" filter="url(#glowEffect)">
+        <g id="hand-beam-sword" filter={glow}>
           <rect x="146" y="148" width="6" height="16" rx="2" fill="#334155" />
           <line x1="149" y1="148" x2="175" y2="75" stroke="#00f2fe" strokeWidth="5" strokeLinecap="round" />
           <line x1="149" y1="148" x2="175" y2="75" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
@@ -760,11 +813,13 @@ function renderHandItem(handId?: string, state: string = "idle") {
 // =========================================================================
 // 7. STATE OVERLAYS (INDICADORES VISUAIS DE FALA, ESCUTA, ETC.)
 // =========================================================================
-function renderStateOverlays(state: string) {
+function renderStateOverlays(state: string, ctx?: SvgContext) {
+  const glow = ctx?.glowEffect || "url(#glowEffect)";
+
   switch (state) {
     case "listening":
       return (
-        <g id="state-listening" filter="url(#glowEffect)">
+        <g id="state-listening" filter={glow}>
           {/* Ondas de escuta atenta ao redor da cabeça */}
           <path d="M 38 78 Q 28 92 38 106" stroke="#22c55e" strokeWidth="2.5" fill="none" strokeLinecap="round" />
           <path d="M 30 72 Q 18 92 30 112" stroke="#22c55e" strokeWidth="2" strokeDasharray="3 3" fill="none" strokeLinecap="round" />
@@ -784,7 +839,7 @@ function renderStateOverlays(state: string) {
       );
     case "celebrating":
       return (
-        <g id="state-celebrating" filter="url(#glowEffect)">
+        <g id="state-celebrating" filter={glow}>
           {/* Faíscas e confetes de vitória */}
           <circle cx="35" cy="40" r="4" fill="#fbbf24" />
           <circle cx="165" cy="40" r="4" fill="#f43f5e" />

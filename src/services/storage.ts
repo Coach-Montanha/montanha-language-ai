@@ -1,10 +1,11 @@
 import { UserProgress, ChatMessage, Flashcard } from "@/types/language";
+import { ensureGamificationProgress, awardGamificationRewards } from "./gamification";
 
 const STORAGE_KEY_PROGRESS = "smart_language_progress_v1";
 const STORAGE_KEY_CHAT = "smart_language_chat_v1";
 const STORAGE_KEY_CUSTOM_CARDS = "smart_language_custom_cards_v1";
 
-const DEFAULT_PROGRESS: UserProgress = {
+const RAW_DEFAULT_PROGRESS: UserProgress = {
   streakDays: 1,
   lastActiveDate: new Date().toISOString().split("T")[0] || "",
   xp: 50,
@@ -16,14 +17,16 @@ const DEFAULT_PROGRESS: UserProgress = {
   design: "classic",
 };
 
+export const DEFAULT_PROGRESS: UserProgress = ensureGamificationProgress(RAW_DEFAULT_PROGRESS);
+
 export function loadUserProgress(): UserProgress {
-  if (typeof window === "undefined") return DEFAULT_PROGRESS;
+  if (typeof window === "undefined") return ensureGamificationProgress(DEFAULT_PROGRESS);
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY_PROGRESS);
     if (!raw) {
       saveUserProgress(DEFAULT_PROGRESS);
-      return DEFAULT_PROGRESS;
+      return ensureGamificationProgress(DEFAULT_PROGRESS);
     }
     const data = JSON.parse(raw) as UserProgress;
 
@@ -44,13 +47,15 @@ export function loadUserProgress(): UserProgress {
       }
       data.lastActiveDate = today;
       data.dailySprintDone = false; // reseta o sprint diário para o novo dia
-      saveUserProgress(data);
+      const normalized = ensureGamificationProgress({ ...DEFAULT_PROGRESS, ...data });
+      saveUserProgress(normalized);
+      return normalized;
     }
 
-    return { ...DEFAULT_PROGRESS, ...data };
+    return ensureGamificationProgress({ ...DEFAULT_PROGRESS, ...data });
   } catch (error) {
     console.error("Erro ao carregar progresso:", error);
-    return DEFAULT_PROGRESS;
+    return ensureGamificationProgress(DEFAULT_PROGRESS);
   }
 }
 
@@ -65,9 +70,13 @@ export function saveUserProgress(progress: UserProgress): void {
 
 export function addXP(amount: number): UserProgress {
   const current = loadUserProgress();
-  const updated = { ...current, xp: current.xp + amount };
-  saveUserProgress(updated);
-  return updated;
+  const reward = awardGamificationRewards(
+    current,
+    amount,
+    Math.max(1, Math.floor(amount / 2))
+  );
+  saveUserProgress(reward.updated);
+  return reward.updated;
 }
 
 export function loadChatHistory(): ChatMessage[] {

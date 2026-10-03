@@ -95,7 +95,23 @@ console.log("➡️ Test 2: Progress normalization & defaults");
     );
   }
 
-  console.log("  ✓ Progress normalization verified!");
+  // Verify that paid archetypes (wolf, cat, dragon, elemental, goblin) are NOT unlocked by default
+  const paidArchetypes = [
+    "starter_animal_wolf",
+    "starter_animal_cat",
+    "starter_animal_dragon",
+    "starter_monster_elemental",
+    "starter_monster_goblin",
+  ];
+  for (const paidId of paidArchetypes) {
+    assert.strictEqual(
+      initialized.unlockedAvatarItems.includes(paidId),
+      false,
+      `Paid archetype ${paidId} must not be unlocked by default`
+    );
+  }
+
+  console.log("  ✓ Progress normalization & starter unlock boundary verified!");
 }
 
 // ==========================================
@@ -287,7 +303,50 @@ console.log("➡️ Test 5: Virtual Item Shop buying & equipping");
   assert.strictEqual(colored.equippedAvatar?.primaryColor, "#ff0055");
   assert.strictEqual(colored.equippedAvatar?.secondaryColor, "#00ffcc");
 
+  // 5h: Purchase paid archetype (Wolf: 80 coins, Level 1)
+  const wolfItem = getItemById("starter_animal_wolf")!;
+  assert.ok(wolfItem, "starter_animal_wolf must exist in catalog");
+  assert.strictEqual(wolfItem.price, 80, "Wolf should cost 80 coins");
+  const buyWolf = buyAvatarItem(colored, wolfItem);
+  assert.strictEqual(buyWolf.success, true);
+  assert.ok(buyWolf.updated);
+  assert.strictEqual(buyWolf.updated.coins, colored.coins! - 80);
+  assert.ok(buyWolf.updated.unlockedAvatarItems?.includes("starter_animal_wolf"));
+  assert.strictEqual(buyWolf.updated.equippedAvatar?.archetype, "animal");
+  assert.strictEqual(buyWolf.updated.equippedAvatar?.subType, "wolf");
+
   console.log("  ✓ Virtual Shop purchase & equip mechanics verified!");
+}
+
+// ==========================================
+// Test 6: Storage Gamification & Level Up Synchronization
+// ==========================================
+console.log("➡️ Test 6: Storage addXP Gamification Synchronization");
+{
+  const mockCurrent: UserProgress = {
+    xp: 60,
+    coins: 150,
+    level: 1,
+    skillPoints: 1,
+    streakDays: 1,
+    lastActiveDate: "2026-10-03",
+    cardsMasteredCount: 0,
+    phrasesAnalyzedCount: 0,
+    messagesSentCount: 0,
+    dailySprintDone: false,
+    audioSpeed: 1.0,
+  };
+
+  // Adding 60 XP: 60 + 60 = 120 XP -> Triggers level up to 2 (threshold: 100)
+  // Bonus coins: +100, earned coins: +30 -> Total coins: 150 + 130 = 280
+  const reward = awardGamificationRewards(mockCurrent, 60, 30);
+  assert.strictEqual(reward.leveledUp, true);
+  assert.strictEqual(reward.newLevel, 2);
+  assert.strictEqual(reward.updated.level, 2);
+  assert.strictEqual(reward.updated.coins, 280);
+  assert.strictEqual(reward.updated.skillPoints, 2);
+
+  console.log("  ✓ Storage addXP Gamification Synchronization verified!");
 }
 
 console.log("\n🎉 ALL GAMIFICATION & AVATAR VERIFICATION TESTS PASSED FLAWLESSLY!\n");

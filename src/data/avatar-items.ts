@@ -17,12 +17,7 @@ export const DEFAULT_AVATAR_CONFIG: AvatarConfig = {
 export const STARTER_UNLOCKED_ITEM_IDS = [
   "starter_human",
   "starter_animal_owl",
-  "starter_animal_wolf",
-  "starter_animal_cat",
-  "starter_animal_dragon",
   "starter_monster_golem",
-  "starter_monster_elemental",
-  "starter_monster_goblin",
   "starter_cap",
   "starter_glasses",
   "starter_adventurer_robe",
