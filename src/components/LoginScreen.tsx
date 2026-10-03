@@ -238,30 +238,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         </nav>
 
         {/* B) FLOATING HERO CARD */}
-        <div className="w-full md:w-80 relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-[#06b6d4]/25 p-6 md:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-800/80">
-          <div aria-hidden className="absolute -top-24 -left-24 w-64 h-64 bg-[#06b6d4]/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="w-full md:w-80 relative overflow-hidden bg-slate-950/90 p-6 md:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-800">
+          <div aria-hidden className="absolute -top-24 -left-24 w-64 h-64 bg-[#06b6d4]/20 rounded-full blur-3xl pointer-events-none" />
           
           <div className="relative z-10 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#06b6d4]/20 border border-[#06b6d4]/40 text-[#06b6d4] text-xs font-bold">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>CYBER CYAN • LANGUAGE</span>
-            </div>
-
             {view === "signin" ? (
               <div className="space-y-3 animate-in fade-in">
-                <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-tight">
+                <h2 className="text-2xl md:text-3xl font-extrabold !text-white text-white tracking-tight leading-tight" style={{ color: "#ffffff" }}>
                   Montanha Language AI
                 </h2>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-sm text-slate-300 leading-relaxed">
                   Tutor Inteligente de Idiomas com Prática de Fala, Microtreinos de 5 Minutos &amp; Imersão IA.
                 </p>
               </div>
             ) : (
               <div className="space-y-3 animate-in fade-in">
-                <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-tight">
+                <h2 className="text-2xl md:text-3xl font-extrabold !text-white text-white tracking-tight leading-tight" style={{ color: "#ffffff" }}>
                   Conquiste a Fluência Diária
                 </h2>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-sm text-slate-300 leading-relaxed">
                   Aprenda com conversação em tempo real, correção fonética e missões interativas.
                 </p>
               </div>
@@ -269,22 +264,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           </div>
 
           <div className="relative z-10 pt-6 border-t border-slate-800/80 space-y-3">
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <CheckCircle2 className="h-4 w-4 text-[#06b6d4]" />
-              <span>PIN 10 Dígitos Padronizado</span>
+            <div className="flex items-center gap-2.5 text-xs text-slate-300 font-medium">
+              <CheckCircle2 className="h-4 w-4 text-[#06b6d4] flex-shrink-0" />
+              <span>Autenticação rápida e segura por PIN</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <CheckCircle2 className="h-4 w-4 text-[#06b6d4]" />
+            <div className="flex items-center gap-2.5 text-xs text-slate-300 font-medium">
+              <CheckCircle2 className="h-4 w-4 text-[#06b6d4] flex-shrink-0" />
               <span>Inteligência Fonética em Tempo Real</span>
             </div>
-            <a
-              href="#terms"
-              onClick={(e) => { e.preventDefault(); }}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#06b6d4] hover:underline pt-2"
-            >
-              <span>Termos &amp; Segurança do Ecossistema</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </a>
           </div>
         </div>
 
@@ -293,7 +280,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           <div className="space-y-6 my-auto">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-white">
+                <h3 className="text-xl font-bold !text-white text-white" style={{ color: "#ffffff" }}>
                   {view === "signin" ? (mode === "reset" ? "Redefinir PIN" : "Acessar Plataforma") : "Criar sua Conta"}
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
