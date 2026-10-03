@@ -1,12 +1,5 @@
 {
-  "rewrites": [
-    {
-      "source": "/auth",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "bun run build",
+  "framework": null
 }
