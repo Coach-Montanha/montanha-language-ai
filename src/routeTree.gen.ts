@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BoostRouteImport } from './routes/boost'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as EcoRouteImport } from './routes/eco'
@@ -18,6 +19,11 @@ import { Route as MasterAdminRouteImport } from './routes/master-admin'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BoostRoute = BoostRouteImport.update({
@@ -43,6 +49,7 @@ const MasterAdminRoute = MasterAdminRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/boost': typeof BoostRoute
   '/create': typeof CreateRoute
   '/eco': typeof EcoRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/boost': typeof BoostRoute
   '/create': typeof CreateRoute
   '/eco': typeof EcoRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/boost': typeof BoostRoute
   '/create': typeof CreateRoute
   '/eco': typeof EcoRoute
@@ -65,14 +74,16 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/boost' | '/create' | '/eco' | '/master-admin'
+  fullPaths: '/' | '/auth' | '/boost' | '/create' | '/eco' | '/master-admin'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/boost' | '/create' | '/eco' | '/master-admin'
-  id: '__root__' | '/' | '/boost' | '/create' | '/eco' | '/master-admin'
+  to: '/' | '/auth' | '/boost' | '/create' | '/eco' | '/master-admin'
+  id:
+    '__root__' | '/' | '/auth' | '/boost' | '/create' | '/eco' | '/master-admin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   BoostRoute: typeof BoostRoute
   CreateRoute: typeof CreateRoute
   EcoRoute: typeof EcoRoute
@@ -86,6 +97,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/boost': {
@@ -121,6 +139,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   BoostRoute: BoostRoute,
   CreateRoute: CreateRoute,
   EcoRoute: EcoRoute,
