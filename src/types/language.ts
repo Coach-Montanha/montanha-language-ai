@@ -1,4 +1,15 @@
-export type TabType = "conversa" | "cenario" | "estudo" | "laboratorio" | "alfabeto" | "cartoes" | "destrinchar";
+import { AvatarConfig } from "./avatar";
+
+export type TabType =
+  | "treino"
+  | "conversa"
+  | "cenario"
+  | "avatar"
+  | "estudo"
+  | "laboratorio"
+  | "alfabeto"
+  | "cartoes"
+  | "destrinchar";
 
 export type ConversationMode = "chat" | "challenge" | "debate" | "grammar";
 
@@ -195,6 +206,11 @@ export interface UserProgress {
   bestPronunciationScore?: number | undefined;
   cefrLevel?: string | undefined;
   aiModelPreference?: AiModelId | undefined;
+  coins?: number | undefined;
+  level?: number | undefined;
+  skillPoints?: number | undefined;
+  equippedAvatar?: AvatarConfig | undefined;
+  unlockedAvatarItems?: string[] | undefined;
 }
 
 export interface LearnerTopicMemory {

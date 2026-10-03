@@ -10,16 +10,16 @@ import {
 } from "@/services/auth";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { LeftSidebar } from "@/components/LeftSidebar";
 import { LoginScreen } from "@/components/LoginScreen";
 import { ActivityTimelineModal } from "@/components/ActivityTimelineModal";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
+import { DailySprintTab } from "@/components/tabs/DailySprintTab";
 import { ConversationTab } from "@/components/tabs/ConversationTab";
 import { ScenarioTab } from "@/components/tabs/ScenarioTab";
+import { AvatarTab } from "@/components/tabs/AvatarTab";
 import { AlphabetTab } from "@/components/tabs/AlphabetTab";
 import { FlashcardsTab } from "@/components/tabs/FlashcardsTab";
 import { BreakdownTab } from "@/components/tabs/BreakdownTab";
-import { DailySprintModal } from "@/components/DailySprintModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
 import { VoiceCallModal } from "@/components/VoiceCallModal";
@@ -39,14 +39,13 @@ export const Route = createFileRoute("/")({
 
 function SmartLanguageApp() {
   const [session, setSession] = useState<UserSession | null>(() => getCurrentSession());
-  const [activeTab, setActiveTab] = useState<TabType>("conversa");
+  const [activeTab, setActiveTab] = useState<TabType>("treino");
   const [progress, setProgress] = useState<UserProgress>(() => {
     const s = getCurrentSession();
     if (s && s.progress) return s.progress;
     return loadUserProgress();
   });
   const [selectedMission, setSelectedMission] = useState<WeeklyMission | null>(null);
-  const [isDailySprintOpen, setIsDailySprintOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
@@ -139,15 +138,6 @@ function SmartLanguageApp() {
     }
   };
 
-  const handleDailySprintComplete = () => {
-    const updated = addXP(50);
-    const completedState: UserProgress = {
-      ...updated,
-      dailySprintDone: true,
-    };
-    handleUpdateProgress(completedState);
-  };
-
   const handleStartMission = (mission: WeeklyMission) => {
     setSelectedMission(mission);
     setActiveTab("cenario");
@@ -168,34 +158,33 @@ function SmartLanguageApp() {
       {/* Barra de Notificações Toast */}
       <Toaster position="top-center" richColors />
 
-      {/* Layout com Sidebar Desktop & Conteúdo */}
-      <div className="flex flex-1 w-full min-h-0">
-        <LeftSidebar
-          activeTab={activeTab}
-          onChangeTab={setActiveTab}
-          onOpenDailySprint={() => setIsDailySprintOpen(true)}
-          dailySprintDone={progress.dailySprintDone}
-        />
+      {/* Cabeçalho limpo com Nome do Usuário, Streak, XP, Nível RPG, Moedas, Configurações e Logout */}
+      <Header
+        progress={progress}
+        userName={session.displayName}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onLogout={handleLogout}
+        onOpenLanguageSelector={() => setIsLanguageModalOpen(true)}
+        onOpenTimeline={() => setIsTimelineOpen(true)}
+        onOpenAvatarShop={() => setActiveTab("avatar")}
+      />
 
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Cabeçalho limpo com Nome do Usuário, Streak, XP, Configurações e Logout */}
-          <Header
+      {/* Conteúdo Principal com as Abas */}
+      <main className="flex-1 pb-16 overflow-hidden flex flex-col w-full">
+        {activeTab === "treino" && (
+          <DailySprintTab
             progress={progress}
-            userName={session.displayName}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            onLogout={handleLogout}
-            onOpenLanguageSelector={() => setIsLanguageModalOpen(true)}
-            onOpenTimeline={() => setIsTimelineOpen(true)}
+            onUpdateProgress={handleUpdateProgress}
+            onNavigateToTab={(tab) => setActiveTab(tab)}
           />
-
-          {/* Conteúdo Principal com as 5 Abas */}
-          <main className="flex-1 pb-16 overflow-hidden flex flex-col">
-            {activeTab === "conversa" && (
+        )}
+        {activeTab === "conversa" && (
           <ConversationTab
             progress={progress}
             onUpdateProgress={handleUpdateProgress}
             onOpenVoiceCall={() => setIsVoiceCallOpen(true)}
             onOpenStreetTalk={() => setIsStreetTalkOpen(true)}
+            onOpenAvatarShop={() => setActiveTab("avatar")}
           />
         )}
         {activeTab === "cenario" && (
@@ -206,6 +195,13 @@ function SmartLanguageApp() {
             onOpenTravelPack={() => setIsTravelPackOpen(true)}
             onOpenPlacementTest={() => setIsPlacementTestOpen(true)}
             onOpenStreetTalk={() => setIsStreetTalkOpen(true)}
+          />
+        )}
+        {activeTab === "avatar" && (
+          <AvatarTab
+            progress={progress}
+            onUpdateProgress={handleUpdateProgress}
+            onOpenConversation={() => setActiveTab("conversa")}
           />
         )}
         {(activeTab === "estudo" || activeTab === "cartoes" || activeTab === "alfabeto") && (
@@ -222,25 +218,12 @@ function SmartLanguageApp() {
           />
         )}
       </main>
-      </div>
-      </div>
 
-      {/* Navegação Inferior de Abas + Treino 5 min (feita para celular) */}
+      {/* Navegação Inferior de Abas */}
       <BottomNav
         activeTab={activeTab}
         onChangeTab={setActiveTab}
-        onOpenDailySprint={() => setIsDailySprintOpen(true)}
         dailySprintDone={progress.dailySprintDone}
-      />
-
-      {/* Modal: Treino Diário de 5 Minutos (Leitura, Audição e Fala) */}
-      <DailySprintModal
-        open={isDailySprintOpen}
-        onOpenChange={setIsDailySprintOpen}
-        audioSpeed={progress.audioSpeed}
-        onSprintComplete={handleDailySprintComplete}
-        language={progress.selectedLanguage || "en"}
-        selectedVoiceName={progress.selectedVoiceName}
       />
 
       {/* Modal: Configurações (Voz, Velocidade, IA e Chave API) */}

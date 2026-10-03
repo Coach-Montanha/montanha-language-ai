@@ -43,6 +43,9 @@ import {
 import { getTutorById } from "@/data/tutors";
 import { getLanguageById } from "@/data/languages";
 import { TutorSelectorModal } from "@/components/TutorSelectorModal";
+import { ModularAvatar } from "@/components/avatar/ModularAvatar";
+import { AvatarAnimationState } from "@/types/avatar";
+import { ensureGamificationProgress, awardGamificationRewards } from "@/services/gamification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -89,6 +92,7 @@ interface ConversationTabProps {
   onUpdateProgress: (updated: UserProgress) => void;
   onOpenVoiceCall?: (() => void) | undefined;
   onOpenStreetTalk?: (() => void) | undefined;
+  onOpenAvatarShop?: (() => void) | undefined;
 }
 
 // Configurações dos tamanhos de fonte sincronizadas com a acessibilidade global
@@ -134,7 +138,12 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   onUpdateProgress,
   onOpenVoiceCall,
   onOpenStreetTalk,
+  onOpenAvatarShop,
 }) => {
+  const preparedProgress = ensureGamificationProgress(progress);
+  const avatarConfig = preparedProgress.equippedAvatar;
+  const [isCelebrating, setIsCelebrating] = useState(false);
+
   const activeTutor = getTutorById(progress.selectedTutorId);
   const activeLanguage = getLanguageById(activeTutor.language);
   const currentFontSize: FontKey = (progress.fontSize as FontKey) || "md";
@@ -167,6 +176,17 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [previewSpeakingText, setPreviewSpeakingText] = useState<string | null>(null);
+
+  const avatarState: AvatarAnimationState = isRecording
+    ? "listening"
+    : isLoading
+    ? "thinking"
+    : speakingMessageId !== null || previewSpeakingText !== null
+    ? "speaking"
+    : isCelebrating
+    ? "celebrating"
+    : "idle";
+
   const [autoSpeak, setAutoSpeak] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
     const saved = localStorage.getItem("smart_language_autospeak");
@@ -477,11 +497,19 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         handleSpeakMessage(tutorMsgId, response.replyText);
       }
 
-      const updated = addXP(10);
+      const rewardResult = awardGamificationRewards(progress, 15, 5);
       onUpdateProgress({
-        ...updated,
+        ...rewardResult.updated,
         messagesSentCount: progress.messagesSentCount + 1,
       });
+      setIsCelebrating(true);
+      setTimeout(() => setIsCelebrating(false), 2500);
+
+      if (rewardResult.leveledUp) {
+        toast.success(`🎉 LEVEL UP! Você subiu para o Nível ${rewardResult.newLevel}!`, {
+          description: `+${rewardResult.bonusCoins} moedas concedidas para sua Loja RPG!`,
+        });
+      }
     } catch (err) {
       console.error(err);
       toast.error("Houve uma falha ao obter a resposta. Tente novamente.");
@@ -696,8 +724,12 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
           aria-label={`Tutor atual ${activeTutor.name} (${activeLanguage.name}). Toque para trocar`}
         >
           <div className="relative shrink-0">
-            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-base shadow-xs group-hover:scale-105 transition-transform">
-              {activeTutor.avatar}
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center overflow-hidden p-0.5 shadow-xs group-hover:scale-105 transition-transform">
+              <ModularAvatar
+                config={avatarConfig}
+                state={avatarState}
+                size="sm"
+              />
             </div>
             <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
           </div>
@@ -732,6 +764,20 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
             </Button>
           )}
 
+          {/* Botão Rápido de Avatar RPG */}
+          {onOpenAvatarShop && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onOpenAvatarShop}
+              className="h-8 px-2 text-xs font-bold text-amber-500 hover:bg-amber-500/10 cursor-pointer hidden sm:flex items-center gap-1.5"
+              title="Personalizar Avatar Tutor & Loja RPG"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+              <span>Avatar RPG</span>
+            </Button>
+          )}
+
           {/* Botão Rápido de Auto-Voz */}
           <Button
             variant="ghost"
@@ -762,6 +808,19 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-xl">
+              {onOpenAvatarShop && (
+                <DropdownMenuItem
+                  onClick={onOpenAvatarShop}
+                  className="flex items-center gap-2.5 cursor-pointer py-2 text-xs text-amber-600 dark:text-amber-400 font-bold"
+                >
+                  <Sparkles className="h-4 w-4 text-amber-400" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold">Avatar Tutor & Loja RPG</div>
+                    <div className="text-[10px] opacity-80 truncate">Personalizar itens e equipamentos</div>
+                  </div>
+                </DropdownMenuItem>
+              )}
+
               {onOpenVoiceCall && (
                 <DropdownMenuItem
                   onClick={onOpenVoiceCall}
@@ -1002,8 +1061,12 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
                 {/* Avatar do Tutor */}
                 {!isUser && (
-                  <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 text-xs">
-                    {activeTutor.avatar}
+                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5 overflow-hidden p-0.5">
+                    <ModularAvatar
+                      config={avatarConfig}
+                      state={isSpeakingThis ? "speaking" : "idle"}
+                      size="xs"
+                    />
                   </div>
                 )}
 
@@ -1363,13 +1426,13 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
             </div>
           ) : speakingMessageId ? (
             <div className="flex items-center gap-1.5 text-primary font-medium">
-              <Volume2 className="h-3.5 w-3.5 animate-pulse" />
+              <ModularAvatar config={avatarConfig} state="speaking" size="xs" />
               <span>{activeTutor.name} falando...</span>
             </div>
           ) : (
             <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium">
-              <Bot className="h-3.5 w-3.5 animate-spin" />
-              <span>{activeTutor.name} digitando...</span>
+              <ModularAvatar config={avatarConfig} state="thinking" size="xs" />
+              <span>{activeTutor.name} pensando na resposta...</span>
             </div>
           )}
 

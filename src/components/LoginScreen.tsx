@@ -9,16 +9,13 @@ import {
   RotateCcw,
   CheckCircle2,
   AlertCircle,
-  Globe,
-  ChevronDown,
-  ChevronUp,
-  ShieldCheck,
   Mail,
-  Smartphone,
   Eye,
   EyeOff,
   Loader2,
-  Lock
+  Lock,
+  ShieldCheck,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -27,54 +24,6 @@ interface LoginScreenProps {
 }
 
 type Mode = "login" | "register" | "reset";
-
-const ECOSYSTEM_APPS = [
-  {
-    id: "language",
-    name: "Montanha Language AI",
-    tag: "App Atual",
-    slogan: "Tutor de Idiomas com IA & Treinos Diários",
-    accent: "#06b6d4",
-    badgeBg: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-    isCurrent: true,
-  },
-  {
-    id: "pdf",
-    name: "Montanha PDF Studio",
-    tag: "Diagramação & IA",
-    slogan: "Diagramação Editorial & Publicações com IA",
-    accent: "#eab308",
-    badgeBg: "bg-amber-500/20 text-amber-300 border-amber-500/40",
-    isCurrent: false,
-  },
-  {
-    id: "personal",
-    name: "Montanha Personal Studio",
-    tag: "Finanças & Operação",
-    slogan: "Gestão Financeira & Inteligência para Studios",
-    accent: "#6958e2",
-    badgeBg: "bg-purple-500/20 text-purple-300 border-purple-500/40",
-    isCurrent: false,
-  },
-  {
-    id: "hybrid",
-    name: "Montanha Hybrid Training",
-    tag: "Performance & Treino",
-    slogan: "Alta Performance & Periodização de Treino",
-    accent: "#dc2626",
-    badgeBg: "bg-red-500/20 text-red-300 border-red-500/40",
-    isCurrent: false,
-  },
-  {
-    id: "whatsapp",
-    name: "Montanha WhatsApp Automation",
-    tag: "SaaS & CRM",
-    slogan: "Automação Multi-Tenant & Disparos WhatsApp",
-    accent: "#10b981",
-    badgeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
-    isCurrent: false,
-  },
-];
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [view, setView] = useState<"signin" | "signup">("signin");
@@ -86,7 +35,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [showPass, setShowPass] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [showEcosystem, setShowEcosystem] = useState(false);
 
   // Brand Accent Color: #06b6d4 (Cyber Cyan)
 
@@ -444,51 +392,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           </div>
         </div>
       </div>
-
-      {/* Ecosystem Drawer Toggle */}
-      <div className="mt-4 text-center">
-        <button
-          type="button"
-          onClick={() => setShowEcosystem(!showEcosystem)}
-          className="text-xs text-[#06b6d4] hover:text-cyan-300 font-bold inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#06b6d4]/10 border border-[#06b6d4]/30 transition-all cursor-pointer shadow-md min-h-[44px]"
-        >
-          <Globe className="w-3.5 h-3.5" />
-          <span>🌐 Ecossistema Montanha (5 Apps Integrados)</span>
-          {showEcosystem ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-        </button>
-      </div>
-
-      {showEcosystem && (
-        <div className="mt-3 w-full max-w-[920px] p-4 rounded-2xl bg-slate-900/95 border border-[#06b6d4]/40 shadow-2xl space-y-2 animate-in fade-in">
-          <div className="text-[11px] font-bold text-cyan-300 flex items-center gap-1.5 uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5 text-[#06b6d4]" />
-            <span>Plataformas do Ecossistema Montanha</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {ECOSYSTEM_APPS.map((app) => (
-              <div
-                key={app.id}
-                className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-all ${
-                  app.isCurrent
-                    ? "bg-[#06b6d4]/15 border-[#06b6d4]/50 text-white"
-                    : "bg-slate-950/60 border-slate-800/80 text-slate-300 hover:border-slate-700"
-                }`}
-              >
-                <div className="flex flex-col">
-                  <span className="font-bold flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: app.accent }} />
-                    {app.name}
-                  </span>
-                  <span className="text-[10px] text-slate-400">{app.slogan}</span>
-                </div>
-                <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border ${app.badgeBg}`}>
-                  {app.isCurrent ? "ATUAL" : app.tag}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

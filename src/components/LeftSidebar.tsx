@@ -1,18 +1,11 @@
 import React, { useEffect, useRef } from "react";
-import { Link } from "@tanstack/react-router";
 import {
+  Timer,
   MessageSquareText,
   Compass,
-  SpellCheck,
   Layers,
-  Split,
-  Timer,
-  CheckCircle2,
   Sparkles,
-  Zap,
-  Globe,
-  PlusCircle,
-  Shield,
+  CheckCircle2,
 } from "lucide-react";
 import { TabType } from "@/types/language";
 
@@ -23,27 +16,33 @@ interface LeftSidebarProps {
   dailySprintDone?: boolean;
 }
 
-type NavItem =
-  | { type: "tab"; id: TabType; label: string; icon: React.ComponentType<{ className?: string }> }
-  | { type: "sprint"; id: "treino"; label: string; icon: React.ComponentType<{ className?: string }> };
+interface NavItem {
+  id: TabType;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
 
 const NAV_ITEMS: NavItem[] = [
-  { type: "tab", id: "conversa", label: "Conversa", icon: MessageSquareText },
-  { type: "tab", id: "cenario", label: "Situações", icon: Compass },
-  { type: "sprint", id: "treino", label: "Treino 5m", icon: Timer },
-  { type: "tab", id: "estudo", label: "Estudo", icon: Layers },
-  { type: "tab", id: "laboratorio", label: "Laboratório", icon: Split },
+  { id: "treino", label: "Treino 5m", icon: Timer },
+  { id: "conversa", label: "Conversa", icon: MessageSquareText },
+  { id: "cenario", label: "Situações", icon: Compass },
+  { id: "avatar", label: "Avatar RPG", icon: Sparkles },
+  { id: "estudo", label: "Estudo", icon: Layers },
 ];
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   activeTab,
   onChangeTab,
-  onOpenDailySprint,
   dailySprintDone,
 }) => {
-  const isEstudoActive = activeTab === "estudo" || activeTab === "cartoes" || activeTab === "alfabeto";
-  const isLabActive = activeTab === "laboratorio" || activeTab === "destrinchar";
-  const activeKey = isEstudoActive ? "estudo" : isLabActive ? "laboratorio" : activeTab;
+  const isEstudoActive =
+    activeTab === "estudo" ||
+    activeTab === "cartoes" ||
+    activeTab === "alfabeto" ||
+    activeTab === "laboratorio" ||
+    activeTab === "destrinchar";
+
+  const activeKey = isEstudoActive ? "estudo" : activeTab;
 
   const navRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLSpanElement>(null);
@@ -68,7 +67,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
         <div>
           <h2 className="text-sm font-extrabold text-foreground">Montanha Language AI</h2>
-          <p className="text-[10px] text-muted-foreground font-medium">Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida</p>
+          <p className="text-[10px] text-muted-foreground font-medium">Tutor com IA & Gamificação</p>
         </div>
       </div>
 
@@ -80,28 +79,11 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
+          const isActive =
+            item.id === "estudo"
+              ? isEstudoActive
+              : activeTab === item.id;
 
-          if (item.type === "sprint") {
-            return (
-              <button
-                key="treino-sprint"
-                type="button"
-                onClick={() => onOpenDailySprint?.()}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors text-left cursor-pointer"
-              >
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20">
-                  {dailySprintDone ? (
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                  ) : (
-                    <Icon className="h-3.5 w-3.5 text-emerald-500 animate-pulse" />
-                  )}
-                </div>
-                <span>{dailySprintDone ? "Treino Concluído" : "Treino 5m"}</span>
-              </button>
-            );
-          }
-
-          const isActive = activeKey === item.id;
           return (
             <button
               key={item.id}
@@ -117,58 +99,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             >
               <Icon className={`h-4 w-4 ${isActive ? "text-primary stroke-[2.5]" : "opacity-70"}`} />
               <span>{item.label}</span>
+              {item.id === "treino" && dailySprintDone && (
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 ml-auto" />
+              )}
             </button>
           );
         })}
-      </div>
-
-      {/* Rodapé: Navegação no Ecossistema Montanha */}
-      <div className="mt-auto pt-4 border-t border-border/60 flex flex-col gap-1">
-        <div className="px-3 pb-1 flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-            <Globe className="h-3 w-3 text-primary" />
-            Ecossistema
-          </span>
-          <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-            @eco
-          </span>
-        </div>
-
-        <Link
-          to="/boost"
-          activeProps={{ className: "bg-amber-500/15 text-amber-500 font-bold" }}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
-        >
-          <Zap className="h-3.5 w-3.5 text-amber-500" />
-          <span>Booster Fluência</span>
-        </Link>
-
-        <Link
-          to="/eco"
-          activeProps={{ className: "bg-indigo-500/15 text-indigo-400 font-bold" }}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
-        >
-          <Globe className="h-3.5 w-3.5 text-indigo-400" />
-          <span>Hub Ecossistema</span>
-        </Link>
-
-        <Link
-          to="/create"
-          activeProps={{ className: "bg-emerald-500/15 text-emerald-500 font-bold" }}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
-        >
-          <PlusCircle className="h-3.5 w-3.5 text-emerald-500" />
-          <span>Criador de Lições</span>
-        </Link>
-
-        <Link
-          to="/master-admin"
-          activeProps={{ className: "bg-rose-500/15 text-rose-400 font-bold" }}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-        >
-          <Shield className="h-3.5 w-3.5 text-rose-400" />
-          <span>SuperAdmin</span>
-        </Link>
       </div>
     </aside>
   );

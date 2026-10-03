@@ -1,89 +1,57 @@
 import React from "react";
-import { MessageSquareText, Compass, SpellCheck, Layers, Split, Timer, CheckCircle2 } from "lucide-react";
+import {
+  Timer,
+  MessageSquareText,
+  Compass,
+  Layers,
+  Sparkles,
+  CheckCircle2,
+} from "lucide-react";
 import { TabType } from "@/types/language";
 
 interface BottomNavProps {
   activeTab: TabType;
   onChangeTab: (tab: TabType) => void;
-  onOpenDailySprint?: () => void;
   dailySprintDone?: boolean;
 }
 
-type BottomNavItem =
-  | { type: "tab"; id: TabType; label: string; icon: React.ComponentType<{ className?: string }> }
-  | { type: "sprint"; id: "treino"; label: string; icon: React.ComponentType<{ className?: string }> };
+interface NavItem {
+  id: TabType;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
 
-const NAV_ITEMS: BottomNavItem[] = [
-  { type: "tab", id: "conversa", label: "Conversa", icon: MessageSquareText },
-  { type: "tab", id: "cenario", label: "Situações", icon: Compass },
-  { type: "sprint", id: "treino", label: "Treino 5m", icon: Timer },
-  { type: "tab", id: "estudo", label: "Estudo", icon: Layers },
-  { type: "tab", id: "laboratorio", label: "Laboratório", icon: Split },
+const NAV_ITEMS: NavItem[] = [
+  { id: "treino", label: "Treino 5m", icon: Timer },
+  { id: "conversa", label: "Conversa", icon: MessageSquareText },
+  { id: "cenario", label: "Situações", icon: Compass },
+  { id: "avatar", label: "Avatar RPG", icon: Sparkles },
+  { id: "estudo", label: "Estudo", icon: Layers },
 ];
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   activeTab,
   onChangeTab,
-  onOpenDailySprint,
   dailySprintDone,
 }) => {
-  const isEstudoActive = activeTab === "estudo" || activeTab === "cartoes" || activeTab === "alfabeto";
-  const isLabActive = activeTab === "laboratorio" || activeTab === "destrinchar";
+  const isEstudoActive =
+    activeTab === "estudo" ||
+    activeTab === "cartoes" ||
+    activeTab === "alfabeto" ||
+    activeTab === "laboratorio" ||
+    activeTab === "destrinchar";
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background/95 backdrop-blur-lg pb-safe">
       <div className="mx-auto flex max-w-lg items-center justify-around px-0.5 py-1 sm:px-2">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-
-          if (item.type === "sprint") {
-            return (
-              <button
-                key="treino-sprint"
-                type="button"
-                onClick={() => onOpenDailySprint?.()}
-                aria-label={dailySprintDone ? "Treino diário concluído" : "Abrir treino diário de 5 minutos"}
-                className="group flex flex-1 flex-col items-center justify-center py-1.5 px-0.5 min-h-[44px] min-w-[44px] transition-all duration-200 rounded-xl cursor-pointer active:scale-95"
-                title="Treino rápido diário de 5 minutos"
-              >
-                <div
-                  className={`relative flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 ${
-                    dailySprintDone
-                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                      : "bg-emerald-600 text-white shadow-xs group-hover:scale-105"
-                  }`}
-                >
-                  {dailySprintDone ? (
-                    <CheckCircle2 className="h-4 w-4 stroke-[2.2]" />
-                  ) : (
-                    <Icon className="h-4 w-4 stroke-[2.2] animate-pulse" />
-                  )}
-                  {!dailySprintDone && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                    </span>
-                  )}
-                </div>
-                <span
-                  className={`mt-0.5 text-[9.5px] tracking-tight line-clamp-1 ${
-                    dailySprintDone
-                      ? "text-emerald-600 dark:text-emerald-400 font-semibold"
-                      : "text-emerald-700 dark:text-emerald-300 font-bold"
-                  }`}
-                >
-                  {dailySprintDone ? "Treino Feito" : "Treino 5m"}
-                </span>
-              </button>
-            );
-          }
-
           const isActive =
             item.id === "estudo"
               ? isEstudoActive
-              : item.id === "laboratorio"
-              ? isLabActive
               : activeTab === item.id;
+
+          const isTreinoTab = item.id === "treino";
 
           return (
             <button
@@ -100,12 +68,44 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             >
               <div
                 className={`relative flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 ${
-                  isActive ? "bg-primary/15 text-primary shadow-xs" : "group-hover:bg-muted"
+                  isActive
+                    ? "bg-primary/15 text-primary shadow-xs"
+                    : isTreinoTab && !dailySprintDone
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20"
+                    : "group-hover:bg-muted"
                 }`}
               >
-                <Icon className={`h-4 w-4 ${isActive ? "stroke-[2.5]" : "stroke-[1.8]"}`} />
+                <Icon
+                  className={`h-4 w-4 ${
+                    isActive
+                      ? "stroke-[2.5]"
+                      : isTreinoTab && !dailySprintDone
+                      ? "stroke-[2.2] animate-pulse text-emerald-600 dark:text-emerald-400"
+                      : "stroke-[1.8]"
+                  }`}
+                />
+
+                {/* Badge verde de sprint diário concluído */}
+                {isTreinoTab && dailySprintDone && (
+                  <CheckCircle2 className="absolute -top-0.5 -right-0.5 h-3 w-3 text-emerald-500 fill-background" />
+                )}
+
+                {/* Ponto pulsante quando o treino ainda não foi feito hoje */}
+                {isTreinoTab && !dailySprintDone && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                )}
               </div>
-              <span className="mt-0.5 text-[9.5px] sm:text-[10px] tracking-tight line-clamp-1">
+
+              <span
+                className={`mt-0.5 text-[9.5px] sm:text-[10px] tracking-tight line-clamp-1 ${
+                  isTreinoTab && !dailySprintDone && !isActive
+                    ? "text-emerald-700 dark:text-emerald-300 font-semibold"
+                    : ""
+                }`}
+              >
                 {item.label}
               </span>
             </button>
