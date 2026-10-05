@@ -71,6 +71,7 @@ export interface Scenario {
   id: string;
   title: string;
   icon: string;
+  category?: "real-world" | "rpg" | string | undefined;
   roleAi: string;
   roleUser: string;
   description: string;
@@ -122,6 +123,7 @@ export interface SentenceAnalysis {
 export interface WeeklyMission {
   id: string;
   language?: SupportedLanguage | undefined;
+  category?: "real-world" | "rpg" | string | undefined;
   week: number;
   weekTitle: string;
   title: string;

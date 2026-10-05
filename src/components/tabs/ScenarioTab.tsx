@@ -56,11 +56,18 @@ import {
   Luggage,
   GraduationCap,
   Sparkle as SparkleIcon,
+  Sword,
+  Shield,
+  Scroll,
+  Globe,
+  Flame,
+  Wand2,
 } from "lucide-react";
 import { Stepper, StepItem } from "@/components/ui/stepper";
 import { Rating } from "@/components/ui/rating";
 import { toast } from "sonner";
 import { soundscape, SoundscapeType } from "@/services/soundscape-audio";
+import { getAvatarHeroPersona } from "@/data/avatar-personas";
 
 interface ScenarioTabProps {
   progress: UserProgress;
@@ -83,6 +90,13 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   ShieldAlert,
   TrendingUp,
   BookOpen,
+  Sword,
+  Shield,
+  Scroll,
+  Globe,
+  Flame,
+  Wand2,
+  Sparkles,
 };
 
 export const ScenarioTab: React.FC<ScenarioTabProps> = ({
@@ -97,6 +111,14 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
   const langDef = getLanguageById(currentLanguage);
   const tutors = getTutorsForLanguage(currentLanguage);
   const activeTutor = tutors[0] || getDefaultTutorForLanguage(currentLanguage);
+
+  // Categoria de Cenários: Vida Real / Viagem vs Missões RPG & Avatar
+  const [scenarioCategory, setScenarioCategory] = useState<"real-world" | "rpg">(
+    (selectedMission?.category as "real-world" | "rpg") || "real-world"
+  );
+
+  // Persona do Avatar Companheiro
+  const companionPersona = getAvatarHeroPersona(progress.selectedCharacterId || "char_tactician_m");
 
   const [activeSoundscape, setActiveSoundscape] = useState<SoundscapeType | null>(null);
 
@@ -126,7 +148,8 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
 
   const availableWeeks = getAvailableWeeksForLanguage(
     currentLanguage,
-    progress.customMissions
+    progress.customMissions,
+    scenarioCategory
   );
 
   const initialWeek = selectedMission
@@ -141,12 +164,14 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
   const missionsForWeek = getMissionsByWeek(
     activeWeek,
     currentLanguage,
-    progress.customMissions
+    progress.customMissions,
+    scenarioCategory
   );
 
   const initialMission =
     selectedMission ||
     missionsForWeek[0] ||
+    getMissionsForLanguage(currentLanguage, progress.customMissions, scenarioCategory)[0] ||
     getMissionsForLanguage(currentLanguage, progress.customMissions)[0]!;
 
   const [activeMission, setActiveMission] = useState<WeeklyMission>(initialMission);
@@ -188,7 +213,8 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
   useEffect(() => {
     const langWeeks = getAvailableWeeksForLanguage(
       currentLanguage,
-      progress.customMissions
+      progress.customMissions,
+      scenarioCategory
     );
     const targetW = langWeeks[0] || 1;
     setActiveWeek(targetW);
@@ -196,11 +222,12 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
     const weekMissions = getMissionsByWeek(
       targetW,
       currentLanguage,
-      progress.customMissions
+      progress.customMissions,
+      scenarioCategory
     );
     const firstOfLang =
       weekMissions[0] ||
-      getMissionsForLanguage(currentLanguage, progress.customMissions)[0];
+      getMissionsForLanguage(currentLanguage, progress.customMissions, scenarioCategory)[0];
 
     if (firstOfLang) {
       handleSelectMission(firstOfLang);
@@ -210,17 +237,46 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
   // Se uma missão específica foi passada como prop
   useEffect(() => {
     if (selectedMission) {
+      if (selectedMission.category) {
+        setScenarioCategory(selectedMission.category as "real-world" | "rpg");
+      }
       setActiveWeek(selectedMission.week);
       handleSelectMission(selectedMission);
     }
   }, [selectedMission]);
+
+  const handleSelectCategory = (cat: "real-world" | "rpg") => {
+    setScenarioCategory(cat);
+    const weeks = getAvailableWeeksForLanguage(
+      currentLanguage,
+      progress.customMissions,
+      cat
+    );
+    const targetW = weeks[0] || 1;
+    setActiveWeek(targetW);
+
+    const weekMissions = getMissionsByWeek(
+      targetW,
+      currentLanguage,
+      progress.customMissions,
+      cat
+    );
+    const firstOfCategory =
+      weekMissions[0] ||
+      getMissionsForLanguage(currentLanguage, progress.customMissions, cat)[0];
+
+    if (firstOfCategory) {
+      handleSelectMission(firstOfCategory);
+    }
+  };
 
   const handleSelectWeek = (week: number) => {
     setActiveWeek(week);
     const missions = getMissionsByWeek(
       week,
       currentLanguage,
-      progress.customMissions
+      progress.customMissions,
+      scenarioCategory
     );
     if (missions.length > 0) {
       handleSelectMission(missions[0]!);
@@ -420,7 +476,8 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
   const missionsInCurrentWeek = getMissionsByWeek(
     activeWeek,
     currentLanguage,
-    progress.customMissions
+    progress.customMissions,
+    scenarioCategory
   );
 
   const isMissionCompleted = (progress.completedMissionIds || []).includes(
@@ -487,32 +544,66 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
           </button>
         </div>
 
+        {/* Categoria: Vida Real / Viagem vs RPG & Avatar Quests */}
+        <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted/80 rounded-xl border border-border">
+          <button
+            type="button"
+            onClick={() => handleSelectCategory("real-world")}
+            className={`py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              scenarioCategory === "real-world"
+                ? "bg-background text-primary shadow-xs border border-border"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+            }`}
+          >
+            <Globe className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+            <span className="truncate">Cotidiano & Viagem</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSelectCategory("rpg")}
+            className={`py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              scenarioCategory === "rpg"
+                ? "bg-gradient-to-r from-amber-500 to-violet-600 text-white shadow-xs font-extrabold"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+            }`}
+          >
+            <Sword className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+            <span className="truncate">Missões RPG & Avatar</span>
+            <span className="text-[8px] bg-amber-400/20 text-amber-300 dark:text-amber-200 px-1 py-0.2 rounded uppercase font-extrabold shrink-0">
+              RPG
+            </span>
+          </button>
+        </div>
+
         {/* Barra superior: Idioma, Ações e Botão Procedural */}
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-1.5">
             <span className="text-base">{langDef.flag}</span>
             <div>
               <span className="text-[11px] font-extrabold text-foreground tracking-tight block">
-                Situações da Vida Real
+                {scenarioCategory === "rpg" ? "⚔️ Missões Fantasia & Avatar" : "Situações da Vida Real"}
               </span>
               <span className="text-[10px] text-muted-foreground block -mt-0.5">
-                {langDef.name} • Tutor {activeTutor.name}
+                {langDef.name} • {scenarioCategory === "rpg" ? `Companheiro ${companionPersona.name}` : `Tutor ${activeTutor.name}`}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5">
-            {/* Botão Procedural: Criar Mais Semanas */}
-            <Button
-              size="sm"
-              variant="default"
-              onClick={handleCreateMoreWeeks}
-              className="h-7 text-[10px] px-2.5 gap-1 rounded-lg font-bold shadow-xs bg-primary text-primary-foreground hover:bg-primary/90"
-              title="Gerar nova semana procedural com situações reais"
-            >
-              <Sparkles className="h-3 w-3 text-amber-300" />
-              <span>+ Criar Semana</span>
-            </Button>
+            {/* Botão Procedural: Criar Mais Semanas (Disponível no Cotidiano) */}
+            {scenarioCategory === "real-world" && (
+              <Button
+                size="sm"
+                variant="default"
+                onClick={handleCreateMoreWeeks}
+                className="h-7 text-[10px] px-2.5 gap-1 rounded-lg font-bold shadow-xs bg-primary text-primary-foreground hover:bg-primary/90"
+                title="Gerar nova semana procedural com situações reais"
+              >
+                <Sparkles className="h-3 w-3 text-amber-300" />
+                <span>+ Criar Semana</span>
+              </Button>
+            )}
 
             {activeMission.script && (
               <button
@@ -588,14 +679,15 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
           )}
         </div>
 
-        {/* Seletor Dinâmico de Semanas (Rolagem horizontal para semanas infinitas) */}
+        {/* Seletor Dinâmico de Semanas / Capítulos */}
         <div className="flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar pt-0.5">
           {availableWeeks.map((w) => {
             const isSel = activeWeek === w;
             const weekMissionsList = getMissionsByWeek(
               w,
               currentLanguage,
-              progress.customMissions
+              progress.customMissions,
+              scenarioCategory
             );
             const weekDoneCount = weekMissionsList.filter((m) =>
               (progress.completedMissionIds || []).includes(m.id)
@@ -613,7 +705,7 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
               >
                 <div className="flex items-center gap-1">
                   <span className="text-[10px] font-extrabold uppercase">
-                    Semana {w}
+                    {scenarioCategory === "rpg" ? `Ato ${w}` : `Semana ${w}`}
                   </span>
                   {weekDoneCount > 0 && (
                     <span className="text-[8px] bg-emerald-500/15 text-emerald-600 px-1 py-0.2 rounded font-bold">
@@ -658,8 +750,33 @@ export const ScenarioTab: React.FC<ScenarioTabProps> = ({
         </div>
       </div>
 
-      {/* 2. BRIEFING DA SITUAÇÃO (História, Objetivo e Dica do Tutor) */}
+      {/* 2. BRIEFING DA SITUAÇÃO (História, Objetivo e Dica do Tutor / Companheiro) */}
       <div className="px-3 py-2 bg-muted/40 border-b border-border text-[11px] space-y-2">
+        {/* Companheiro Avatar Hero Badge */}
+        <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-card border border-border shadow-2xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-sm shrink-0">
+              {scenarioCategory === "rpg" ? "⚔️" : "🌍"}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10.5px] font-bold text-foreground truncate">
+                  {companionPersona.name}
+                </span>
+                <span className="text-[9px] text-primary font-semibold px-1 rounded bg-primary/10 truncate">
+                  {companionPersona.heroTitle}
+                </span>
+              </div>
+              <span className="text-[9.5px] text-muted-foreground block truncate">
+                {companionPersona.affinityBonus}
+              </span>
+            </div>
+          </div>
+          <Badge variant="outline" className="text-[9px] bg-background font-semibold text-emerald-600 dark:text-emerald-400 shrink-0 border-emerald-500/30">
+            +Bônus Ativo
+          </Badge>
+        </div>
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 flex-wrap">
             <Badge variant="outline" className="text-[9px] bg-background font-semibold">

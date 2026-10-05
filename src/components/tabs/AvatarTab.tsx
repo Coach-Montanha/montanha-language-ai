@@ -251,7 +251,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 sm:px-4 md:px-6 max-w-6xl mx-auto w-full max-w-full space-y-4 sm:space-y-6 pb-20">
+    <div className="w-full max-w-6xl mx-auto px-2 sm:px-4 md:px-6 space-y-4 sm:space-y-6 pb-32">
       {/* ============================================================ */}
       {/* 1. BANNER RPG: NÍVEL, XP, TÍTULO, MOEDAS E BÔNUS COMBINADOS */}
       {/* ============================================================ */}

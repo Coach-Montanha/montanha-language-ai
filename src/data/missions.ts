@@ -1,5 +1,6 @@
 import { WeeklyMission, Scenario, SupportedLanguage } from "@/types/language";
 import { MULTILINGUAL_MISSIONS } from "./multilingual-missions";
+import { RPG_AVATAR_MISSIONS } from "./rpg-missions";
 
 export const WEEKLY_MISSIONS: WeeklyMission[] = [
   // ================= SEMANA 1: SOBREVIVÊNCIA =================
@@ -594,25 +595,30 @@ export const WEEKLY_MISSIONS: WeeklyMission[] = [
 ];
 
 export const ALL_MISSIONS: WeeklyMission[] = [
-  ...WEEKLY_MISSIONS.map((m) => ({ ...m, language: (m.language || "en") as SupportedLanguage })),
-  ...MULTILINGUAL_MISSIONS,
+  ...WEEKLY_MISSIONS.map((m) => ({ ...m, category: "real-world" as const, language: (m.language || "en") as SupportedLanguage })),
+  ...MULTILINGUAL_MISSIONS.map((m) => ({ ...m, category: "real-world" as const })),
+  ...RPG_AVATAR_MISSIONS,
 ];
 
 export function getMissionsForLanguage(
   language: SupportedLanguage = "en",
-  customMissions: WeeklyMission[] = []
+  customMissions: WeeklyMission[] = [],
+  category?: "all" | "real-world" | "rpg"
 ): WeeklyMission[] {
   const builtIn = ALL_MISSIONS.filter((m) => (m.language || "en") === language);
   const custom = customMissions.filter((m) => (m.language || "en") === language);
-  return [...builtIn, ...custom];
+  const combined = [...builtIn, ...custom];
+  if (!category || category === "all") return combined;
+  return combined.filter((m) => (m.category || "real-world") === category);
 }
 
 export function getMissionsByWeek(
   week: number,
   language: SupportedLanguage = "en",
-  customMissions: WeeklyMission[] = []
+  customMissions: WeeklyMission[] = [],
+  category?: "all" | "real-world" | "rpg"
 ): WeeklyMission[] {
-  const allForLang = getMissionsForLanguage(language, customMissions);
+  const allForLang = getMissionsForLanguage(language, customMissions, category);
   return allForLang.filter((m) => m.week === week);
 }
 
@@ -625,9 +631,10 @@ export function getMissionById(
 
 export function getAvailableWeeksForLanguage(
   language: SupportedLanguage = "en",
-  customMissions: WeeklyMission[] = []
+  customMissions: WeeklyMission[] = [],
+  category?: "all" | "real-world" | "rpg"
 ): number[] {
-  const all = getMissionsForLanguage(language, customMissions);
+  const all = getMissionsForLanguage(language, customMissions, category);
   const weeks = Array.from(new Set(all.map((m) => m.week))).sort((a, b) => a - b);
   return weeks.length > 0 ? weeks : [1];
 }
@@ -638,6 +645,7 @@ export function missionToScenario(mission: WeeklyMission): Scenario {
     id: mission.id,
     title: mission.title,
     icon: mission.icon,
+    category: mission.category || "real-world",
     roleAi: mission.aiRole,
     roleUser: mission.userRole,
     description: mission.situationDescription,

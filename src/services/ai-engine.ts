@@ -13,6 +13,7 @@ import {
   AiModelId,
 } from "@/types/language";
 import { CharacterBase } from "@/types/avatar";
+import { getAvatarHeroPersona } from "@/data/avatar-personas";
 import { PRESET_THEMES, getPresetThemesForLanguage } from "@/data/vocabulary";
 import { callGeminiRaw } from "./gemini";
 import { compressContextForAgent, recordTokenSavings } from "./ruflo-eco-engine";
@@ -3153,16 +3154,27 @@ RPG Companion Traveling With Student:
   // Se houver chave Gemini configurada, usar IA com a personalidade completa do tutor escolhido
   if (apiKey) {
     try {
-      const systemPrompt = `You are "${activeTutor.name}", a charismatic, warm, friendly, and highly engaging native tutor teaching ${targetLangName} from ${activeTutor.city}, ${activeTutor.country} (${activeTutor.gender === "female" ? "female" : "male"}).
-Target Language being taught and practiced: ${targetLangName}.
+      const avatarHero = companionCharacter ? getAvatarHeroPersona(companionCharacter.id || companionCharacter.baseSpriteAsset) : null;
+      const isAvatarHeroMode = activeTutor.id === "avatar_companion" || (companionCharacter && (activeTutor.id.startsWith("char_") || activeTutor.id === "leo-chicago"));
 
+      const personaPrompt = (isAvatarHeroMode && avatarHero)
+        ? `You are "${avatarHero.name}" (${avatarHero.heroTitle}), an inspiring fantasy RPG companion and linguistic mentor teaching ${targetLangName}.
+Persona, Worldview & Speech Style:
+${avatarHero.tonePrompt}
+- Hero Lore: ${avatarHero.lore}
+- Language Affinity Bonus: ${avatarHero.affinityBonus}
+- Companion Greeting Tone: "${avatarHero.avatarGreeting}"
+- Goal: Converse strictly in-character as ${avatarHero.name}. Embody your lore, adventure spirit, and supportive knight/mage/draconic/automaton personality while teaching authentic, communicative ${targetLangName}! Never break character.`
+        : `You are "${activeTutor.name}", a charismatic, warm, friendly, and highly engaging native tutor teaching ${targetLangName} from ${activeTutor.city}, ${activeTutor.country} (${activeTutor.gender === "female" ? "female" : "male"}).
 Your Persona, Cultural Flavor & Style:
 - Style: ${activeTutor.styleTitle} - ${activeTutor.styleDesc}
 - Bio: ${activeTutor.bioPt}
 - Cultural nuances & native expressions: ${tutorNuance}
-- Goal: Make the dialogue feel GENUINELY ALIVE, NATURAL, ENGAGING, and HIGHLY INTERACTIVE — like two close friends enjoying coffee, NOT a robotic exam or rigid grammar textbook.
+- Goal: Make the dialogue feel GENUINELY ALIVE, NATURAL, ENGAGING, and HIGHLY INTERACTIVE — like two close friends enjoying coffee, NOT a robotic exam or rigid grammar textbook.`;
+
+      const systemPrompt = `${personaPrompt}
+Target Language being taught and practiced: ${targetLangName}.
 ${memoryContext}
-${companionContext}
 ${modeInstruction}
 
 Interaction Guidelines & Fluency System (80/20 Applied Linguistics):

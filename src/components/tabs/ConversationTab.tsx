@@ -43,6 +43,7 @@ import {
 import { getTutorById } from "@/data/tutors";
 import { getLanguageById } from "@/data/languages";
 import { getCharacterById } from "@/data/avatar-items";
+import { getAvatarHeroPersona } from "@/data/avatar-personas";
 import { TutorSelectorModal } from "@/components/TutorSelectorModal";
 import { ModularAvatar } from "@/components/avatar/ModularAvatar";
 import { AvatarAnimationState } from "@/types/avatar";
@@ -150,9 +151,16 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   const avatarConfig = preparedProgress.equippedAvatar;
   const [isCelebrating, setIsCelebrating] = useState(false);
 
+  const [personaMode, setPersonaMode] = useState<"avatar" | "tutor">(() => {
+    if (typeof window === "undefined") return "avatar";
+    const saved = localStorage.getItem("smart_language_persona_mode");
+    return saved === "tutor" ? "tutor" : "avatar";
+  });
+
   const activeTutor = getTutorById(progress.selectedTutorId);
   const activeLanguage = getLanguageById(activeTutor.language);
-  const selectedHero = getCharacterById(preparedProgress.selectedCharacterId || "valerius");
+  const selectedHero = getCharacterById(preparedProgress.selectedCharacterId || "char_tactician_m");
+  const heroPersona = getAvatarHeroPersona(preparedProgress.selectedCharacterId || avatarConfig?.subType);
   const combinedStats = getCombinedStats(preparedProgress, activeTutor.language);
   const currentFontSize: FontKey = (progress.fontSize as FontKey) || "md";
   const fontConfig = FONT_LEVELS[currentFontSize] || FONT_LEVELS.md;
@@ -163,21 +171,56 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  const activeGreeting = personaMode === "avatar"
+    ? (heroPersona.greetingsByLanguage[activeTutor.language] || heroPersona.greetingsByLanguage.en)
+    : {
+        text: activeTutor.initialGreeting,
+        phonetic: activeTutor.initialGreetingPhonetic,
+        translationPt: activeTutor.initialGreetingPt,
+      };
+
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     const saved = loadChatHistory();
     if (saved.length > 0) return saved;
-    const initialTutor = getTutorById(progress.selectedTutorId);
+    const initialGreeting = (personaMode === "avatar" ? heroPersona.greetingsByLanguage[activeTutor.language] : null) || (personaMode === "avatar" ? heroPersona.greetingsByLanguage.en : null) || {
+      text: activeTutor.initialGreeting,
+      phonetic: activeTutor.initialGreetingPhonetic,
+      translationPt: activeTutor.initialGreetingPt,
+    };
     return [
       {
         id: "intro",
         sender: "tutor",
-        text: initialTutor.initialGreeting,
-        phonetic: initialTutor.initialGreetingPhonetic,
-        translationPt: initialTutor.initialGreetingPt,
+        text: initialGreeting.text,
+        phonetic: initialGreeting.phonetic,
+        translationPt: initialGreeting.translationPt,
         timestamp: Date.now(),
       },
     ];
   });
+
+  // Atualiza saudação inicial se usuário trocar de herói ou de modo quando houver apenas a mensagem de abertura
+  useEffect(() => {
+    if (messages.length === 1 && messages[0]?.id === "intro") {
+      const currentGreeting = personaMode === "avatar"
+        ? (heroPersona.greetingsByLanguage[activeTutor.language] || heroPersona.greetingsByLanguage.en)
+        : {
+            text: activeTutor.initialGreeting,
+            phonetic: activeTutor.initialGreetingPhonetic,
+            translationPt: activeTutor.initialGreetingPt,
+          };
+      setMessages([
+        {
+          id: "intro",
+          sender: "tutor",
+          text: currentGreeting.text,
+          phonetic: currentGreeting.phonetic,
+          translationPt: currentGreeting.translationPt,
+          timestamp: Date.now(),
+        },
+      ]);
+    }
+  }, [personaMode, preparedProgress.selectedCharacterId, activeTutor.language]);
 
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -419,11 +462,23 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     setIsLoading(true);
 
     try {
+      const tutorForChat: TutorPersona =
+        personaMode === "avatar"
+          ? {
+              ...activeTutor,
+              id: "avatar_companion",
+              name: heroPersona.name,
+              styleTitle: heroPersona.heroTitle,
+              styleDesc: heroPersona.lore,
+              bioPt: `${heroPersona.lore} Afinidade: ${heroPersona.affinityBonus}`,
+            }
+          : activeTutor;
+
       const response = await tutorChat(
         query,
         messages,
         progress.geminiApiKey,
-        activeTutor,
+        tutorForChat,
         learnerMemory,
         isPt,
         progress.aiModelPreference,
@@ -727,37 +782,77 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
     <div className="flex flex-col h-[calc(100vh-8.5rem)] max-w-lg mx-auto w-full">
       {/* Topo do Chat Limpo com Perfil do Tutor, Áudio e Menu de Opções */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/80 bg-card/40 rounded-t-xl gap-2">
-        {/* Tutor Ativo (Clicável para abrir catálogo) */}
-        <button
-          type="button"
-          onClick={() => setIsTutorModalOpen(true)}
-          className="flex items-center gap-2.5 text-left hover:opacity-85 transition-opacity group cursor-pointer min-h-[44px] py-1 active:scale-98 min-w-0"
-          title="Clique para escolher outro tutor ou idioma"
-          aria-label={`Tutor atual ${activeTutor.name} (${activeLanguage.name}). Toque para trocar`}
-        >
-          <div className="relative shrink-0">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center overflow-hidden p-0.5 shadow-xs group-hover:scale-105 transition-transform">
-              <ModularAvatar
-                config={avatarConfig}
-                state={avatarState}
-                size="sm"
-              />
+        {/* Tutor / Avatar Ativo com Seletor de Modo */}
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={() => setIsTutorModalOpen(true)}
+            className="flex items-center gap-2 text-left hover:opacity-85 transition-opacity group cursor-pointer min-h-[44px] py-1 active:scale-98 min-w-0"
+            title="Clique para escolher outro tutor ou idioma"
+            aria-label={`Interlocutor atual ${personaMode === "avatar" ? heroPersona.name : activeTutor.name} (${activeLanguage.name}). Toque para trocar`}
+          >
+            <div className="relative shrink-0">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center overflow-hidden p-0.5 shadow-xs group-hover:scale-105 transition-transform">
+                <ModularAvatar
+                  config={avatarConfig}
+                  state={avatarState}
+                  size="sm"
+                />
+              </div>
+              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
             </div>
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 leading-tight">
-              <span className="text-xs sm:text-sm font-bold text-foreground truncate">
-                {activeTutor.name}
-              </span>
-              <span className="text-xs shrink-0">{activeTutor.flag}</span>
-              <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 leading-tight">
+                <span className="text-xs sm:text-sm font-bold text-foreground truncate max-w-[85px] xs:max-w-[120px] sm:max-w-[160px]">
+                  {personaMode === "avatar" ? heroPersona.name : activeTutor.name}
+                </span>
+                <span className="text-xs shrink-0">{activeLanguage.flag}</span>
+                <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+              </div>
+              <p className="text-[10px] text-muted-foreground font-medium truncate mt-0.5 max-w-[100px] xs:max-w-[140px] sm:max-w-[180px]">
+                {personaMode === "avatar" ? heroPersona.heroTitle : `${activeTutor.city} • Online`}
+              </p>
             </div>
-            <p className="text-[10px] text-muted-foreground font-medium truncate mt-0.5">
-              {activeTutor.city} &bull; <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Online</span>
-            </p>
+          </button>
+
+          {/* Seletor Rápido: Avatar RPG vs Tutor Nativo */}
+          <div className="flex items-center p-0.5 rounded-xl bg-muted/80 border border-border shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setPersonaMode("avatar");
+                try { localStorage.setItem("smart_language_persona_mode", "avatar"); } catch {}
+                toast.success(`⚔️ Conversando com ${heroPersona.name}!`);
+              }}
+              className={`px-2 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                personaMode === "avatar"
+                  ? "bg-indigo-600 text-white shadow-xs font-black"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Conversar com seu Avatar RPG Ilustrado"
+            >
+              <span>⚔️</span>
+              <span className="hidden xs:inline">Avatar</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPersonaMode("tutor");
+                try { localStorage.setItem("smart_language_persona_mode", "tutor"); } catch {}
+                toast.success(`🌍 Conversando com o Tutor Nativo ${activeTutor.name}!`);
+              }}
+              className={`px-2 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                personaMode === "tutor"
+                  ? "bg-sky-600 text-white shadow-xs font-black"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Conversar com o Tutor Nativo do Mundo Real"
+            >
+              <span>🌍</span>
+              <span className="hidden xs:inline">Nativo</span>
+            </button>
           </div>
-        </button>
+        </div>
 
         {/* Controles de Áudio e Menu Expandido */}
         <div className="flex items-center gap-1 shrink-0">
