@@ -247,7 +247,10 @@ export class AntigravityAvatarController {
   private equippedSlots: Map<SlotCategory, WardrobeItem | null>;
 
   constructor(baseArchetypeKey: string, initialLevel: number = 1, initialCoins: number = 600) {
-    this.character = ARCHETYPES_REGISTRY[baseArchetypeKey] ?? ARCHETYPES_REGISTRY["tactician_swordsman"]!;
+    this.character =
+      ARCHETYPES_REGISTRY[baseArchetypeKey] ??
+      getStudioArchetypeById(baseArchetypeKey) ??
+      ARCHETYPES_REGISTRY["tactician_swordsman"]!;
     this.currentLevel = initialLevel;
     this.coinBalance = initialCoins;
     this.ownedItemIds = new Set<string>();

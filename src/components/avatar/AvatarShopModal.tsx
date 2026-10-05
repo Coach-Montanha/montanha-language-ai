@@ -75,19 +75,14 @@ interface AvatarShopModalProps {
 
 const RO_SLOT_TABS: { id: string; label: string; icon: string }[] = [
   { id: "all", label: "Tudo", icon: "✨" },
-  { id: "heroes", label: "Heróis & Companheiros", icon: "🧙‍♂️" },
-  { id: EquipmentSlot.HEAD_UPPER, label: "Chapéus & Capuzes", icon: "🎩" },
-  { id: EquipmentSlot.HEAD_LOWER, label: "Boca & Acessórios", icon: "🍃" },
-  { id: EquipmentSlot.ARMOR, label: "Trajes & Túnicas", icon: "👘" },
-  { id: EquipmentSlot.GARMENT, label: "Asas & Capas", icon: "🪽" },
-  { id: EquipmentSlot.BACKPACK, label: "Mochilas & Alforjes", icon: "🎒" },
-  { id: EquipmentSlot.RIGHT_HAND, label: "Armas & Cajados", icon: "⚔️" },
-  { id: EquipmentSlot.PET_FAMILIAR, label: "Familiares & Mascotes", icon: "🐣" },
-  { id: "HEAD", label: "Cabeça", icon: "🧢" },
-  { id: "CHEST", label: "Peitoral", icon: "🥋" },
-  { id: "MAIN_HAND", label: "Mão", icon: "🔨" },
-  { id: "BACK", label: "Costas", icon: "📦" },
-  { id: "ACCESSORY", label: "Acessório", icon: "💎" },
+  { id: "HEAD", label: "Chapéus & Capuzes", icon: "🎩" },
+  { id: "CHEST", label: "Trajes & Túnicas", icon: "👘" },
+  { id: "LEGS", label: "Botas & Pernas", icon: "👢" },
+  { id: "MAIN_HAND", label: "Armas & Cajados", icon: "⚔️" },
+  { id: "OFF_HAND", label: "Escudos & Grimórios", icon: "🛡️" },
+  { id: "BACK", label: "Capas & Mochilas", icon: "🎒" },
+  { id: "PET", label: "Familiares & Mascotes", icon: "🐣" },
+  { id: "ACCESSORY", label: "Relíquias & Acessórios", icon: "💎" },
 ];
 
 const TIER_COLORS: Record<string, { badge: string; border: string }> = {
@@ -184,44 +179,69 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
 
     if (selectedSlot === "all") return true;
 
-    // Correspondência direta do slot
+    // Correspondência direta
     if (item.slot === selectedSlot) return true;
 
-    // Mapeamento Studio Fantasy SlotCategory (bidirecional)
-    if ((selectedSlot === "HEAD" || selectedSlot === EquipmentSlot.HEAD_UPPER) && item.slot === "HEADWEAR") return true;
-    if (selectedSlot === "HEADWEAR" && (item.slot === "HEAD" || item.slot === EquipmentSlot.HEAD_UPPER)) return true;
+    // Correspondência por categoria unificada (Studio Fantasy, RO e Clássico)
+    if (selectedSlot === "HEAD") {
+      return (
+        item.slot === "HEAD" ||
+        item.slot === "HEADWEAR" ||
+        item.slot === EquipmentSlot.HEAD_UPPER ||
+        item.slot === EquipmentSlot.HEAD_LOWER ||
+        item.slot === EquipmentSlot.HEAD_MIDDLE
+      );
+    }
+    if (selectedSlot === "CHEST") {
+      return (
+        item.slot === "CHEST" ||
+        item.slot === EquipmentSlot.ARMOR ||
+        item.slot === "OUTFIT"
+      );
+    }
+    if (selectedSlot === "LEGS") {
+      return item.slot === "LEGS" || item.slot === EquipmentSlot.FOOTGEAR;
+    }
+    if (selectedSlot === "MAIN_HAND") {
+      return (
+        item.slot === "MAIN_HAND" ||
+        item.slot === EquipmentSlot.RIGHT_HAND ||
+        item.slot === "MAIN_TOOL"
+      );
+    }
+    if (selectedSlot === "OFF_HAND") {
+      return (
+        item.slot === "OFF_HAND" ||
+        item.slot === EquipmentSlot.LEFT_HAND ||
+        item.slot === "OFF_TOOL"
+      );
+    }
+    if (selectedSlot === "BACK") {
+      return (
+        item.slot === "BACK" ||
+        item.slot === EquipmentSlot.GARMENT ||
+        item.slot === EquipmentSlot.BACKPACK ||
+        item.slot === "BACKPACK_CAPE"
+      );
+    }
+    if (selectedSlot === "PET") {
+      return (
+        item.slot === EquipmentSlot.PET_FAMILIAR ||
+        item.slot === "FAMILIAR"
+      );
+    }
+    if (selectedSlot === "ACCESSORY") {
+      return item.slot === "ACCESSORY";
+    }
 
-    if ((selectedSlot === "CHEST" || selectedSlot === EquipmentSlot.ARMOR) && item.slot === "OUTFIT") return true;
-    if (selectedSlot === "OUTFIT" && (item.slot === "CHEST" || item.slot === EquipmentSlot.ARMOR)) return true;
-
-    if ((selectedSlot === "MAIN_HAND" || selectedSlot === EquipmentSlot.RIGHT_HAND) && item.slot === "MAIN_TOOL") return true;
-    if (selectedSlot === "MAIN_TOOL" && (item.slot === "MAIN_HAND" || item.slot === EquipmentSlot.RIGHT_HAND)) return true;
-
-    if ((selectedSlot === "OFF_HAND" || selectedSlot === EquipmentSlot.LEFT_HAND) && item.slot === "OFF_TOOL") return true;
-    if (selectedSlot === "OFF_TOOL" && (item.slot === "OFF_HAND" || item.slot === EquipmentSlot.LEFT_HAND)) return true;
-
-    if ((selectedSlot === "BACK" || selectedSlot === EquipmentSlot.BACKPACK || selectedSlot === EquipmentSlot.GARMENT) && item.slot === "BACKPACK_CAPE") return true;
-    if (selectedSlot === "BACKPACK_CAPE" && (item.slot === "BACK" || item.slot === EquipmentSlot.BACKPACK || item.slot === EquipmentSlot.GARMENT)) return true;
-
-    if ((selectedSlot === "ACCESSORY" || selectedSlot === EquipmentSlot.PET_FAMILIAR) && item.slot === "FAMILIAR") return true;
-    if (selectedSlot === "FAMILIAR" && (item.slot === "ACCESSORY" || item.slot === EquipmentSlot.PET_FAMILIAR)) return true;
-
-    // Mapeamento de slots RO compatíveis (bidirecional)
-    if (selectedSlot === "HEAD" && (item.slot === EquipmentSlot.HEAD_UPPER || item.slot === EquipmentSlot.HEAD_LOWER || item.slot === EquipmentSlot.HEAD_MIDDLE)) return true;
-    if (selectedSlot === EquipmentSlot.HEAD_UPPER && item.slot === "HEAD") return true;
-    if (selectedSlot === "CHEST" && item.slot === EquipmentSlot.ARMOR) return true;
-    if (selectedSlot === EquipmentSlot.ARMOR && item.slot === "CHEST") return true;
-    if (selectedSlot === "BACK" && (item.slot === EquipmentSlot.GARMENT || item.slot === EquipmentSlot.BACKPACK)) return true;
-    if (selectedSlot === EquipmentSlot.GARMENT && item.slot === "BACK") return true;
-    if (selectedSlot === EquipmentSlot.BACKPACK && item.slot === "BACK") return true;
-    if (selectedSlot === "MAIN_HAND" && item.slot === EquipmentSlot.RIGHT_HAND) return true;
-    if (selectedSlot === EquipmentSlot.RIGHT_HAND && item.slot === "MAIN_HAND") return true;
-    if (selectedSlot === "OFF_HAND" && item.slot === EquipmentSlot.LEFT_HAND) return true;
-    if (selectedSlot === EquipmentSlot.LEFT_HAND && item.slot === "OFF_HAND") return true;
-    if (selectedSlot === "ACCESSORY" && item.slot === EquipmentSlot.PET_FAMILIAR) return true;
-    if (selectedSlot === EquipmentSlot.PET_FAMILIAR && item.slot === "ACCESSORY") return true;
-    if (selectedSlot === "LEGS" && item.slot === EquipmentSlot.FOOTGEAR) return true;
-    if (selectedSlot === EquipmentSlot.FOOTGEAR && item.slot === "LEGS") return true;
+    // Fallbacks para filtros diretos por enum RO
+    if (selectedSlot === EquipmentSlot.HEAD_UPPER) return item.slot === "HEAD" || item.slot === "HEADWEAR" || item.slot === EquipmentSlot.HEAD_UPPER;
+    if (selectedSlot === EquipmentSlot.ARMOR) return item.slot === "CHEST" || item.slot === "OUTFIT" || item.slot === EquipmentSlot.ARMOR;
+    if (selectedSlot === EquipmentSlot.FOOTGEAR) return item.slot === "LEGS" || item.slot === EquipmentSlot.FOOTGEAR;
+    if (selectedSlot === EquipmentSlot.RIGHT_HAND) return item.slot === "MAIN_HAND" || item.slot === "MAIN_TOOL" || item.slot === EquipmentSlot.RIGHT_HAND;
+    if (selectedSlot === EquipmentSlot.LEFT_HAND) return item.slot === "OFF_HAND" || item.slot === "OFF_TOOL" || item.slot === EquipmentSlot.LEFT_HAND;
+    if (selectedSlot === EquipmentSlot.GARMENT || selectedSlot === EquipmentSlot.BACKPACK) return item.slot === "BACK" || item.slot === "BACKPACK_CAPE" || item.slot === EquipmentSlot.GARMENT || item.slot === EquipmentSlot.BACKPACK;
+    if (selectedSlot === EquipmentSlot.PET_FAMILIAR) return item.slot === "ACCESSORY" || item.slot === "FAMILIAR" || item.slot === EquipmentSlot.PET_FAMILIAR;
 
     return false;
   });
@@ -337,6 +357,27 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
               <p className="text-xs text-slate-700 dark:text-slate-300 mt-0.5 line-clamp-2 leading-relaxed">
                 {allHeroes.find((h) => h.id === prepared.selectedCharacterId)?.lore || "Bônus ativo de aprendizado de vocabulário."}
               </p>
+
+              {/* Caixa de Texto do Avatar / Balão de Fala do Herói Ativo */}
+              <div className="mt-2.5 p-2.5 rounded-xl border-2 border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-slate-100 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-[11px] text-indigo-700 dark:text-indigo-300 font-extrabold">
+                  <span className="flex items-center gap-1">💬 Fala do Aventureiro:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playOptionSelectSound();
+                      toast.info(`Voz de ${allHeroes.find((h) => h.id === prepared.selectedCharacterId)?.name || "Herói"} ativada!`);
+                    }}
+                    className="hover:underline flex items-center gap-1 cursor-pointer font-extrabold"
+                  >
+                    <Volume2 className="w-3 h-3" />
+                    <span>Ouvir</span>
+                  </button>
+                </div>
+                <p className="italic text-slate-800 dark:text-slate-200 select-text leading-relaxed">
+                  "{allHeroes.find((h) => h.id === prepared.selectedCharacterId)?.avatarGreeting || "Pronto para treinar pronúncia e novas expressões com maestria!"}"
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/80">
@@ -457,10 +498,15 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
                     <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
                       {hero.lore}
                     </p>
-                    <div className="pt-1">
+                    <div className="pt-1 space-y-2">
                       <span className="text-[10px] font-bold text-amber-950 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/10 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-500/20 block truncate">
-                        Afinidade: {hero.nativeLanguageBonus}
+                        ⚡ Afinidade: {hero.nativeLanguageBonus}
                       </span>
+                      {hero.avatarGreeting && (
+                        <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 italic leading-relaxed">
+                          💬 "{hero.avatarGreeting}"
+                        </div>
+                      )}
                     </div>
                   </div>
 

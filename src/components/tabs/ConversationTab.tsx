@@ -1546,7 +1546,7 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                 : `Converse em ${activeLanguage.name}...`
             }
             disabled={isLoading}
-            className="h-11 text-xs sm:text-sm rounded-2xl bg-background pl-3 pr-16 border-border/80"
+            className="h-11 text-xs sm:text-sm rounded-2xl bg-white dark:bg-slate-900 pl-3.5 pr-16 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 shadow-sm focus-visible:border-indigo-600 dark:focus-visible:border-indigo-400"
             aria-label={
               translateFromPt
                 ? `Mensagem em Português para traduzir para ${activeLanguage.name}`

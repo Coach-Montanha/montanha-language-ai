@@ -106,12 +106,18 @@ export function ensureGamificationProgress(progress: UserProgress): UserProgress
     HEAD_MIDDLE: "head",
     HEAD_LOWER: "head",
     ARMOR: "body",
-    GARMENT: "body",
+    GARMENT: "back",
     FOOTGEAR: "legs",
     RIGHT_HAND: "hand",
     LEFT_HAND: "off_hand",
     BACKPACK: "back",
-    PET_FAMILIAR: "accessory",
+    PET_FAMILIAR: "pet",
+    HEADWEAR: "head",
+    OUTFIT: "body",
+    MAIN_TOOL: "hand",
+    OFF_TOOL: "off_hand",
+    BACKPACK_CAPE: "back",
+    FAMILIAR: "pet",
   };
 
   // Se selectedCharacterId foi definido/trocado, garante que o avatar reflita o arquétipo e o subType corretos
@@ -137,11 +143,28 @@ export function ensureGamificationProgress(progress: UserProgress): UserProgress
     },
   };
 
-  // Se algum slot em equipment estiver explicitamente null, garante que equippedAvatar.equipped reflita null
+  // Sincroniza slots mapeados para as chaves canônicas em minúsculo do avatar (ex: BACKPACK_CAPE -> back, HEADWEAR -> head)
   for (const [slotKey, lowerKey] of Object.entries(lowerSlotMap)) {
-    if (equipment[slotKey as SlotType] === null) {
+    const val = equipment[slotKey as SlotType];
+    if (val === null) {
       equippedAvatar.equipped[slotKey] = null;
       equippedAvatar.equipped[lowerKey] = null;
+    } else if (val) {
+      equippedAvatar.equipped[slotKey] = val;
+      // Dá preferência a Studio Fantasy e RO se fornecidos sobre slots legados padrão
+      const isStudioOrRo =
+        slotKey === "BACKPACK_CAPE" ||
+        slotKey === "OUTFIT" ||
+        slotKey === "HEADWEAR" ||
+        slotKey === "MAIN_TOOL" ||
+        slotKey === "OFF_TOOL" ||
+        slotKey === "FAMILIAR" ||
+        slotKey === "ARMOR" ||
+        slotKey === "GARMENT" ||
+        slotKey === "RIGHT_HAND";
+      if (!equippedAvatar.equipped[lowerKey] || isStudioOrRo) {
+        equippedAvatar.equipped[lowerKey] = val;
+      }
     }
   }
 
@@ -202,21 +225,29 @@ export function awardGamificationRewards(
   };
 }
 
-// Mapeamento de slots correspondentes entre o sistema clássico (7 slots) e Ragnarok Online (10 slots)
-// Evita duplicação fantasma de equipamentos simultâneos (ex: Peitoral Clássico + Armadura RO)
+// Mapeamento de slots correspondentes entre o sistema clássico (7 slots), Ragnarok Online (10 slots) e Studio Fantasy
+// Evita duplicação fantasma de equipamentos simultâneos (ex: Peitoral Clássico + Armadura RO + Traje Studio Fantasy)
 export const CORRESPONDING_SLOTS: Record<string, string[]> = {
-  HEAD_UPPER: ["HEAD"],
-  HEAD: ["HEAD_UPPER"],
-  ARMOR: ["CHEST"],
-  CHEST: ["ARMOR"],
+  HEAD_UPPER: ["HEAD", "HEADWEAR"],
+  HEAD: ["HEAD_UPPER", "HEADWEAR"],
+  HEADWEAR: ["HEAD", "HEAD_UPPER"],
+  ARMOR: ["CHEST", "OUTFIT"],
+  CHEST: ["ARMOR", "OUTFIT"],
+  OUTFIT: ["CHEST", "ARMOR"],
   FOOTGEAR: ["LEGS"],
   LEGS: ["FOOTGEAR"],
-  RIGHT_HAND: ["MAIN_HAND"],
-  MAIN_HAND: ["RIGHT_HAND"],
-  LEFT_HAND: ["OFF_HAND"],
-  OFF_HAND: ["LEFT_HAND"],
-  GARMENT: ["BACK"],
-  BACK: ["GARMENT"],
+  RIGHT_HAND: ["MAIN_HAND", "MAIN_TOOL"],
+  MAIN_HAND: ["RIGHT_HAND", "MAIN_TOOL"],
+  MAIN_TOOL: ["MAIN_HAND", "RIGHT_HAND"],
+  LEFT_HAND: ["OFF_HAND", "OFF_TOOL"],
+  OFF_HAND: ["LEFT_HAND", "OFF_TOOL"],
+  OFF_TOOL: ["OFF_HAND", "LEFT_HAND"],
+  GARMENT: ["BACK", "BACKPACK_CAPE"],
+  BACK: ["GARMENT", "BACKPACK", "BACKPACK_CAPE"],
+  BACKPACK: ["BACK", "BACKPACK_CAPE"],
+  BACKPACK_CAPE: ["BACK", "GARMENT", "BACKPACK"],
+  FAMILIAR: ["PET_FAMILIAR", "ACCESSORY"],
+  PET_FAMILIAR: ["FAMILIAR"],
 };
 
 // =========================================================================
@@ -233,7 +264,7 @@ export function getCombinedStats(
   let itemStreakProtection = 0;
   let itemCoinBonus = 0;
 
-  // Resolve precedência de slots equipados evitando sobreposição dupla entre slots RO e legado
+  // Resolve precedência de slots equipados evitando sobreposição dupla entre slots RO, Studio Fantasy e legado
   const effectiveSlots: Record<string, string> = {};
   for (const [slot, id] of Object.entries(equipment)) {
     if (id) effectiveSlots[slot] = id;
@@ -241,8 +272,20 @@ export function getCombinedStats(
   if (effectiveSlots[EquipmentSlot.HEAD_UPPER] && effectiveSlots["HEAD"]) {
     delete effectiveSlots["HEAD"];
   }
+  if (effectiveSlots["HEADWEAR"] && effectiveSlots["HEAD"]) {
+    delete effectiveSlots["HEAD"];
+  }
+  if (effectiveSlots["HEADWEAR"] && effectiveSlots[EquipmentSlot.HEAD_UPPER]) {
+    delete effectiveSlots[EquipmentSlot.HEAD_UPPER];
+  }
   if (effectiveSlots[EquipmentSlot.ARMOR] && effectiveSlots["CHEST"]) {
     delete effectiveSlots["CHEST"];
+  }
+  if (effectiveSlots["OUTFIT"] && effectiveSlots["CHEST"]) {
+    delete effectiveSlots["CHEST"];
+  }
+  if (effectiveSlots["OUTFIT"] && effectiveSlots[EquipmentSlot.ARMOR]) {
+    delete effectiveSlots[EquipmentSlot.ARMOR];
   }
   if (effectiveSlots[EquipmentSlot.FOOTGEAR] && effectiveSlots["LEGS"]) {
     delete effectiveSlots["LEGS"];
@@ -250,11 +293,32 @@ export function getCombinedStats(
   if (effectiveSlots[EquipmentSlot.RIGHT_HAND] && effectiveSlots["MAIN_HAND"]) {
     delete effectiveSlots["MAIN_HAND"];
   }
+  if (effectiveSlots["MAIN_TOOL"] && effectiveSlots["MAIN_HAND"]) {
+    delete effectiveSlots["MAIN_HAND"];
+  }
+  if (effectiveSlots["MAIN_TOOL"] && effectiveSlots[EquipmentSlot.RIGHT_HAND]) {
+    delete effectiveSlots[EquipmentSlot.RIGHT_HAND];
+  }
   if (effectiveSlots[EquipmentSlot.LEFT_HAND] && effectiveSlots["OFF_HAND"]) {
     delete effectiveSlots["OFF_HAND"];
   }
+  if (effectiveSlots["OFF_TOOL"] && effectiveSlots["OFF_HAND"]) {
+    delete effectiveSlots["OFF_HAND"];
+  }
+  if (effectiveSlots["OFF_TOOL"] && effectiveSlots[EquipmentSlot.LEFT_HAND]) {
+    delete effectiveSlots[EquipmentSlot.LEFT_HAND];
+  }
   if (effectiveSlots[EquipmentSlot.GARMENT] && effectiveSlots["BACK"]) {
     delete effectiveSlots["BACK"];
+  }
+  if (effectiveSlots["BACKPACK_CAPE"] && effectiveSlots["BACK"]) {
+    delete effectiveSlots["BACK"];
+  }
+  if (effectiveSlots["BACKPACK_CAPE"] && effectiveSlots[EquipmentSlot.GARMENT]) {
+    delete effectiveSlots[EquipmentSlot.GARMENT];
+  }
+  if (effectiveSlots["FAMILIAR"] && effectiveSlots[EquipmentSlot.PET_FAMILIAR]) {
+    delete effectiveSlots[EquipmentSlot.PET_FAMILIAR];
   }
 
   for (const [slot, itemId] of Object.entries(effectiveSlots)) {

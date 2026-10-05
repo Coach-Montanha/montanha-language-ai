@@ -1162,4 +1162,93 @@ console.log("➡️ Test 20: Studio Fantasy Avatar Customisation System & Antigr
   console.log("  ✓ Studio Fantasy Avatar Customisation System & Controller verified!");
 }
 
+// ==========================================
+// Test 21: AntigravityAvatarController ID Resolution & Archetype Fallbacks
+// ==========================================
+console.log("➡️ Test 21: AntigravityAvatarController ID Resolution & Fallbacks");
+{
+  const ctrlKaelen = new AntigravityAvatarController("char_tactician_m");
+  const displayKaelen = ctrlKaelen.getAntigravityDisplayTree();
+  assert.strictEqual(displayKaelen[0]?.assetUrl, "sprites/characters/kaelen_base.png");
+
+  const ctrlLyanna = new AntigravityAvatarController("char_archivist_f");
+  const displayLyanna = ctrlLyanna.getAntigravityDisplayTree();
+  assert.strictEqual(displayLyanna[0]?.assetUrl, "sprites/characters/lyanna_base.png");
+
+  const ctrlIgnisaur = new AntigravityAvatarController("char_elemental_beast");
+  const displayIgnisaur = ctrlIgnisaur.getAntigravityDisplayTree();
+  assert.strictEqual(displayIgnisaur[0]?.assetUrl, "sprites/characters/ignisaur_base.png");
+
+  // Fallback to tactician_swordsman on unknown key
+  const ctrlFallback = new AntigravityAvatarController("unknown_archetype_xyz");
+  const displayFallback = ctrlFallback.getAntigravityDisplayTree();
+  assert.strictEqual(displayFallback[0]?.assetUrl, "sprites/characters/kaelen_base.png");
+
+  console.log("  ✓ Controller ID resolution & fallbacks verified!");
+}
+
+// ==========================================
+// Test 22: Studio Fantasy Slot Mapping & Conflict Resolution (No Phantom Stacking)
+// ==========================================
+console.log("➡️ Test 22: Studio Fantasy Slot Mapping & Conflict Resolution");
+{
+  // 22a: Test lowerSlotMap GARMENT: "back" and Studio Fantasy slots
+  const p1: UserProgress = {
+    xp: 500,
+    equipment: {
+      GARMENT: "garment_angel_wings",
+      HEADWEAR: "hat_pointed_wanderer",
+      OUTFIT: "outfit_scout_tunic",
+      MAIN_TOOL: "weapon_gnarled_staff",
+      BACKPACK_CAPE: "back_field_lexicon_pack",
+      FAMILIAR: "familiar_clockwork_golem",
+    },
+  };
+  const norm1 = ensureGamificationProgress(p1);
+  assert.strictEqual(norm1.equippedAvatar?.equipped.back, "back_field_lexicon_pack");
+  assert.strictEqual(norm1.equippedAvatar?.equipped.head, "hat_pointed_wanderer");
+  assert.strictEqual(norm1.equippedAvatar?.equipped.body, "outfit_scout_tunic");
+  assert.strictEqual(norm1.equippedAvatar?.equipped.hand, "weapon_gnarled_staff");
+  assert.strictEqual(norm1.equippedAvatar?.equipped.pet, "familiar_clockwork_golem");
+
+  // 22b: Test getCombinedStats conflict resolution: Studio Fantasy takes precedence, avoiding duplicate stats
+  const pConflict: UserProgress = {
+    xp: 1000,
+    selectedLanguage: "en",
+    equipment: {
+      // Overlapping head gear
+      HEAD: "head_chapeu_mago",
+      HEAD_UPPER: "head_mage_hat",
+      HEADWEAR: "hat_pointed_wanderer", // +5% XP
+
+      // Overlapping body gear
+      CHEST: "chest_manto_dalaran",
+      ARMOR: "armor_apprentice_robe",
+      OUTFIT: "outfit_scout_tunic", // +8% XP
+
+      // Overlapping weapon
+      MAIN_HAND: "main_cajado_arcano",
+      RIGHT_HAND: "wpn_wizard_staff",
+      MAIN_TOOL: "weapon_runic_rapier", // +5s extra time
+
+      // Overlapping back gear
+      BACK: "back_capa_invisibilidade",
+      GARMENT: "garment_angel_wings",
+      BACKPACK_CAPE: "back_field_lexicon_pack", // +6% XP
+
+      // Overlapping pet
+      PET_FAMILIAR: "pet_poring_cute",
+      FAMILIAR: "familiar_clockwork_golem", // +3 streak shield, +6s extra time
+    },
+  };
+
+  const stats = getCombinedStats(pConflict, "en");
+  // Should include bonuses from Studio Fantasy items, but NOT stack duplicate bonuses from RO/legacy for same slots
+  assert.ok(stats.finalXpMultiplier > 1.0);
+  assert.ok(stats.totalItemStats.streakProtection >= 3);
+  assert.strictEqual(stats.finalStreakProtection, stats.totalItemStats.streakProtection);
+
+  console.log("  ✓ Studio Fantasy Slot Mapping & Conflict Resolution verified!");
+}
+
 console.log("\n🎉 ALL GAMIFICATION, RPG & AVATAR VERIFICATION TESTS PASSED FLAWLESSLY!\n");

@@ -83,36 +83,30 @@ interface PaperDollSlotDef {
 }
 
 const RO_PAPER_DOLL_SLOTS: PaperDollSlotDef[] = [
-  { slotKey: EquipmentSlot.HEAD_UPPER, fallbackKeys: ["HEAD"], label: "Chapéu RO", icon: "🐰" },
-  { slotKey: EquipmentSlot.HEAD_MIDDLE, fallbackKeys: ["eyes"], label: "Óculos RO", icon: "👓" },
-  { slotKey: EquipmentSlot.HEAD_LOWER, fallbackKeys: ["head_lower"], label: "Boca RO", icon: "🍃" },
-  { slotKey: EquipmentSlot.ARMOR, fallbackKeys: ["CHEST", "body"], label: "Armadura RO", icon: "👘" },
-  { slotKey: EquipmentSlot.GARMENT, fallbackKeys: ["BACK", "back"], label: "Asas & Capas RO", icon: "🪽" },
-  { slotKey: EquipmentSlot.FOOTGEAR, fallbackKeys: ["LEGS", "legs"], label: "Botas RO", icon: "🥾" },
-  { slotKey: EquipmentSlot.RIGHT_HAND, fallbackKeys: ["MAIN_HAND", "hand"], label: "Arma RO", icon: "🔨" },
-  { slotKey: EquipmentSlot.LEFT_HAND, fallbackKeys: ["OFF_HAND", "off_hand"], label: "Escudo RO", icon: "🛡️" },
-  { slotKey: EquipmentSlot.BACKPACK, fallbackKeys: ["backpack"], label: "Mochila RO", icon: "📦" },
-  { slotKey: EquipmentSlot.PET_FAMILIAR, fallbackKeys: ["pet"], label: "Pet Companheiro", icon: "🐣" },
+  { slotKey: EquipmentSlot.HEAD_UPPER, fallbackKeys: ["HEAD", "HEADWEAR"], label: "Chapéu / Capuz", icon: "🎩" },
+  { slotKey: EquipmentSlot.HEAD_MIDDLE, fallbackKeys: ["eyes"], label: "Óculos / Viseira", icon: "👓" },
+  { slotKey: EquipmentSlot.HEAD_LOWER, fallbackKeys: ["head_lower"], label: "Boca / Amuleto", icon: "🍃" },
+  { slotKey: EquipmentSlot.ARMOR, fallbackKeys: ["CHEST", "body", "OUTFIT"], label: "Traje / Armadura", icon: "🥋" },
+  { slotKey: EquipmentSlot.GARMENT, fallbackKeys: ["BACK", "back", "BACKPACK_CAPE"], label: "Capa & Asas", icon: "🪽" },
+  { slotKey: EquipmentSlot.FOOTGEAR, fallbackKeys: ["LEGS", "legs"], label: "Botas / Calçado", icon: "👢" },
+  { slotKey: EquipmentSlot.RIGHT_HAND, fallbackKeys: ["MAIN_HAND", "hand", "MAIN_TOOL"], label: "Arma / Ferramenta", icon: "⚔️" },
+  { slotKey: EquipmentSlot.LEFT_HAND, fallbackKeys: ["OFF_HAND", "off_hand", "OFF_TOOL"], label: "Escudo / Grimório", icon: "🛡️" },
+  { slotKey: EquipmentSlot.BACKPACK, fallbackKeys: ["backpack", "BACKPACK_CAPE"], label: "Mochila / Alforge", icon: "🎒" },
+  { slotKey: EquipmentSlot.PET_FAMILIAR, fallbackKeys: ["pet", "FAMILIAR"], label: "Familiar & Mascote", icon: "🐣" },
   { slotKey: "ACCESSORY", fallbackKeys: ["accessory"], label: "Relíquia / Acessório", icon: "💎" },
 ];
 
 const SLOT_TABS: { id: string; label: string; icon: string }[] = [
   { id: "all", label: "Tudo", icon: "✨" },
-  { id: "archetype", label: "Heróis", icon: "🧙‍♂️" },
-  { id: EquipmentSlot.HEAD_UPPER, label: "Chapéus RO", icon: "🐰" },
-  { id: EquipmentSlot.HEAD_LOWER, label: "Boca RO", icon: "🍃" },
-  { id: EquipmentSlot.ARMOR, label: "Armaduras RO", icon: "👘" },
-  { id: EquipmentSlot.GARMENT, label: "Asas & Capas RO", icon: "🪽" },
-  { id: EquipmentSlot.BACKPACK, label: "Mochilas RO", icon: "📦" },
-  { id: EquipmentSlot.RIGHT_HAND, label: "Armas RO", icon: "🔨" },
-  { id: EquipmentSlot.PET_FAMILIAR, label: "Pets RO", icon: "🐣" },
-  { id: "HEAD", label: "Cabeça", icon: "🎩" },
-  { id: "CHEST", label: "Peitoral", icon: "🥋" },
-  { id: "LEGS", label: "Pernas", icon: "👢" },
-  { id: "MAIN_HAND", label: "Mão Principal", icon: "⚔️" },
-  { id: "OFF_HAND", label: "Mão Secundária", icon: "🛡️" },
-  { id: "BACK", label: "Costas", icon: "🎒" },
-  { id: "ACCESSORY", label: "Acessório", icon: "💎" },
+  { id: "HEAD", label: "Chapéus & Capuzes", icon: "🎩" },
+  { id: "CHEST", label: "Trajes & Túnicas", icon: "👘" },
+  { id: "LEGS", label: "Botas & Pernas", icon: "👢" },
+  { id: "MAIN_HAND", label: "Armas & Cajados", icon: "⚔️" },
+  { id: "OFF_HAND", label: "Escudos & Grimórios", icon: "🛡️" },
+  { id: "BACK", label: "Capas & Mochilas", icon: "🎒" },
+  { id: "PET", label: "Familiares & Mascotes", icon: "🐣" },
+  { id: "ACCESSORY", label: "Relíquias & Acessórios", icon: "💎" },
+  { id: "archetype", label: "Galeria de Heróis", icon: "🧙‍♂️" },
 ];
 
 const RARITY_COLORS: Record<ItemRarity, { badge: string; border: string }> = {
@@ -170,25 +164,18 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
   const [previewState, setPreviewState] = useState<AvatarAnimationState>("idle");
 
   const filteredItems = fullShopCatalog.filter((item) => {
-    // Filtro por slot com mapeamento bidirecional entre sistema RO, Studio Fantasy e legado
+    // Filtro por slot unificado com mapeamento entre sistema Studio Fantasy, RO e legado
     if (activeSlot !== "all" && activeSlot !== "archetype") {
       const directMatch = item.slot === activeSlot;
       const mappedMatch =
-        (activeSlot === "HEAD" && (item.slot === EquipmentSlot.HEAD_UPPER || item.slot === EquipmentSlot.HEAD_LOWER || item.slot === EquipmentSlot.HEAD_MIDDLE || item.slot === "HEADWEAR")) ||
-        (activeSlot === EquipmentSlot.HEAD_UPPER && (item.slot === "HEAD" || item.slot === "HEADWEAR")) ||
-        (activeSlot === "CHEST" && (item.slot === EquipmentSlot.ARMOR || item.slot === "OUTFIT")) ||
-        (activeSlot === EquipmentSlot.ARMOR && (item.slot === "CHEST" || item.slot === "OUTFIT")) ||
-        (activeSlot === "BACK" && (item.slot === EquipmentSlot.GARMENT || item.slot === EquipmentSlot.BACKPACK || item.slot === "BACKPACK_CAPE")) ||
-        (activeSlot === EquipmentSlot.GARMENT && (item.slot === "BACK" || item.slot === "BACKPACK_CAPE")) ||
-        (activeSlot === EquipmentSlot.BACKPACK && (item.slot === "BACK" || item.slot === "BACKPACK_CAPE")) ||
-        (activeSlot === "MAIN_HAND" && (item.slot === EquipmentSlot.RIGHT_HAND || item.slot === "MAIN_TOOL")) ||
-        (activeSlot === EquipmentSlot.RIGHT_HAND && (item.slot === "MAIN_HAND" || item.slot === "MAIN_TOOL")) ||
-        (activeSlot === "OFF_HAND" && (item.slot === EquipmentSlot.LEFT_HAND || item.slot === "OFF_TOOL")) ||
-        (activeSlot === EquipmentSlot.LEFT_HAND && (item.slot === "OFF_HAND" || item.slot === "OFF_TOOL")) ||
-        (activeSlot === "ACCESSORY" && (item.slot === EquipmentSlot.PET_FAMILIAR || item.slot === "FAMILIAR")) ||
-        (activeSlot === EquipmentSlot.PET_FAMILIAR && (item.slot === "ACCESSORY" || item.slot === "FAMILIAR")) ||
-        (activeSlot === "LEGS" && item.slot === EquipmentSlot.FOOTGEAR) ||
-        (activeSlot === EquipmentSlot.FOOTGEAR && item.slot === "LEGS");
+        (activeSlot === "HEAD" && (item.slot === "HEAD" || item.slot === EquipmentSlot.HEAD_UPPER || item.slot === EquipmentSlot.HEAD_LOWER || item.slot === EquipmentSlot.HEAD_MIDDLE || item.slot === "HEADWEAR")) ||
+        (activeSlot === "CHEST" && (item.slot === "CHEST" || item.slot === EquipmentSlot.ARMOR || item.slot === "OUTFIT")) ||
+        (activeSlot === "LEGS" && (item.slot === "LEGS" || item.slot === EquipmentSlot.FOOTGEAR)) ||
+        (activeSlot === "MAIN_HAND" && (item.slot === "MAIN_HAND" || item.slot === EquipmentSlot.RIGHT_HAND || item.slot === "MAIN_TOOL")) ||
+        (activeSlot === "OFF_HAND" && (item.slot === "OFF_HAND" || item.slot === EquipmentSlot.LEFT_HAND || item.slot === "OFF_TOOL")) ||
+        (activeSlot === "BACK" && (item.slot === "BACK" || item.slot === EquipmentSlot.GARMENT || item.slot === EquipmentSlot.BACKPACK || item.slot === "BACKPACK_CAPE")) ||
+        (activeSlot === "PET" && (item.slot === EquipmentSlot.PET_FAMILIAR || item.slot === "FAMILIAR")) ||
+        (activeSlot === "ACCESSORY" && item.slot === "ACCESSORY");
 
       if (!directMatch && !mappedMatch) return false;
     }
@@ -388,7 +375,57 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
             />
           </div>
 
-          {/* Seletor de Estados de Animação */}
+          {/* ============================================================ */}
+          {/* CAIXA DE TEXTO DO AVATAR (BALÃO DE DIÁLOGO EM ALTO CONTRASTE) */}
+          {/* ============================================================ */}
+          <div className="w-full relative rounded-2xl border-2 border-indigo-300 dark:border-indigo-600 bg-slate-50 dark:bg-slate-900 p-4 shadow-md space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-sm">💬</span>
+                <span className="text-xs font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-wider truncate">
+                  {selectedChar?.name || "Herói Aventureiro"}
+                </span>
+              </div>
+              <Badge className="bg-indigo-600 text-white text-[10px] font-black uppercase px-2 py-0.5 shrink-0 shadow-xs">
+                {previewState === "speaking"
+                  ? "Falando"
+                  : previewState === "listening"
+                  ? "Ouvindo"
+                  : previewState === "celebrating"
+                  ? "Vitória!"
+                  : previewState === "thinking"
+                  ? "Pensando"
+                  : "Voz Ativa"}
+              </Badge>
+            </div>
+            <p className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white leading-relaxed select-text">
+              {previewState === "speaking"
+                ? selectedChar?.avatarGreeting || "Pronto para treinar pronúncia e novas expressões com maestria!"
+                : previewState === "listening"
+                ? "Estou ouvindo você com atenção! Fale com naturalidade para refinarmos sua entonação."
+                : previewState === "celebrating"
+                ? "Excelente progresso! A cada lição e diálogo completado seu vocabulário se torna lendário!"
+                : previewState === "thinking"
+                ? "Analisando nuances sintáticas e a gramática ideal para o contexto da conversa..."
+                : selectedChar?.avatarGreeting || "Salve, estudioso! Equipamentos aumentam seu ganho de XP e moedas em cada treino."}
+            </p>
+            <div className="flex items-center justify-between pt-1.5 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 font-bold">
+              <span className="truncate mr-1">
+                ⚡ Afinidade: <strong className="text-slate-950 dark:text-white font-black">{selectedChar?.nativeLanguageBonus}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  playOptionSelectSound();
+                  toast.info(`Voz de ${selectedChar?.name || "Herói"} ativada!`);
+                }}
+                className="text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer font-extrabold flex items-center gap-1 text-[11px] shrink-0"
+              >
+                <Volume2 className="w-3.5 h-3.5" />
+                <span>Ouvir</span>
+              </button>
+            </div>
+          </div>
           <div className="w-full pt-2 border-t border-slate-100 dark:border-slate-800">
             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2 text-center">
               Testar Animações do Avatar
@@ -591,10 +628,15 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                     {char.lore}
                   </p>
 
-                  <div className="pt-1">
-                    <span className="text-[10px] font-bold text-amber-950 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700/50">
-                      Afinidade: {char.nativeLanguageBonus} (+15% XP)
+                  <div className="pt-1 space-y-2">
+                    <span className="text-[10px] font-bold text-amber-950 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700/50 block truncate">
+                      ⚡ Afinidade: {char.nativeLanguageBonus} (+15% XP)
                     </span>
+                    {char.avatarGreeting && (
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-800 dark:text-slate-200 italic leading-relaxed">
+                        💬 "{char.avatarGreeting}"
+                      </div>
+                    )}
                   </div>
                 </div>
 

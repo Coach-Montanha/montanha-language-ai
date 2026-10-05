@@ -144,6 +144,9 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
           </filter>
         </defs>
 
+        {/* 0. CAMADA DE SOMBRA NO CHÃO (SHADOW LAYER = 0) */}
+        <ellipse cx="100" cy="188" rx="46" ry="6" fill="#0f172a" opacity="0.22" />
+
         {/* 1. CAMADA DE AURA / BACKGROUND */}
         {renderAuraLayer(auraId, primaryColor, state, ctx)}
 
@@ -960,22 +963,33 @@ function renderBaseArchetype(
         <path d="M 62 48 L 74 32 L 88 48" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
         <path d="M 104 46 L 116 30 L 128 46" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
         <path d="M 54 75 Q 100 52 146 75 Q 125 60 100 60 Q 75 60 54 75 Z" fill="#292524" />
-        <ellipse cx="80" cy="88" rx="7.5" ry="8" fill="#0f172a" />
-        <ellipse cx="120" cy="88" rx="7.5" ry="8" fill="#0f172a" />
-        <ellipse cx="80" cy="89" rx="6" ry="6.5" fill="#0284c7" />
-        <ellipse cx="120" cy="89" rx="6" ry="6.5" fill="#0284c7" />
-        <circle cx="80" cy="88" r="3.5" fill="#082f49" />
-        <circle cx="120" cy="88" r="3.5" fill="#082f49" />
-        <circle cx="77" cy="85" r="2.8" fill="#fff" />
-        <circle cx="117" cy="85" r="2.8" fill="#fff" />
-        <circle cx="83" cy="91" r="1.4" fill="#fff" />
-        <circle cx="123" cy="91" r="1.4" fill="#fff" />
+        {state === "celebrating" ? (
+          <g>
+            <path d="M 72 90 Q 80 82 88 90" stroke="#082f49" strokeWidth="3" strokeLinecap="round" fill="none" />
+            <path d="M 112 90 Q 120 82 128 90" stroke="#082f49" strokeWidth="3" strokeLinecap="round" fill="none" />
+          </g>
+        ) : (
+          <g>
+            <ellipse cx="80" cy="88" rx="7.5" ry="8" fill="#0f172a" />
+            <ellipse cx="120" cy="88" rx="7.5" ry="8" fill="#0f172a" />
+            <ellipse cx="80" cy="89" rx="6" ry="6.5" fill="#0284c7" />
+            <ellipse cx="120" cy="89" rx="6" ry="6.5" fill="#0284c7" />
+            <circle cx={state === "thinking" ? 82 : 80} cy={state === "thinking" ? 86 : 88} r="3.5" fill="#082f49" />
+            <circle cx={state === "thinking" ? 122 : 120} cy={state === "thinking" ? 86 : 88} r="3.5" fill="#082f49" />
+            <circle cx={state === "thinking" ? 79 : 77} cy={state === "thinking" ? 83 : 85} r="2.8" fill="#fff" />
+            <circle cx={state === "thinking" ? 119 : 117} cy={state === "thinking" ? 83 : 85} r="2.8" fill="#fff" />
+            <circle cx={state === "thinking" ? 84 : 83} cy={state === "thinking" ? 89 : 91} r="1.4" fill="#fff" />
+            <circle cx={state === "thinking" ? 124 : 123} cy={state === "thinking" ? 89 : 91} r="1.4" fill="#fff" />
+          </g>
+        )}
         <path d="M 70 76 Q 80 72 90 75" stroke="#1c1917" strokeWidth="3" strokeLinecap="round" fill="none" />
         <path d="M 110 75 Q 120 72 130 76" stroke="#1c1917" strokeWidth="3" strokeLinecap="round" fill="none" />
         <ellipse cx="72" cy="98" rx="5" ry="2.5" fill="#f43f5e" opacity="0.35" />
         <ellipse cx="128" cy="98" rx="5" ry="2.5" fill="#f43f5e" opacity="0.35" />
         {isSpeaking ? (
           <ellipse cx="100" cy="108" rx="8" ry="6" fill="#be123c" />
+        ) : state === "celebrating" ? (
+          <path d="M 90 105 Q 100 115 110 105" stroke="#881337" strokeWidth="2.8" strokeLinecap="round" fill="none" />
         ) : (
           <path d="M 92 106 Q 100 112 108 106" stroke="#881337" strokeWidth="2.5" strokeLinecap="round" fill="none" />
         )}
@@ -1003,20 +1017,31 @@ function renderBaseArchetype(
         <path d="M 50 72 Q 36 105 38 152 Q 46 115 56 84 Z" fill="#a855f7" />
         <path d="M 150 72 Q 164 105 162 152 Q 154 115 144 84 Z" fill="#a855f7" />
         <path d="M 68 114 Q 100 128 132 114 Q 100 120 68 114 Z" fill="#e9d5ff" opacity="0.75" filter={glow} />
-        <ellipse cx="80" cy="88" rx="7" ry="7.5" fill="#581c87" />
-        <ellipse cx="120" cy="88" rx="7.5" ry="7.5" fill="#581c87" />
-        <ellipse cx="80" cy="89" rx="5.5" ry="6" fill="#9333ea" />
-        <ellipse cx="120" cy="89" rx="5.5" ry="6" fill="#9333ea" />
-        <circle cx="78" cy="85" r="2.6" fill="#fff" />
-        <circle cx="118" cy="85" r="2.6" fill="#fff" />
-        <circle cx="82" cy="90" r="1.3" fill="#fdf4ff" />
-        <circle cx="122" cy="90" r="1.3" fill="#fdf4ff" />
+        {state === "celebrating" ? (
+          <g>
+            <path d="M 72 90 Q 80 82 88 90" stroke="#581c87" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+            <path d="M 112 90 Q 120 82 128 90" stroke="#581c87" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+          </g>
+        ) : (
+          <g>
+            <ellipse cx="80" cy="88" rx="7" ry="7.5" fill="#581c87" />
+            <ellipse cx="120" cy="88" rx="7.5" ry="7.5" fill="#581c87" />
+            <ellipse cx="80" cy="89" rx="5.5" ry="6" fill="#9333ea" />
+            <ellipse cx="120" cy="89" rx="5.5" ry="6" fill="#9333ea" />
+            <circle cx={state === "thinking" ? 82 : 78} cy={state === "thinking" ? 83 : 85} r="2.6" fill="#fff" />
+            <circle cx={state === "thinking" ? 122 : 118} cy={state === "thinking" ? 83 : 85} r="2.6" fill="#fff" />
+            <circle cx={state === "thinking" ? 83 : 82} cy={state === "thinking" ? 88 : 90} r="1.3" fill="#fdf4ff" />
+            <circle cx={state === "thinking" ? 123 : 122} cy={state === "thinking" ? 88 : 90} r="1.3" fill="#fdf4ff" />
+          </g>
+        )}
         <path d="M 72 80 Q 80 77 88 80" stroke="#6b21a8" strokeWidth="2.2" strokeLinecap="round" fill="none" />
         <path d="M 112 80 Q 120 77 128 80" stroke="#6b21a8" strokeWidth="2.2" strokeLinecap="round" fill="none" />
         <ellipse cx="72" cy="97" rx="6" ry="3" fill="#f472b6" opacity="0.6" />
         <ellipse cx="128" cy="97" rx="6" ry="3" fill="#f472b6" opacity="0.6" />
         {isSpeaking ? (
           <ellipse cx="100" cy="107" rx="7" ry="5.5" fill="#be123c" />
+        ) : state === "celebrating" ? (
+          <path d="M 93 105 Q 100 113 107 105" stroke="#db2777" strokeWidth="2.2" strokeLinecap="round" fill="none" />
         ) : (
           <path d="M 94 106 Q 100 110 106 106" stroke="#db2777" strokeWidth="2" strokeLinecap="round" fill="none" />
         )}
@@ -1049,14 +1074,25 @@ function renderBaseArchetype(
         <polygon points="90,88 110,88 100,108" fill="#9a3412" />
         <circle cx="96" cy="102" r="1.5" fill="#431407" />
         <circle cx="104" cy="102" r="1.5" fill="#431407" />
-        <ellipse cx="78" cy="84" rx="8" ry="6.5" fill="#fbbf24" stroke="#7c2d12" strokeWidth="1.5" filter={glow} />
-        <ellipse cx="122" cy="84" rx="8" ry="6.5" fill="#fbbf24" stroke="#7c2d12" strokeWidth="1.5" filter={glow} />
-        <ellipse cx="78" cy="84" rx="2.5" ry="5.5" fill="#431407" />
-        <ellipse cx="122" cy="84" rx="2.5" ry="5.5" fill="#431407" />
-        <circle cx="76" cy="82" r="2" fill="#fff" />
-        <circle cx="120" cy="82" r="2" fill="#fff" />
+        {state === "celebrating" ? (
+          <g>
+            <path d="M 72 84 Q 78 76 84 84" stroke="#7c2d12" strokeWidth="3" strokeLinecap="round" fill="none" />
+            <path d="M 116 84 Q 122 76 128 84" stroke="#7c2d12" strokeWidth="3" strokeLinecap="round" fill="none" />
+          </g>
+        ) : (
+          <g>
+            <ellipse cx="78" cy="84" rx="8" ry="6.5" fill="#fbbf24" stroke="#7c2d12" strokeWidth="1.5" filter={glow} />
+            <ellipse cx="122" cy="84" rx="8" ry="6.5" fill="#fbbf24" stroke="#7c2d12" strokeWidth="1.5" filter={glow} />
+            <ellipse cx={state === "thinking" ? 80 : 78} cy={state === "thinking" ? 82 : 84} rx="2.5" ry="5.5" fill="#431407" />
+            <ellipse cx={state === "thinking" ? 124 : 122} cy={state === "thinking" ? 82 : 84} rx="2.5" ry="5.5" fill="#431407" />
+            <circle cx={state === "thinking" ? 78 : 76} cy={state === "thinking" ? 80 : 82} r="2" fill="#fff" />
+            <circle cx={state === "thinking" ? 122 : 120} cy={state === "thinking" ? 80 : 82} r="2" fill="#fff" />
+          </g>
+        )}
         {isSpeaking ? (
           <ellipse cx="100" cy="112" rx="7" ry="5" fill="#ea580c" />
+        ) : state === "celebrating" ? (
+          <path d="M 90 108 Q 100 118 110 108" stroke="#f97316" strokeWidth="3" strokeLinecap="round" fill="none" />
         ) : (
           <path d="M 92 110 Q 100 115 108 110" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" fill="none" />
         )}
