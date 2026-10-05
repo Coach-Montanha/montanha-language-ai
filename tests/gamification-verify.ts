@@ -12,6 +12,7 @@ import {
   equipShopItem,
   unequipShopSlot,
   selectRpgCharacter,
+  equipStudioFantasyKit,
 } from "../src/services/gamification";
 import {
   AVATAR_ITEMS,
@@ -1249,6 +1250,52 @@ console.log("➡️ Test 22: Studio Fantasy Slot Mapping & Conflict Resolution")
   assert.strictEqual(stats.finalStreakProtection, stats.totalItemStats.streakProtection);
 
   console.log("  ✓ Studio Fantasy Slot Mapping & Conflict Resolution verified!");
+}
+
+// ==========================================
+// Test 23: equipStudioFantasyKit 1-Click Transformation & Catalog Verification
+// ==========================================
+console.log("➡️ Test 23: equipStudioFantasyKit 1-Click Transformation & Item Unlocks");
+{
+  const initialUser: UserProgress = {
+    xp: 300,
+    coins: 200,
+    selectedCharacterId: "valerius",
+  };
+
+  // 23a: Transform into Kaelen with full Studio Fantasy kit
+  const kaelenUser = equipStudioFantasyKit(initialUser, "kaelen");
+  assert.strictEqual(kaelenUser.selectedCharacterId, "char_tactician_m");
+  assert.strictEqual(kaelenUser.equippedAvatar?.archetype, "human");
+  assert.strictEqual(kaelenUser.equippedAvatar?.subType, "char_tactician_m");
+  assert.strictEqual(kaelenUser.equipment?.HEADWEAR, "hat_pointed_wanderer");
+  assert.strictEqual(kaelenUser.equipment?.OUTFIT, "outfit_scout_tunic");
+  assert.strictEqual(kaelenUser.equipment?.MAIN_TOOL, "weapon_runic_rapier");
+  assert.strictEqual(kaelenUser.equipment?.BACKPACK_CAPE, "back_field_lexicon_pack");
+  assert.strictEqual(kaelenUser.equipment?.FAMILIAR, "familiar_clockwork_golem");
+  assert.ok(kaelenUser.unlockedAvatarItems?.includes("hat_pointed_wanderer"));
+  assert.ok(kaelenUser.unlockedAvatarItems?.includes("weapon_runic_rapier"));
+  assert.ok(kaelenUser.inventoryItemIds?.includes("back_field_lexicon_pack"));
+
+  // 23b: Transform into Lyanna with full Studio Fantasy kit
+  const lyannaUser = equipStudioFantasyKit(initialUser, "lyanna");
+  assert.strictEqual(lyannaUser.selectedCharacterId, "char_archivist_f");
+  assert.strictEqual(lyannaUser.equippedAvatar?.archetype, "human");
+  assert.strictEqual(lyannaUser.equippedAvatar?.subType, "char_archivist_f");
+  assert.strictEqual(lyannaUser.equipment?.HEADWEAR, "hood_silk_archivist");
+  assert.strictEqual(lyannaUser.equipment?.OUTFIT, "outfit_ceremonial_silks");
+  assert.strictEqual(lyannaUser.equipment?.MAIN_TOOL, "weapon_gnarled_staff");
+
+  // 23c: Transform into Ignisaur with full Studio Fantasy kit
+  const ignisaurUser = equipStudioFantasyKit(initialUser, "ignisaur");
+  assert.strictEqual(ignisaurUser.selectedCharacterId, "char_elemental_beast");
+  assert.strictEqual(ignisaurUser.equippedAvatar?.archetype, "monster");
+  assert.strictEqual(ignisaurUser.equippedAvatar?.subType, "char_elemental_beast");
+  assert.strictEqual(ignisaurUser.equipment?.HEADWEAR, null);
+  assert.strictEqual(ignisaurUser.equippedAvatar?.equipped.head, undefined);
+  assert.strictEqual(ignisaurUser.equipment?.OUTFIT, "outfit_ceremonial_silks");
+
+  console.log("  ✓ equipStudioFantasyKit 1-Click Transformation & Item Unlocks verified!");
 }
 
 console.log("\n🎉 ALL GAMIFICATION, RPG & AVATAR VERIFICATION TESTS PASSED FLAWLESSLY!\n");

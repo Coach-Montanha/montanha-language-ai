@@ -7,6 +7,7 @@ import {
   ALL_SLOT_TYPES,
   CombinedStats,
   EquipmentSlot,
+  AvatarArchetype,
 } from "@/types/avatar";
 import {
   DEFAULT_AVATAR_CONFIG,
@@ -697,6 +698,98 @@ export function setAvatarColors(
       ...currentConfig,
       primaryColor,
       secondaryColor: secondaryColor || currentConfig.secondaryColor,
+    },
+  };
+}
+
+export function equipStudioFantasyKit(
+  current: UserProgress,
+  heroId: "kaelen" | "lyanna" | "ignisaur" | string = "kaelen"
+): UserProgress {
+  const prepared = ensureGamificationProgress(current);
+  const heroKey = heroId.toLowerCase();
+
+  let selectedCharacterId = "char_tactician_m";
+  let subType = "char_tactician_m";
+  let archetype: AvatarArchetype = "human";
+  let primaryColor = "#38bdf8";
+  let secondaryColor = "#fbbf24";
+  let headItem: string | null = "hat_pointed_wanderer";
+  let outfitItem: string | null = "outfit_scout_tunic";
+  let weaponItem: string | null = "weapon_runic_rapier";
+  let backItem: string | null = "back_field_lexicon_pack";
+  let familiarItem: string | null = "familiar_clockwork_golem";
+
+  if (heroKey.includes("lyanna") || heroKey === "char_archivist_f" || heroKey === "hooded_archivist") {
+    selectedCharacterId = "char_archivist_f";
+    subType = "char_archivist_f";
+    archetype = "human";
+    primaryColor = "#c084fc";
+    secondaryColor = "#fbbf24";
+    headItem = "hood_silk_archivist";
+    outfitItem = "outfit_ceremonial_silks";
+    weaponItem = "weapon_gnarled_staff";
+  } else if (heroKey.includes("ignisaur") || heroKey === "char_elemental_beast" || heroKey === "mythic_elemental_mentor") {
+    selectedCharacterId = "char_elemental_beast";
+    subType = "char_elemental_beast";
+    archetype = "monster";
+    primaryColor = "#ea580c";
+    secondaryColor = "#fbbf24";
+    headItem = null;
+    outfitItem = "outfit_ceremonial_silks";
+    weaponItem = "weapon_gnarled_staff";
+  }
+
+  const kitItems = [headItem, outfitItem, weaponItem, backItem, familiarItem].filter(Boolean) as string[];
+  const unlocked = Array.from(new Set([...(prepared.unlockedAvatarItems || []), ...kitItems]));
+  const inventory = Array.from(new Set([...(prepared.inventoryItemIds || []), ...kitItems]));
+
+  const updatedEquipment = {
+    ...(prepared.equipment || {}),
+    HEADWEAR: headItem,
+    HEAD: headItem,
+    OUTFIT: outfitItem,
+    CHEST: outfitItem,
+    MAIN_TOOL: weaponItem,
+    MAIN_HAND: weaponItem,
+    BACKPACK_CAPE: backItem,
+    BACK: backItem,
+    FAMILIAR: familiarItem,
+  };
+
+  const updatedEquipped: AvatarConfig["equipped"] = {
+    ...(prepared.equippedAvatar?.equipped || {}),
+    ...(headItem ? { head: headItem } : {}),
+    HEAD: headItem,
+    HEADWEAR: headItem,
+    ...(outfitItem ? { body: outfitItem } : {}),
+    CHEST: outfitItem,
+    OUTFIT: outfitItem,
+    ...(weaponItem ? { hand: weaponItem } : {}),
+    MAIN_HAND: weaponItem,
+    MAIN_TOOL: weaponItem,
+    ...(backItem ? { back: backItem } : {}),
+    BACK: backItem,
+    BACKPACK_CAPE: backItem,
+    ...(familiarItem ? { pet: familiarItem } : {}),
+    FAMILIAR: familiarItem,
+  };
+  if (!headItem) {
+    delete updatedEquipped.head;
+  }
+
+  return {
+    ...prepared,
+    selectedCharacterId,
+    unlockedAvatarItems: unlocked,
+    inventoryItemIds: inventory,
+    equipment: updatedEquipment,
+    equippedAvatar: {
+      archetype,
+      subType,
+      primaryColor,
+      secondaryColor,
+      equipped: updatedEquipped,
     },
   };
 }

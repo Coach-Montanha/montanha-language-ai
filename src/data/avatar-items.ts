@@ -32,6 +32,15 @@ export const STARTER_UNLOCKED_ITEM_IDS = [
   "starter_adventurer_robe",
   "starter_quill",
   "starter_glow",
+  // Studio Fantasy Starter Items
+  "hat_pointed_wanderer",
+  "hood_silk_archivist",
+  "outfit_scout_tunic",
+  "outfit_ceremonial_silks",
+  "weapon_runic_rapier",
+  "weapon_gnarled_staff",
+  "back_field_lexicon_pack",
+  "familiar_clockwork_golem",
   ...STARTER_SHOP_ITEM_IDS,
 ];
 

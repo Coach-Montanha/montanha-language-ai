@@ -36,6 +36,7 @@ import {
   selectRpgCharacter,
   buyAvatarItem,
   equipAvatarItem,
+  equipStudioFantasyKit,
 } from "@/services/gamification";
 import {
   playSuccessSound,
@@ -229,6 +230,20 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
     });
   };
 
+  const handleEquipStudioKit = (heroId: "kaelen" | "lyanna" | "ignisaur" = "kaelen") => {
+    playSuccessSound();
+    const updated = equipStudioFantasyKit(prepared, heroId);
+    onUpdateProgress(updated);
+    const heroNames: Record<string, string> = {
+      kaelen: "Kaelen, o Espadachim Linguista",
+      lyanna: "Lyanna, a Maga de Véu",
+      ignisaur: "Ignisaur, a Chama Ancestral",
+    };
+    toast.success(`✨ Visual Studio Fantasy Ativado!`, {
+      description: `Transformado em ${heroNames[heroId]} com o kit Studio Fantasy completo equipado!`,
+    });
+  };
+
   const isEquipped = (itemId: string, slot: string) => {
     return currentEquipment[slot] === itemId;
   };
@@ -342,6 +357,57 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
             </span>
           </div>
           <Progress value={levelInfo.progressPercent} className="h-2 bg-slate-950/80" />
+        </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* NOVIDADE: VITRINE DESTAQUE STUDIO FANTASY (TRANSFORMAÇÃO 1-CLIQUE) */}
+      {/* ============================================================ */}
+      <div className="relative overflow-hidden rounded-3xl border-2 border-indigo-500/50 bg-gradient-to-r from-sky-950 via-indigo-950 to-purple-950 p-5 sm:p-6 text-white shadow-2xl">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-5">
+          <div className="space-y-2 text-center lg:text-left">
+            <div className="flex items-center justify-center lg:justify-start gap-2">
+              <Badge className="bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black text-xs px-2.5 py-0.5 shadow-sm">
+                NOVIDADE STUDIO FANTASY
+              </Badge>
+              <span className="text-xs text-sky-300 font-bold">Vetor 3D Shaded • Fidelidade Estúdio RPG</span>
+            </div>
+            <h3 className="text-lg sm:text-xl font-black text-white leading-tight">
+              Heróis e Mascotes Studio Fantasy com Visual de Alta Produção
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed">
+              Descubra Kaelen (o Espadachim Linguista), Lyanna (a Maga de Véu) e Ignisaur (a Chama Ancestral) com 
+              sombreamento volumétrico, asas em camadas e runas de sintaxe gravadas.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-2.5 shrink-0 w-full sm:w-auto">
+            <Button
+              onClick={() => handleEquipStudioKit("kaelen")}
+              className="w-full sm:w-auto bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 hover:from-sky-400 hover:via-indigo-500 hover:to-purple-500 text-white font-black text-xs h-11 px-5 rounded-2xl shadow-xl shadow-indigo-500/30 cursor-pointer transform hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300 animate-spin" />
+              <span>Transformar em Kaelen (Visual Completo Studio Fantasy)</span>
+            </Button>
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleEquipStudioKit("lyanna")}
+                className="flex-1 sm:flex-none border-purple-400/50 bg-purple-900/40 text-purple-200 hover:bg-purple-800/60 text-xs font-bold h-11 px-3.5 rounded-2xl cursor-pointer"
+              >
+                ✨ Lyanna Kit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleEquipStudioKit("ignisaur")}
+                className="flex-1 sm:flex-none border-amber-400/50 bg-amber-900/40 text-amber-200 hover:bg-amber-800/60 text-xs font-bold h-11 px-3.5 rounded-2xl cursor-pointer"
+              >
+                🔥 Ignisaur Kit
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -463,6 +529,17 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                 );
               })}
             </div>
+          </div>
+
+          {/* Atalho Studio Fantasy Rápido */}
+          <div className="w-full pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              onClick={() => handleEquipStudioKit("kaelen")}
+              className="w-full bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 hover:from-sky-400 hover:via-indigo-500 hover:to-purple-500 text-white font-extrabold text-xs py-2 rounded-xl shadow-md cursor-pointer transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-1 text-amber-300" />
+              <span>Vestir Kit Kaelen Studio Fantasy</span>
+            </Button>
           </div>
         </div>
 
@@ -640,19 +717,54 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                   </div>
                 </div>
 
-                <Button
-                  size="sm"
-                  variant={isCurrent ? "secondary" : "default"}
-                  disabled={isCurrent}
-                  onClick={() => handleSelectCharacter(char)}
-                  className={`w-full text-xs font-bold ${
-                    isCurrent
-                      ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-default"
-                      : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer shadow-sm"
-                  }`}
-                >
-                  {isCurrent ? "Herói Selecionado" : "Escolher Herói"}
-                </Button>
+                <div className="space-y-1.5">
+                  <Button
+                    size="sm"
+                    variant={isCurrent ? "secondary" : "default"}
+                    disabled={isCurrent}
+                    onClick={() => handleSelectCharacter(char)}
+                    className={`w-full text-xs font-bold ${
+                      isCurrent
+                        ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-default"
+                        : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer shadow-sm"
+                    }`}
+                  >
+                    {isCurrent ? "Herói Selecionado" : "Escolher Herói"}
+                  </Button>
+                  {(char.id === "char_tactician_m" || char.id.includes("kaelen")) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEquipStudioKit("kaelen")}
+                      className="w-full text-[11px] font-bold border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 cursor-pointer"
+                    >
+                      <Sparkles className="w-3 h-3 mr-1 text-amber-500" />
+                      Vestir Kit Completo Studio
+                    </Button>
+                  )}
+                  {(char.id === "char_archivist_f" || char.id.includes("lyanna")) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEquipStudioKit("lyanna")}
+                      className="w-full text-[11px] font-bold border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900 cursor-pointer"
+                    >
+                      <Sparkles className="w-3 h-3 mr-1 text-amber-500" />
+                      Vestir Kit Completo Studio
+                    </Button>
+                  )}
+                  {(char.id === "char_elemental_beast" || char.id.includes("ignisaur")) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEquipStudioKit("ignisaur")}
+                      className="w-full text-[11px] font-bold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900 cursor-pointer"
+                    >
+                      <Sparkles className="w-3 h-3 mr-1 text-amber-500" />
+                      Vestir Kit Completo Studio
+                    </Button>
+                  )}
+                </div>
               </div>
             );
           })}

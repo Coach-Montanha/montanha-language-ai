@@ -33,6 +33,7 @@ import {
   equipShopItem,
   unequipShopSlot,
   selectRpgCharacter,
+  equipStudioFantasyKit,
 } from "@/services/gamification";
 import {
   playSuccessSound,
@@ -284,6 +285,20 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
     });
   };
 
+  const handleEquipStudioKit = (heroId: "kaelen" | "lyanna" | "ignisaur" = "kaelen") => {
+    playSuccessSound();
+    const updated = equipStudioFantasyKit(prepared, heroId);
+    onUpdateProgress(updated);
+    const heroNames: Record<string, string> = {
+      kaelen: "Kaelen, o Espadachim Linguista",
+      lyanna: "Lyanna, a Maga de Véu",
+      ignisaur: "Ignisaur, a Chama Ancestral",
+    };
+    toast.success(`✨ Visual Studio Fantasy Equipado!`, {
+      description: `Transformado em ${heroNames[heroId]} com o kit Studio Fantasy completo!`,
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-3xl shadow-2xl">
@@ -307,6 +322,51 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
             Personalize seu herói com chapéus de viajante, mantos cerimoniais, rapieiras rúnicas e golens autômatos!
           </p>
         </DialogHeader>
+
+        {/* Banner de Destaque Studio Fantasy - Transformação em 1 Clique */}
+        <div className="relative overflow-hidden rounded-2xl border-2 border-indigo-500/50 bg-gradient-to-r from-sky-950 via-indigo-950 to-purple-950 p-4 text-white shadow-xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start gap-2">
+                <Badge className="bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black text-[10px] px-2 py-0.5">
+                  NOVIDADE STUDIO FANTASY
+                </Badge>
+                <span className="text-xs text-indigo-300 font-bold">Alta Definição Vetorial 3D</span>
+              </div>
+              <h3 className="text-sm sm:text-base font-black text-white">
+                Transforme seu Avatar no Herói Studio Fantasy Completo!
+              </h3>
+              <p className="text-[11px] text-slate-300 max-w-lg leading-relaxed">
+                Equipe Kaelen com Florete Rúnico, Túnica de Batedor, Chapéu de Peregrino e Alforge em um único clique.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2 shrink-0">
+              <Button
+                onClick={() => handleEquipStudioKit("kaelen")}
+                className="bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 hover:from-sky-400 hover:via-indigo-500 hover:to-purple-500 text-white font-extrabold text-xs h-9 px-3.5 rounded-xl shadow-lg cursor-pointer transform hover:scale-105 active:scale-95 transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-1 text-amber-300" />
+                <span>Kaelen Studio Kit</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleEquipStudioKit("lyanna")}
+                className="border-purple-400/50 bg-purple-900/40 text-purple-200 hover:bg-purple-800/60 text-xs font-bold h-9 px-3 rounded-xl cursor-pointer"
+              >
+                Lyanna Kit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleEquipStudioKit("ignisaur")}
+                className="border-amber-400/50 bg-amber-900/40 text-amber-200 hover:bg-amber-800/60 text-xs font-bold h-9 px-3 rounded-xl cursor-pointer"
+              >
+                Ignisaur Kit
+              </Button>
+            </div>
+          </div>
+        </div>
 
         {/* Topo: Visualização do Avatar Chibi & Bônus de Lições */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">

@@ -27,6 +27,21 @@ interface SvgContext {
   fireGrad: string;
   auraGlow: string;
   glowEffect: string;
+  angelingJelly: string;
+  angelingWing: string;
+  angelingHalo: string;
+  kaelenHair: string;
+  kaelenHairSheen: string;
+  kaelenArmor: string;
+  goldTrim: string;
+  silverBlade: string;
+  lyannaHair: string;
+  lyannaRobe: string;
+  ignisaurFire: string;
+  ignisaurHorn: string;
+  baphometHorn: string;
+  baphometEye: string;
+  skinShade: string;
 }
 
 export const ModularAvatar: React.FC<ModularAvatarProps> = ({
@@ -44,6 +59,14 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
   const primaryColor = config?.primaryColor || "#3b82f6";
   const secondaryColor = config?.secondaryColor || "#f59e0b";
   const eq = (config?.equipped || {}) as Record<string, string | null | undefined>;
+
+  const isMascot =
+    subType === "ro_chibi_angeling_base" ||
+    subType === "char_angeling" ||
+    subType === "ro_chibi_baphomet_jr_base" ||
+    subType === "char_baphomet_jr" ||
+    archetype === "monster" ||
+    archetype === "animal";
 
   // Slot Resolution: se a chave maiúscula estiver explicitamente definida (mesmo que null para unequipped),
   // respeitamos seu valor. Apenas se undefined consultamos os fallbacks em minúsculo.
@@ -75,6 +98,21 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
   const fireGradId = `fireGrad_${uid}`;
   const auraGlowId = `auraGlow_${uid}`;
   const glowEffectId = `glowEffect_${uid}`;
+  const angelingJellyId = `angelingJelly_${uid}`;
+  const angelingWingId = `angelingWing_${uid}`;
+  const angelingHaloId = `angelingHalo_${uid}`;
+  const kaelenHairId = `kaelenHair_${uid}`;
+  const kaelenSheenId = `kaelenSheen_${uid}`;
+  const kaelenArmorId = `kaelenArmor_${uid}`;
+  const goldTrimId = `goldTrim_${uid}`;
+  const silverBladeId = `silverBlade_${uid}`;
+  const lyannaHairId = `lyannaHair_${uid}`;
+  const lyannaRobeId = `lyannaRobe_${uid}`;
+  const ignisaurFireId = `ignisaurFire_${uid}`;
+  const ignisaurHornId = `ignisaurHorn_${uid}`;
+  const baphometHornId = `baphometHorn_${uid}`;
+  const baphometEyeId = `baphometEye_${uid}`;
+  const skinShadeId = `skinShade_${uid}`;
 
   const ctx: SvgContext = {
     goldGrad: `url(#${goldGradId})`,
@@ -83,6 +121,21 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
     fireGrad: `url(#${fireGradId})`,
     auraGlow: `url(#${auraGlowId})`,
     glowEffect: `url(#${glowEffectId})`,
+    angelingJelly: `url(#${angelingJellyId})`,
+    angelingWing: `url(#${angelingWingId})`,
+    angelingHalo: `url(#${angelingHaloId})`,
+    kaelenHair: `url(#${kaelenHairId})`,
+    kaelenHairSheen: `url(#${kaelenSheenId})`,
+    kaelenArmor: `url(#${kaelenArmorId})`,
+    goldTrim: `url(#${goldTrimId})`,
+    silverBlade: `url(#${silverBladeId})`,
+    lyannaHair: `url(#${lyannaHairId})`,
+    lyannaRobe: `url(#${lyannaRobeId})`,
+    ignisaurFire: `url(#${ignisaurFireId})`,
+    ignisaurHorn: `url(#${ignisaurHornId})`,
+    baphometHorn: `url(#${baphometHornId})`,
+    baphometEye: `url(#${baphometEyeId})`,
+    skinShade: `url(#${skinShadeId})`,
   };
 
   const getStateAnimationClass = () => {
@@ -119,20 +172,101 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
       >
         <defs>
           <linearGradient id={goldGradId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#fbbf24" />
+            <stop offset="0%" stopColor="#fef08a" />
+            <stop offset="40%" stopColor="#f59e0b" />
+            <stop offset="100%" stopColor="#b45309" />
+          </linearGradient>
+          <linearGradient id={goldTrimId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#fde047" />
+            <stop offset="50%" stopColor="#fbbf24" />
             <stop offset="100%" stopColor="#d97706" />
           </linearGradient>
+          <linearGradient id={silverBladeId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="50%" stopColor="#e2e8f0" />
+            <stop offset="100%" stopColor="#94a3b8" />
+          </linearGradient>
           <linearGradient id={cyberGradId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#06b6d4" />
-            <stop offset="100%" stopColor="#3b82f6" />
+            <stop offset="0%" stopColor="#38bdf8" />
+            <stop offset="50%" stopColor="#06b6d4" />
+            <stop offset="100%" stopColor="#2563eb" />
           </linearGradient>
           <linearGradient id={purpleGradId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#a855f7" />
+            <stop offset="0%" stopColor="#c084fc" />
+            <stop offset="50%" stopColor="#a855f7" />
             <stop offset="100%" stopColor="#6366f1" />
           </linearGradient>
           <linearGradient id={fireGradId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ef4444" />
-            <stop offset="100%" stopColor="#f97316" />
+            <stop offset="0%" stopColor="#fef08a" />
+            <stop offset="35%" stopColor="#f97316" />
+            <stop offset="100%" stopColor="#dc2626" />
+          </linearGradient>
+          <radialGradient id={angelingJellyId} cx="38%" cy="32%" r="65%">
+            <stop offset="0%" stopColor="#ffe4e6" />
+            <stop offset="25%" stopColor="#f472b6" />
+            <stop offset="70%" stopColor="#e11d48" />
+            <stop offset="100%" stopColor="#881337" />
+          </radialGradient>
+          <linearGradient id={angelingWingId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="60%" stopColor="#f1f5f9" />
+            <stop offset="100%" stopColor="#cbd5e1" />
+          </linearGradient>
+          <linearGradient id={angelingHaloId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#fef08a" />
+            <stop offset="30%" stopColor="#fbbf24" />
+            <stop offset="70%" stopColor="#f59e0b" />
+            <stop offset="100%" stopColor="#d97706" />
+          </linearGradient>
+          <linearGradient id={kaelenHairId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#334155" />
+            <stop offset="50%" stopColor="#1e293b" />
+            <stop offset="100%" stopColor="#0f172a" />
+          </linearGradient>
+          <linearGradient id={kaelenSheenId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.2" />
+            <stop offset="50%" stopColor="#7dd3fc" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.2" />
+          </linearGradient>
+          <linearGradient id={kaelenArmorId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#475569" />
+            <stop offset="50%" stopColor="#1e293b" />
+            <stop offset="100%" stopColor="#0f172a" />
+          </linearGradient>
+          <linearGradient id={lyannaHairId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#f5d0fe" />
+            <stop offset="45%" stopColor="#c084fc" />
+            <stop offset="100%" stopColor="#7e22ce" />
+          </linearGradient>
+          <linearGradient id={lyannaRobeId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#581c87" />
+            <stop offset="60%" stopColor="#3b0764" />
+            <stop offset="100%" stopColor="#1e1b4b" />
+          </linearGradient>
+          <linearGradient id={ignisaurFireId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#fef08a" />
+            <stop offset="35%" stopColor="#f97316" />
+            <stop offset="75%" stopColor="#dc2626" />
+            <stop offset="100%" stopColor="#7f1d1d" />
+          </linearGradient>
+          <linearGradient id={ignisaurHornId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#78350f" />
+            <stop offset="50%" stopColor="#451a03" />
+            <stop offset="100%" stopColor="#1c1917" />
+          </linearGradient>
+          <linearGradient id={baphometHornId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#64748b" />
+            <stop offset="50%" stopColor="#334155" />
+            <stop offset="100%" stopColor="#0f172a" />
+          </linearGradient>
+          <radialGradient id={baphometEyeId} cx="40%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#fca5a5" />
+            <stop offset="40%" stopColor="#ef4444" />
+            <stop offset="100%" stopColor="#7f1d1d" />
+          </radialGradient>
+          <linearGradient id={skinShadeId} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#fed7aa" />
+            <stop offset="100%" stopColor="#e5b89c" />
           </linearGradient>
           <radialGradient id={auraGlowId} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor={primaryColor} stopOpacity="0.45" />
@@ -160,10 +294,10 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
         {renderBaseArchetype(archetype, subType, primaryColor, secondaryColor, state, ctx)}
 
         {/* 5. LAYER_FOOTGEAR (PERNAS / BOTAS / GREVAS) */}
-        {renderLegsApparel(legsId, primaryColor, secondaryColor, ctx)}
+        {renderLegsApparel(legsId, primaryColor, secondaryColor, ctx, isMascot)}
 
         {/* 6. LAYER_ARMOR (PEITORAL / TÚNICAS / ARMADURAS) */}
-        {renderBodyApparel(chestId, primaryColor, secondaryColor, ctx)}
+        {renderBodyApparel(chestId, primaryColor, secondaryColor, ctx, isMascot)}
 
         {/* 7. LAYER_HEAD_LOWER (ROSTO INFERIOR / FOLHA NA BOCA) */}
         {renderHeadLowerItem(headLowerId, state, ctx)}
@@ -653,81 +787,249 @@ function renderBaseArchetype(
     );
   }
 
-  // RO 7: BAPHOMET JR. MITOLÓGICO (NEUTRAL_CREATURE, MYTHIC_BEAST)
+  // RO 7: BAPHOMET JR. MITOLÓGICO (NEUTRAL_CREATURE, MYTHIC_BEAST - REIMAGINED STUDIO FANTASY)
   if (subType === "ro_chibi_baphomet_jr_base" || subType === "char_baphomet_jr") {
     return (
-      <g id="ro-baphomet-jr">
-        <path d="M 52 140 Q 100 128 148 140 L 155 185 L 45 185 Z" fill="#18181b" />
-        <path d="M 45 130 C 15 110 15 75 40 85 C 30 100 45 115 55 125 Z" fill="#312e81" stroke="#000" strokeWidth="1.5" />
-        <path d="M 155 130 C 185 110 185 75 160 85 C 170 100 155 115 145 125 Z" fill="#312e81" stroke="#000" strokeWidth="1.5" />
-        <ellipse cx="52" cy="92" rx="12" ry="7" fill="#3f3f46" transform="rotate(-15 52 92)" />
-        <ellipse cx="148" cy="92" rx="12" ry="7" fill="#3f3f46" transform="rotate(15 148 92)" />
+      <g id="ro-baphomet-jr" className="transition-all duration-300">
+        {/* Sombra de chão */}
+        <ellipse cx="100" cy="182" rx="44" ry="7" fill="#0f172a" opacity="0.35" />
+
+        {/* 1. Asinhas de Demônio Chibi Articuladas (Traseiras) */}
+        <g id="baphomet-wings">
+          {/* Asa Esquerda */}
+          <path
+            d="M 52 128 C 16 102 8 62 38 48 C 28 80 44 110 56 124 Z"
+            fill="#312e81"
+            stroke="#1e1b4b"
+            strokeWidth="1.5"
+          />
+          <path d="M 38 48 C 30 75 42 100 52 118" stroke="#6366f1" strokeWidth="1.2" fill="none" opacity="0.7" />
+          <polygon points="36,46 42,48 38,54" fill="#fbbf24" />
+
+          {/* Asa Direita */}
+          <path
+            d="M 148 128 C 184 102 192 62 162 48 C 172 80 156 110 144 124 Z"
+            fill="#312e81"
+            stroke="#1e1b4b"
+            strokeWidth="1.5"
+          />
+          <path d="M 162 48 C 170 75 158 100 148 118" stroke="#6366f1" strokeWidth="1.2" fill="none" opacity="0.7" />
+          <polygon points="164,46 158,48 162,54" fill="#fbbf24" />
+        </g>
+
+        {/* 2. Chifres Espirais de Carneiro com Sulcos e Anéis Rúnicos */}
+        {/* Chifre Esquerdo */}
         <path
-          d="M 68 70 C 40 40 30 15 55 10 C 75 8 75 40 68 70 Z"
-          fill="#78350f"
-          stroke="#451a03"
+          d="M 68 72 C 34 38 20 8 48 4 C 74 1 76 42 68 72 Z"
+          fill={ctx?.baphometHorn || "#27272a"}
+          stroke="#09090b"
           strokeWidth="2"
         />
+        <line x1="38" y1="20" x2="56" y2="28" stroke="#fbbf24" strokeWidth="2.5" />
+        <line x1="32" y1="36" x2="52" y2="44" stroke="#fbbf24" strokeWidth="2" />
+        <circle cx="48" cy="6" r="4.5" fill="#fbbf24" filter={glow} />
+
+        {/* Chifre Direito */}
         <path
-          d="M 132 70 C 160 40 170 15 145 10 C 125 8 125 40 132 70 Z"
-          fill="#78350f"
-          stroke="#451a03"
+          d="M 132 72 C 166 38 180 8 152 4 C 126 1 124 42 132 72 Z"
+          fill={ctx?.baphometHorn || "#27272a"}
+          stroke="#09090b"
           strokeWidth="2"
         />
-        <line x1="45" y1="25" x2="65" y2="35" stroke="#b45309" strokeWidth="1.5" />
-        <line x1="155" y1="25" x2="135" y2="35" stroke="#b45309" strokeWidth="1.5" />
-        <ellipse cx="100" cy="94" rx="42" ry="43" fill="#27272a" />
-        <path d="M 90 56 L 100 40 L 110 56 Z" fill="#3f3f46" />
-        <circle cx="80" cy="88" r="7" fill="#ef4444" filter={glow} />
-        <circle cx="120" cy="88" r="7" fill="#ef4444" filter={glow} />
-        <ellipse cx="80" cy="88" rx="2" ry="5.5" fill="#450a0a" />
-        <ellipse cx="120" cy="88" rx="2" ry="5.5" fill="#450a0a" />
-        <circle cx="77" cy="85" r="2.5" fill="#fff" />
-        <circle cx="117" cy="85" r="2.5" fill="#fff" />
-        <polygon points="97,98 103,98 100,102" fill="#18181b" />
+        <line x1="162" y1="20" x2="144" y2="28" stroke="#fbbf24" strokeWidth="2.5" />
+        <line x1="168" y1="36" x2="148" y2="44" stroke="#fbbf24" strokeWidth="2" />
+        <circle cx="152" cy="6" r="4.5" fill="#fbbf24" filter={glow} />
+
+        {/* 3. Túnica de Bruxo Chibi com Cinto de Caveira */}
+        <path d="M 48 138 Q 100 122 152 138 L 160 186 L 40 186 Z" fill="#18181b" stroke="#09090b" strokeWidth="2" />
+        <path d="M 76 136 L 100 168 L 124 136 Z" fill="#312e81" stroke="#fbbf24" strokeWidth="1.2" />
+        <rect x="52" y="165" width="96" height="8" fill="#09090b" />
+        <circle cx="100" cy="169" r="6" fill="#e2e8f0" stroke="#475569" strokeWidth="1.2" filter={glow} />
+        <circle cx="98" cy="168" r="1" fill="#09090b" />
+        <circle cx="102" cy="168" r="1" fill="#09090b" />
+
+        {/* 4. Orelhas de Bode Macias com Brincos Dourados */}
+        <ellipse cx="50" cy="94" rx="14" ry="8" fill="#3f3f46" stroke="#18181b" strokeWidth="1.2" transform="rotate(-15 50 94)" />
+        <ellipse cx="50" cy="94" rx="8" ry="4" fill="#71717a" transform="rotate(-15 50 94)" />
+        <circle cx="38" cy="98" r="3.5" fill="none" stroke="#fbbf24" strokeWidth="1.8" />
+
+        <ellipse cx="150" cy="94" rx="14" ry="8" fill="#3f3f46" stroke="#18181b" strokeWidth="1.2" transform="rotate(15 150 94)" />
+        <ellipse cx="150" cy="94" rx="8" ry="4" fill="#71717a" transform="rotate(15 150 94)" />
+        <circle cx="162" cy="98" r="3.5" fill="none" stroke="#fbbf24" strokeWidth="1.8" />
+
+        {/* 5. Cabeça Aveludada Escura */}
+        <ellipse cx="100" cy="96" rx="44" ry="45" fill="#27272a" stroke="#09090b" strokeWidth="2" />
+        <polygon points="92,54 100,42 108,54" fill="#3f3f46" />
+
+        {/* Focinho de Bode Fofo */}
+        <polygon points="90,88 110,88 100,106" fill="#18181b" />
+        <polygon points="95,100 105,100 100,105" fill="#09090b" />
+
+        {/* 6. Olhos Vermelho-Rubi Luminous Anime */}
+        <g id="baphomet-eyes">
+          <ellipse cx="78" cy="87" rx="8.5" ry="9.5" fill={ctx?.baphometEye || "#ef4444"} stroke="#450a0a" strokeWidth="1.5" filter={glow} />
+          <ellipse cx="78" cy="87" rx="2.8" ry="6" fill="#450a0a" />
+          <circle cx="75" cy="83" r="3" fill="#ffffff" />
+          <circle cx="81" cy="91" r="1.5" fill="#ffffff" />
+
+          <ellipse cx="122" cy="87" rx="8.5" ry="9.5" fill={ctx?.baphometEye || "#ef4444"} stroke="#450a0a" strokeWidth="1.5" filter={glow} />
+          <ellipse cx="122" cy="87" rx="2.8" ry="6" fill="#450a0a" />
+          <circle cx="119" cy="83" r="3" fill="#ffffff" />
+          <circle cx="125" cy="91" r="1.5" fill="#ffffff" />
+        </g>
+
+        {/* Boquinha com Presas Travessas */}
         {isSpeaking ? (
-          <ellipse cx="100" cy="110" rx="6" ry="5" fill="#991b1b" />
+          <ellipse cx="100" cy="112" rx="7" ry="6" fill="#7f1d1d">
+            <polygon points="96,108 98,113 100,108" fill="#ffffff" />
+            <polygon points="100,108 102,113 104,108" fill="#ffffff" />
+          </ellipse>
+        ) : state === "celebrating" ? (
+          <g>
+            <path d="M 91 108 Q 100 118 109 108" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+            <polygon points="98,108 100,113 102,108" fill="#ffffff" />
+          </g>
         ) : (
-          <path d="M 92 106 Q 96 110 100 107 Q 104 110 108 106" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" fill="none" />
+          <g>
+            <path d="M 92 108 Q 96 112 100 109 Q 104 112 108 108" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+            <polygon points="98,108 100,112 102,108" fill="#ffffff" />
+          </g>
         )}
-        <polygon points="98,106 100,110 102,106" fill="#fff" />
       </g>
     );
   }
 
-  // RO 8: ANGELING ALADO (NEUTRAL_CREATURE, MYTHIC_BEAST)
+  // RO 8: ANGELING ALADO (NEUTRAL_CREATURE, MYTHIC_BEAST - REIMAGINED STUDIO FANTASY 3D JELLY)
   if (subType === "ro_chibi_angeling_base" || subType === "char_angeling") {
     return (
-      <g id="ro-angeling">
+      <g id="ro-angeling" className="transition-all duration-300">
+        {/* Sombra difusa de chão */}
+        <ellipse cx="100" cy="180" rx="46" ry="7" fill="#0f172a" opacity="0.32" />
+
+        {/* 1. Asas Angelicais Celestiais com Múltiplas Camadas de Penas & Profundidade */}
+        {/* Asa Esquerda Traseira */}
+        <g id="angeling-wing-left" className="transition-transform duration-500">
+          <path
+            d="M 64 110 C 25 90 2 52 24 24 C 36 50 52 74 72 95 Z"
+            fill={ctx?.angelingWing || "#f8fafc"}
+            stroke="#cbd5e1"
+            strokeWidth="1.2"
+          />
+          <path
+            d="M 58 118 C 18 106 2 76 22 52 C 34 74 50 96 66 112 Z"
+            fill="#f1f5f9"
+            stroke="#94a3b8"
+            strokeWidth="1"
+          />
+          <path
+            d="M 54 126 C 24 120 12 100 28 80 C 38 98 50 114 62 122 Z"
+            fill="#e2e8f0"
+            stroke="#94a3b8"
+            strokeWidth="0.8"
+          />
+          <path d="M 32 38 Q 44 65 62 92" stroke="#fef08a" strokeWidth="1.5" fill="none" opacity="0.8" />
+          <circle cx="24" cy="26" r="2.5" fill="#fef08a" filter={glow} />
+          <circle cx="16" cy="60" r="1.5" fill="#fff" />
+        </g>
+
+        {/* Asa Direita Traseira */}
+        <g id="angeling-wing-right" className="transition-transform duration-500">
+          <path
+            d="M 136 110 C 175 90 198 52 176 24 C 164 50 148 74 128 95 Z"
+            fill={ctx?.angelingWing || "#f8fafc"}
+            stroke="#cbd5e1"
+            strokeWidth="1.2"
+          />
+          <path
+            d="M 142 118 C 182 106 198 76 178 52 C 166 74 150 96 134 112 Z"
+            fill="#f1f5f9"
+            stroke="#94a3b8"
+            strokeWidth="1"
+          />
+          <path
+            d="M 146 126 C 176 120 188 100 172 80 C 162 98 150 114 138 122 Z"
+            fill="#e2e8f0"
+            stroke="#94a3b8"
+            strokeWidth="0.8"
+          />
+          <path d="M 168 38 Q 156 65 138 92" stroke="#fef08a" strokeWidth="1.5" fill="none" opacity="0.8" />
+          <circle cx="176" cy="26" r="2.5" fill="#fef08a" filter={glow} />
+          <circle cx="184" cy="60" r="1.5" fill="#fff" />
+        </g>
+
+        {/* 2. Auréola Celestial 3D Flutuante com Raios & Estrelas */}
+        <g id="angeling-halo">
+          <ellipse cx="100" cy="46" rx="34" ry="11" fill="none" stroke="#fef08a" strokeWidth="6" opacity="0.35" filter={glow} />
+          <ellipse cx="100" cy="46" rx="32" ry="10" fill="none" stroke={ctx?.angelingHalo || "#f59e0b"} strokeWidth="4.5" />
+          <ellipse cx="100" cy="45" rx="30" ry="8.5" fill="none" stroke="#fef9c3" strokeWidth="1.5" opacity="0.9" />
+          <path d="M 70 46 L 73 40 L 76 46 L 73 52 Z" fill="#fff" filter={glow} />
+          <path d="M 130 46 L 133 40 L 136 46 L 133 52 Z" fill="#fff" filter={glow} />
+          <circle cx="100" cy="36" r="2.5" fill="#fef08a" filter={glow} />
+        </g>
+
+        {/* 3. Corpo Gelatinoso 3D com Volume Esférico & Reflexos Caustics */}
         <path
-          d="M 55 105 C 20 85 10 55 35 40 C 42 60 55 80 68 95 Z"
-          fill="#f8fafc"
-          stroke="#cbd5e1"
-          strokeWidth="1.5"
+          d="M 52 124 C 48 88 72 74 100 74 C 128 74 152 88 148 124 C 145 156 126 166 100 166 C 74 166 55 156 52 124 Z"
+          fill={ctx?.angelingJelly || "#f472b6"}
+          stroke="#be185d"
+          strokeWidth="2.5"
+        />
+
+        {/* Caustic Interno na Base (Translucidez da Geleia) */}
+        <path
+          d="M 64 142 C 75 158 125 158 136 142 C 124 152 76 152 64 142 Z"
+          fill="#fda4af"
+          opacity="0.65"
           filter={glow}
         />
+
+        {/* Brilho Glossy / Especular Curvo Superior Esquerdo */}
+        <ellipse cx="78" cy="94" rx="14" ry="7" fill="#ffffff" opacity="0.8" transform="rotate(-32 78 94)" />
+        <circle cx="70" cy="106" r="3" fill="#ffffff" opacity="0.9" />
+        <ellipse cx="118" cy="86" rx="8" ry="3" fill="#ffffff" opacity="0.45" transform="rotate(-15 118 86)" />
+
+        {/* 4. Colarinho / Manto de Mago Chibi (Elegante & Proporcional) */}
         <path
-          d="M 145 105 C 180 85 190 55 165 40 C 158 60 145 80 132 95 Z"
-          fill="#f8fafc"
-          stroke="#cbd5e1"
-          strokeWidth="1.5"
-          filter={glow}
+          d="M 72 152 Q 100 164 128 152 Q 124 162 100 166 Q 76 162 72 152 Z"
+          fill="#4c1d95"
+          stroke="#fbbf24"
+          strokeWidth="1.2"
         />
-        <ellipse cx="100" cy="52" rx="26" ry="7" fill="none" stroke="#fbbf24" strokeWidth="3.5" filter={glow} />
-        <ellipse cx="100" cy="115" rx="46" ry="38" fill="#f472b6" stroke="#db2777" strokeWidth="2" />
-        <path d="M 72 95 Q 100 84 128 95" stroke="#fbcfe8" strokeWidth="3.5" strokeLinecap="round" fill="none" />
-        <circle cx="86" cy="112" r="6.5" fill="#18181b" />
-        <circle cx="114" cy="112" r="6.5" fill="#18181b" />
-        <circle cx="84" cy="109" r="2.5" fill="#fff" />
-        <circle cx="112" cy="109" r="2.5" fill="#fff" />
-        <circle cx="88" cy="114" r="1.2" fill="#fff" />
-        <circle cx="116" cy="114" r="1.2" fill="#fff" />
-        <ellipse cx="76" cy="120" rx="5" ry="3" fill="#f43f5e" opacity="0.65" />
-        <ellipse cx="124" cy="120" rx="5" ry="3" fill="#f43f5e" opacity="0.65" />
+        <circle cx="100" cy="158" r="4.5" fill="#fbbf24" stroke="#d97706" strokeWidth="1" filter={glow} />
+        <circle cx="100" cy="158" r="2.5" fill="#38bdf8" />
+
+        {/* 5. Olhos de Anime Expressivos & Brilhantes */}
+        <g id="angeling-eyes">
+          <ellipse cx="82" cy="116" rx="8" ry="10" fill="#3b0764" />
+          <ellipse cx="82" cy="118" rx="6.5" ry="7.5" fill="#be185d" />
+          <circle cx="79" cy="112" r="3.5" fill="#ffffff" />
+          <circle cx="85" cy="121" r="1.8" fill="#ffffff" />
+          <circle cx="81" cy="123" r="1" fill="#fda4af" />
+
+          <ellipse cx="118" cy="116" rx="8" ry="10" fill="#3b0764" />
+          <ellipse cx="118" cy="118" rx="6.5" ry="7.5" fill="#be185d" />
+          <circle cx="115" cy="112" r="3.5" fill="#ffffff" />
+          <circle cx="121" cy="121" r="1.8" fill="#ffffff" />
+          <circle cx="117" cy="123" r="1" fill="#fda4af" />
+        </g>
+
+        {/* Bochechas Rosadas e Fofas */}
+        <ellipse cx="70" cy="128" rx="7" ry="4" fill="#f43f5e" opacity="0.75" />
+        <line x1="66" y1="126" x2="68" y2="130" stroke="#be123c" strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="71" y1="126" x2="73" y2="130" stroke="#be123c" strokeWidth="1.2" strokeLinecap="round" />
+        <ellipse cx="130" cy="128" rx="7" ry="4" fill="#f43f5e" opacity="0.75" />
+        <line x1="127" y1="126" x2="129" y2="130" stroke="#be123c" strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="132" y1="126" x2="134" y2="130" stroke="#be123c" strokeWidth="1.2" strokeLinecap="round" />
+
+        {/* Boquinha Adorável */}
         {isSpeaking ? (
-          <ellipse cx="100" cy="124" rx="6" ry="5" fill="#be123c" />
+          <ellipse cx="100" cy="132" rx="7" ry="6" fill="#be123c" stroke="#881337" strokeWidth="1">
+            <path d="M 96 134 Q 100 137 104 134" fill="#fda4af" />
+          </ellipse>
+        ) : state === "celebrating" ? (
+          <path d="M 93 128 Q 100 138 107 128" stroke="#881337" strokeWidth="2.8" strokeLinecap="round" fill="#be123c" />
         ) : (
-          <path d="M 95 122 Q 100 126 105 122" stroke="#9f1239" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <path d="M 94 129 Q 97 133 100 130 Q 103 133 106 129" stroke="#9f1239" strokeWidth="2.4" strokeLinecap="round" fill="none" />
         )}
       </g>
     );
@@ -950,49 +1252,132 @@ function renderBaseArchetype(
     subType.includes("kaelen")
   ) {
     return (
-      <g id="studio-kaelen">
-        <rect x="88" y="114" width="24" height="26" fill="#e5b89c" />
-        <path d="M 46 138 Q 100 120 154 138 L 162 186 L 38 186 Z" fill="#1e293b" />
-        <path d="M 72 136 L 100 172 L 128 136 Z" fill="#334155" stroke="#38bdf8" strokeWidth="1.5" filter={glow} />
-        <rect x="42" y="136" width="22" height="14" rx="4" fill="#475569" stroke="#94a3b8" strokeWidth="1.2" />
-        <rect x="136" y="136" width="22" height="14" rx="4" fill="#475569" stroke="#94a3b8" strokeWidth="1.2" />
-        <circle cx="56" cy="92" r="10" fill="#e5b89c" />
-        <circle cx="144" cy="92" r="10" fill="#e5b89c" />
-        <ellipse cx="100" cy="94" rx="42" ry="44" fill="#fce7d6" />
-        <path d="M 52 78 L 38 46 L 64 52 L 76 26 L 98 46 L 118 24 L 132 46 L 158 38 L 148 78 Z" fill="#1c1917" />
-        <path d="M 62 48 L 74 32 L 88 48" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
-        <path d="M 104 46 L 116 30 L 128 46" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
-        <path d="M 54 75 Q 100 52 146 75 Q 125 60 100 60 Q 75 60 54 75 Z" fill="#292524" />
+      <g id="studio-kaelen" className="transition-all duration-300">
+        {/* 1. Base Corporal: Pescoço Contornado & Ombros de Guerreiro */}
+        <path d="M 88 116 L 88 134 Q 100 138 112 134 L 112 116 Z" fill={ctx?.skinShade || "#e5b89c"} />
+        <path d="M 92 120 Q 100 128 108 120" stroke="#d97706" strokeWidth="1" fill="none" opacity="0.4" />
+
+        {/* Gambeson e Túnica Base em Carvão e Azul Meia-Noite */}
+        <path d="M 44 138 Q 100 120 156 138 L 164 186 L 36 186 Z" fill={ctx?.kaelenArmor || "#1e293b"} />
+        
+        {/* Camisete e Cravat de Escriba Nobre */}
+        <path d="M 86 132 L 100 162 L 114 132 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1" />
+        <line x1="100" y1="134" x2="100" y2="160" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3 2" />
+
+        {/* Peitoral de Aço Escovado com Runas de Sintaxe Gravadas */}
+        <path d="M 70 136 L 100 174 L 130 136 Q 100 126 70 136 Z" fill="#334155" stroke="#475569" strokeWidth="1.5" />
+        <path d="M 76 138 L 100 170 L 124 138" stroke="#38bdf8" strokeWidth="1.8" fill="none" filter={glow} />
+        {/* Runas de Sintaxe Gravadas (λ, Ω, ∑) */}
+        <text x="96" y="152" fill="#7dd3fc" fontSize="9" fontWeight="bold" filter={glow} textAnchor="middle">λ</text>
+        <text x="88" y="145" fill="#38bdf8" fontSize="7" fontWeight="bold" textAnchor="middle">Ω</text>
+        <text x="112" y="145" fill="#38bdf8" fontSize="7" fontWeight="bold" textAnchor="middle">∑</text>
+
+        {/* Ombreiras de Aço e Couro (Pauldrons) */}
+        <rect x="36" y="136" width="26" height="16" rx="5" fill="#475569" stroke="#94a3b8" strokeWidth="1.5" />
+        <line x1="39" y1="144" x2="59" y2="144" stroke="#fbbf24" strokeWidth="1.5" />
+        <circle cx="49" cy="144" r="2.5" fill="#fbbf24" />
+        <rect x="138" y="136" width="26" height="16" rx="5" fill="#475569" stroke="#94a3b8" strokeWidth="1.5" />
+        <line x1="141" y1="144" x2="161" y2="144" stroke="#fbbf24" strokeWidth="1.5" />
+        <circle cx="151" cy="144" r="2.5" fill="#fbbf24" />
+
+        {/* Correia de Couro Transversal (Baldric) com Fivela Dourada */}
+        <line x1="46" y1="138" x2="154" y2="186" stroke="#78350f" strokeWidth="7" />
+        <line x1="46" y1="138" x2="154" y2="186" stroke="#b45309" strokeWidth="1.5" />
+        <rect x="94" y="156" width="12" height="12" rx="2" fill="#fbbf24" stroke="#78350f" strokeWidth="1.5" />
+
+        {/* Manto de Aventureiro Azul Cerúleo no Ombro Esquerdo */}
+        <path d="M 38 140 Q 22 165 30 186 L 50 186 Q 44 165 48 140 Z" fill="#1d4ed8" stroke="#1e40af" strokeWidth="1.2" />
+
+        {/* 2. Cabelo Traseiro para Silhueta Dinâmica */}
+        <path
+          d="M 50 82 C 34 65 32 40 48 28 C 44 50 56 68 64 80 Z"
+          fill={ctx?.kaelenHair || "#1e293b"}
+        />
+        <path
+          d="M 150 82 C 166 65 168 40 152 28 C 156 50 144 68 136 80 Z"
+          fill={ctx?.kaelenHair || "#1e293b"}
+        />
+
+        {/* 3. Cabeça & Orelhas Esculpidas de Anime */}
+        <circle cx="54" cy="94" r="10" fill="#fce7d6" />
+        <circle cx="54" cy="94" r="6" fill="#fbcfe8" opacity="0.4" />
+        <circle cx="146" cy="94" r="10" fill="#fce7d6" />
+        <circle cx="146" cy="94" r="6" fill="#fbcfe8" opacity="0.4" />
+        {/* Rosto com Contorno Suave */}
+        <ellipse cx="100" cy="96" rx="43" ry="46" fill="#fdf2e9" />
+        <path d="M 80 130 Q 100 142 120 130" stroke="#fbcfe8" strokeWidth="1.5" fill="none" opacity="0.5" />
+
+        {/* 4. Olhos de Herói de Anime com Profundidade Safira */}
         {state === "celebrating" ? (
           <g>
-            <path d="M 72 90 Q 80 82 88 90" stroke="#082f49" strokeWidth="3" strokeLinecap="round" fill="none" />
-            <path d="M 112 90 Q 120 82 128 90" stroke="#082f49" strokeWidth="3" strokeLinecap="round" fill="none" />
+            <path d="M 72 92 Q 80 84 88 92" stroke="#0f172a" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+            <path d="M 112 92 Q 120 84 128 92" stroke="#0f172a" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+            <ellipse cx="72" cy="98" rx="6" ry="3" fill="#f43f5e" opacity="0.4" />
+            <ellipse cx="128" cy="98" rx="6" ry="3" fill="#f43f5e" opacity="0.4" />
           </g>
         ) : (
-          <g>
-            <ellipse cx="80" cy="88" rx="7.5" ry="8" fill="#0f172a" />
-            <ellipse cx="120" cy="88" rx="7.5" ry="8" fill="#0f172a" />
-            <ellipse cx="80" cy="89" rx="6" ry="6.5" fill="#0284c7" />
-            <ellipse cx="120" cy="89" rx="6" ry="6.5" fill="#0284c7" />
-            <circle cx={state === "thinking" ? 82 : 80} cy={state === "thinking" ? 86 : 88} r="3.5" fill="#082f49" />
-            <circle cx={state === "thinking" ? 122 : 120} cy={state === "thinking" ? 86 : 88} r="3.5" fill="#082f49" />
-            <circle cx={state === "thinking" ? 79 : 77} cy={state === "thinking" ? 83 : 85} r="2.8" fill="#fff" />
-            <circle cx={state === "thinking" ? 119 : 117} cy={state === "thinking" ? 83 : 85} r="2.8" fill="#fff" />
-            <circle cx={state === "thinking" ? 84 : 83} cy={state === "thinking" ? 89 : 91} r="1.4" fill="#fff" />
-            <circle cx={state === "thinking" ? 124 : 123} cy={state === "thinking" ? 89 : 91} r="1.4" fill="#fff" />
+          <g id="kaelen-eyes">
+            {/* Olho Esquerdo */}
+            <ellipse cx="78" cy="90" rx="9" ry="10" fill="#0f172a" />
+            <ellipse cx="78" cy="91" rx="7.5" ry="8.5" fill="#0284c7" />
+            <ellipse cx="78" cy="93" rx="6" ry="5.5" fill="#38bdf8" />
+            <ellipse cx="78" cy="90" rx="3.5" ry="4.5" fill="#0c4a6e" />
+            <circle cx="75" cy="86" r="3.2" fill="#ffffff" />
+            <circle cx="82" cy="94" r="1.5" fill="#ffffff" />
+            <path d="M 68 87 Q 78 81 88 86" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+
+            {/* Olho Direito */}
+            <ellipse cx="122" cy="90" rx="9" ry="10" fill="#0f172a" />
+            <ellipse cx="122" cy="91" rx="7.5" ry="8.5" fill="#0284c7" />
+            <ellipse cx="122" cy="93" rx="6" ry="5.5" fill="#38bdf8" />
+            <ellipse cx="122" cy="90" rx="3.5" ry="4.5" fill="#0c4a6e" />
+            <circle cx="119" cy="86" r="3.2" fill="#ffffff" />
+            <circle cx="126" cy="94" r="1.5" fill="#ffffff" />
+            <path d="M 112 86 Q 122 81 132 87" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" fill="none" />
           </g>
         )}
-        <path d="M 70 76 Q 80 72 90 75" stroke="#1c1917" strokeWidth="3" strokeLinecap="round" fill="none" />
-        <path d="M 110 75 Q 120 72 130 76" stroke="#1c1917" strokeWidth="3" strokeLinecap="round" fill="none" />
-        <ellipse cx="72" cy="98" rx="5" ry="2.5" fill="#f43f5e" opacity="0.35" />
-        <ellipse cx="128" cy="98" rx="5" ry="2.5" fill="#f43f5e" opacity="0.35" />
+
+        {/* Sobrancelhas Heroicas com Cicatriz Estilizada na Esquerda */}
+        <path d="M 69 77 Q 79 73 89 77" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" fill="none" />
+        <line x1="81" y1="74" x2="81" y2="81" stroke="#fdf2e9" strokeWidth="1.8" />
+        <path d="M 111 77 Q 121 73 131 77" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" fill="none" />
+
+        {/* Nariz Discreto de Anime */}
+        <path d="M 98 94 Q 100 98 103 98" stroke="#e5b89c" strokeWidth="2" strokeLinecap="round" fill="none" />
+
+        {/* Boca Confiante / Sorriso / Fala */}
         {isSpeaking ? (
-          <ellipse cx="100" cy="108" rx="8" ry="6" fill="#be123c" />
+          <ellipse cx="100" cy="110" rx="8" ry="6.5" fill="#be123c">
+            <path d="M 95 112 Q 100 115 105 112" fill="#fda4af" />
+          </ellipse>
         ) : state === "celebrating" ? (
-          <path d="M 90 105 Q 100 115 110 105" stroke="#881337" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+          <path d="M 91 107 Q 100 117 109 107" stroke="#881337" strokeWidth="3" strokeLinecap="round" fill="none" />
         ) : (
-          <path d="M 92 106 Q 100 112 108 106" stroke="#881337" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <path d="M 93 108 Q 100 114 107 108" stroke="#881337" strokeWidth="2.5" strokeLinecap="round" fill="none" />
         )}
+
+        {/* 5. Cabelo Volumoso em Camadas Estilo Studio Fantasy */}
+        <g id="kaelen-hair-front">
+          <path
+            d="M 50 78 L 40 44 L 64 50 L 76 22 L 98 44 L 118 20 L 134 44 L 160 36 L 150 78 Q 130 52 100 52 Q 70 52 50 78 Z"
+            fill={ctx?.kaelenHair || "#1e293b"}
+          />
+          <path d="M 48 76 Q 44 98 52 110 Q 56 94 56 78 Z" fill="#0f172a" />
+          <path d="M 152 76 Q 156 98 148 110 Q 144 94 144 78 Z" fill="#0f172a" />
+          <polygon points="68,64 80,78 84,62" fill="#1e293b" />
+          <polygon points="82,62 96,82 102,62" fill="#0f172a" />
+          <polygon points="100,62 114,80 118,62" fill="#1e293b" />
+          <polygon points="116,62 128,76 134,64" fill="#0f172a" />
+          <path
+            d="M 56 46 Q 100 28 144 46"
+            stroke={ctx?.kaelenHairSheen || "#38bdf8"}
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            fill="none"
+            filter={glow}
+          />
+          <path d="M 72 38 Q 100 24 128 38" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.8" />
+        </g>
       </g>
     );
   }
@@ -1006,45 +1391,95 @@ function renderBaseArchetype(
     subType.includes("lyanna")
   ) {
     return (
-      <g id="studio-lyanna">
-        <rect x="89" y="115" width="22" height="25" fill="#f1c2a2" />
-        <path d="M 48 138 Q 100 122 152 138 L 160 186 L 40 186 Z" fill="#312e81" />
-        <path d="M 76 138 Q 100 160 124 138" stroke="#c084fc" strokeWidth="2" fill="none" filter={glow} />
-        <circle cx="58" cy="92" r="9" fill="#f1c2a2" />
-        <circle cx="142" cy="92" r="9" fill="#f1c2a2" />
-        <ellipse cx="100" cy="94" rx="41" ry="43" fill="#fef2f2" />
-        <path d="M 52 76 Q 56 36 100 36 Q 144 36 148 76 Q 125 54 100 54 Q 75 54 52 76 Z" fill="#c084fc" />
-        <path d="M 50 72 Q 36 105 38 152 Q 46 115 56 84 Z" fill="#a855f7" />
-        <path d="M 150 72 Q 164 105 162 152 Q 154 115 144 84 Z" fill="#a855f7" />
-        <path d="M 68 114 Q 100 128 132 114 Q 100 120 68 114 Z" fill="#e9d5ff" opacity="0.75" filter={glow} />
+      <g id="studio-lyanna" className="transition-all duration-300">
+        {/* 1. Base: Pescoço Gracioso & Túnica de Seda da Arquivista */}
+        <path d="M 90 116 L 90 134 Q 100 138 110 134 L 110 116 Z" fill="#f1c2a2" />
+        <path d="M 46 138 Q 100 120 154 138 L 162 186 L 38 186 Z" fill={ctx?.lyannaRobe || "#312e81"} />
+        
+        {/* Mantilho Bordado com Brocados de Ouro */}
+        <path d="M 74 136 L 100 166 L 126 136" stroke="#fbbf24" strokeWidth="2.5" fill="none" filter={glow} />
+        <circle cx="100" cy="148" r="5" fill="#a855f7" stroke="#fbbf24" strokeWidth="1.5" filter={glow} />
+        <circle cx="100" cy="148" r="2.5" fill="#fdf4ff" />
+
+        {/* 2. Cabelo Longo Fluido Lilás/Ametista Caindo em Ondas */}
+        <path
+          d="M 48 76 C 28 105 24 150 40 178 C 48 140 56 105 58 78 Z"
+          fill={ctx?.lyannaHair || "#c084fc"}
+        />
+        <path
+          d="M 152 76 C 172 105 176 150 160 178 C 152 140 144 105 142 78 Z"
+          fill={ctx?.lyannaHair || "#c084fc"}
+        />
+
+        {/* 3. Cabeça & Rosto de Feiticeira Nobre */}
+        <circle cx="56" cy="94" r="9" fill="#f1c2a2" />
+        <circle cx="144" cy="94" r="9" fill="#f1c2a2" />
+        <ellipse cx="100" cy="96" rx="42" ry="45" fill="#fef2f2" />
+
+        {/* 4. Olhos Místicos Estelares */}
         {state === "celebrating" ? (
           <g>
-            <path d="M 72 90 Q 80 82 88 90" stroke="#581c87" strokeWidth="2.8" strokeLinecap="round" fill="none" />
-            <path d="M 112 90 Q 120 82 128 90" stroke="#581c87" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+            <path d="M 72 92 Q 80 84 88 92" stroke="#581c87" strokeWidth="3" strokeLinecap="round" fill="none" />
+            <path d="M 112 92 Q 120 84 128 92" stroke="#581c87" strokeWidth="3" strokeLinecap="round" fill="none" />
           </g>
         ) : (
-          <g>
-            <ellipse cx="80" cy="88" rx="7" ry="7.5" fill="#581c87" />
-            <ellipse cx="120" cy="88" rx="7.5" ry="7.5" fill="#581c87" />
-            <ellipse cx="80" cy="89" rx="5.5" ry="6" fill="#9333ea" />
-            <ellipse cx="120" cy="89" rx="5.5" ry="6" fill="#9333ea" />
-            <circle cx={state === "thinking" ? 82 : 78} cy={state === "thinking" ? 83 : 85} r="2.6" fill="#fff" />
-            <circle cx={state === "thinking" ? 122 : 118} cy={state === "thinking" ? 83 : 85} r="2.6" fill="#fff" />
-            <circle cx={state === "thinking" ? 83 : 82} cy={state === "thinking" ? 88 : 90} r="1.3" fill="#fdf4ff" />
-            <circle cx={state === "thinking" ? 123 : 122} cy={state === "thinking" ? 88 : 90} r="1.3" fill="#fdf4ff" />
+          <g id="lyanna-eyes">
+            {/* Olho Esquerdo */}
+            <ellipse cx="78" cy="90" rx="8.5" ry="9.5" fill="#581c87" />
+            <ellipse cx="78" cy="91" rx="7" ry="8" fill="#9333ea" />
+            <ellipse cx="78" cy="93" rx="5.5" ry="5.5" fill="#c084fc" />
+            <circle cx="75" cy="87" r="3" fill="#ffffff" />
+            <path d="M 81 92 L 83 89 L 85 92 L 83 95 Z" fill="#ffffff" />
+            <path d="M 68 87 Q 78 82 88 86" stroke="#4c1d95" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+
+            {/* Olho Direito */}
+            <ellipse cx="122" cy="90" rx="8.5" ry="9.5" fill="#581c87" />
+            <ellipse cx="122" cy="91" rx="7" ry="8" fill="#9333ea" />
+            <ellipse cx="122" cy="93" rx="5.5" ry="5.5" fill="#c084fc" />
+            <circle cx="119" cy="87" r="3" fill="#ffffff" />
+            <path d="M 125 92 L 127 89 L 129 92 L 127 95 Z" fill="#ffffff" />
+            <path d="M 112 86 Q 122 82 132 87" stroke="#4c1d95" strokeWidth="2.5" strokeLinecap="round" fill="none" />
           </g>
         )}
-        <path d="M 72 80 Q 80 77 88 80" stroke="#6b21a8" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-        <path d="M 112 80 Q 120 77 128 80" stroke="#6b21a8" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-        <ellipse cx="72" cy="97" rx="6" ry="3" fill="#f472b6" opacity="0.6" />
-        <ellipse cx="128" cy="97" rx="6" ry="3" fill="#f472b6" opacity="0.6" />
+
+        {/* Sobrancelhas Delicadas & Maquiagem Suave */}
+        <path d="M 70 78 Q 80 74 90 78" stroke="#6b21a8" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+        <path d="M 110 78 Q 120 74 130 78" stroke="#6b21a8" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+        <ellipse cx="72" cy="98" rx="6" ry="3" fill="#f472b6" opacity="0.6" />
+        <ellipse cx="128" cy="98" rx="6" ry="3" fill="#f472b6" opacity="0.6" />
+
+        {/* Boca Graciosa */}
         {isSpeaking ? (
-          <ellipse cx="100" cy="107" rx="7" ry="5.5" fill="#be123c" />
+          <ellipse cx="100" cy="110" rx="7" ry="5.5" fill="#be123c">
+            <path d="M 96 111 Q 100 114 104 111" fill="#fda4af" />
+          </ellipse>
         ) : state === "celebrating" ? (
-          <path d="M 93 105 Q 100 113 107 105" stroke="#db2777" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+          <path d="M 93 107 Q 100 115 107 107" stroke="#db2777" strokeWidth="2.5" strokeLinecap="round" fill="none" />
         ) : (
-          <path d="M 94 106 Q 100 110 106 106" stroke="#db2777" strokeWidth="2" strokeLinecap="round" fill="none" />
+          <path d="M 94 108 Q 100 112 106 108" stroke="#db2777" strokeWidth="2.2" strokeLinecap="round" fill="none" />
         )}
+
+        {/* 5. Capuz de Seda & Véu Translúcido (Studio Fantasy) */}
+        <g id="lyanna-hood-and-veil">
+          <path
+            d="M 50 82 C 46 36 68 20 100 20 C 132 20 154 36 150 82 C 138 68 120 62 100 62 C 80 62 62 68 50 82 Z"
+            fill={ctx?.lyannaRobe || "#3b0764"}
+            stroke="#1e1b4b"
+            strokeWidth="2"
+          />
+          <path d="M 54 78 Q 100 58 146 78" stroke="#fbbf24" strokeWidth="2.5" fill="none" strokeDasharray="6 3" />
+          <circle cx="100" cy="24" r="3.5" fill="#fbbf24" filter={glow} />
+
+          <path
+            d="M 64 108 Q 100 126 136 108 Q 100 116 64 108 Z"
+            fill="#e9d5ff"
+            opacity="0.8"
+            filter={glow}
+          />
+
+          <path d="M 62 70 Q 72 84 76 96 Q 70 82 62 70 Z" fill={ctx?.lyannaHair || "#c084fc"} />
+          <path d="M 138 70 Q 128 84 124 96 Q 130 82 138 70 Z" fill={ctx?.lyannaHair || "#c084fc"} />
+        </g>
       </g>
     );
   }
@@ -1058,43 +1493,119 @@ function renderBaseArchetype(
     subType.includes("ignisaur")
   ) {
     return (
-      <g id="studio-ignisaur">
-        <path d="M 48 138 Q 100 120 152 138 L 160 186 L 40 186 Z" fill="#7c2d12" />
-        <path d="M 70 138 L 100 176 L 130 138 Z" fill="#ea580c" stroke="#fbbf24" strokeWidth="1.5" />
-        <path d="M 64 68 C 42 42 36 12 56 6 C 72 2 70 38 66 68 Z" fill="#9a3412" stroke="#ea580c" strokeWidth="1.5" />
-        <path d="M 136 68 C 158 42 164 12 144 6 C 128 2 130 38 134 68 Z" fill="#9a3412" stroke="#ea580c" strokeWidth="1.5" />
-        <circle cx="54" cy="8" r="7" fill="#fbbf24" filter={glow} />
-        <circle cx="54" cy="8" r="3.5" fill="#38bdf8" />
-        <circle cx="146" cy="8" r="7" fill="#fbbf24" filter={glow} />
-        <circle cx="146" cy="8" r="3.5" fill="#38bdf8" />
-        <ellipse cx="100" cy="94" rx="44" ry="44" fill="#ba7b56" />
-        <polygon points="94,54 100,42 106,54" fill="#ea580c" />
-        <polygon points="82,58 88,48 92,60" fill="#ea580c" />
-        <polygon points="108,60 112,48 118,58" fill="#ea580c" />
-        <polygon points="90,88 110,88 100,108" fill="#9a3412" />
-        <circle cx="96" cy="102" r="1.5" fill="#431407" />
-        <circle cx="104" cy="102" r="1.5" fill="#431407" />
+      <g id="studio-ignisaur" className="transition-all duration-300">
+        {/* Sombra difusa de chão */}
+        <ellipse cx="100" cy="184" rx="44" ry="7" fill="#0f172a" opacity="0.3" />
+
+        {/* 1. Labaredas e Juba de Fogo Traseira (Crest) */}
+        <g id="ignisaur-fire-back">
+          <path
+            d="M 50 110 C 25 70 35 30 70 20 C 60 40 75 55 85 45 C 90 20 120 15 115 45 C 125 35 140 40 130 65 C 165 40 175 80 150 110 Z"
+            fill={ctx?.ignisaurFire || "url(#fireGrad)"}
+            opacity="0.9"
+            filter={glow}
+          />
+          <path
+            d="M 65 95 C 45 65 55 40 80 32 C 75 48 88 56 95 48 C 100 30 118 30 112 50 C 120 42 132 46 122 68 C 145 52 155 78 135 95 Z"
+            fill="#fef08a"
+            opacity="0.75"
+          />
+        </g>
+
+        {/* 2. Chifres Dracônicos Curvados de Obsidiana e Ouro */}
+        {/* Chifre Esquerdo */}
+        <g id="ignisaur-horn-left">
+          <path
+            d="M 64 68 C 40 46 25 15 48 6 C 58 2 64 30 72 62 Z"
+            fill={ctx?.ignisaurHorn || "#334155"}
+            stroke="#1c1917"
+            strokeWidth="1.5"
+          />
+          <path d="M 44 26 Q 52 24 58 32" stroke="#fbbf24" strokeWidth="2.5" fill="none" />
+          <path d="M 38 42 Q 48 40 54 48" stroke="#fbbf24" strokeWidth="2" fill="none" />
+          <circle cx="48" cy="6" r="3" fill="#fbbf24" filter={glow} />
+        </g>
+        {/* Chifre Direito */}
+        <g id="ignisaur-horn-right">
+          <path
+            d="M 136 68 C 160 46 175 15 152 6 C 142 2 136 30 128 62 Z"
+            fill={ctx?.ignisaurHorn || "#334155"}
+            stroke="#1c1917"
+            strokeWidth="1.5"
+          />
+          <path d="M 156 26 Q 148 24 142 32" stroke="#fbbf24" strokeWidth="2.5" fill="none" />
+          <path d="M 162 42 Q 152 40 146 48" stroke="#fbbf24" strokeWidth="2" fill="none" />
+          <circle cx="152" cy="6" r="3" fill="#fbbf24" filter={glow} />
+        </g>
+
+        {/* 3. Base Corporal & Túnica / Escamas Peitorais */}
+        <path d="M 46 136 Q 100 118 154 136 L 164 186 L 36 186 Z" fill="#7c2d12" />
+        <path d="M 70 136 L 100 174 L 130 136 Z" fill="#9a3412" stroke="#ea580c" strokeWidth="1.5" />
+        {/* Placas de Escamas Peitorais Douradas */}
+        <path d="M 85 142 L 100 156 L 115 142" stroke="#fbbf24" strokeWidth="2.2" fill="none" />
+        <path d="M 88 154 L 100 166 L 112 154" stroke="#fbbf24" strokeWidth="2" fill="none" />
+        {/* Núcleo de Magma Elemental no Peito */}
+        <circle cx="100" cy="148" r="4.5" fill="#fef08a" stroke="#ea580c" strokeWidth="1.5" filter={glow} />
+
+        {/* 4. Cabeça Dracônica Esculpida com Textura de Escama */}
+        <ellipse cx="100" cy="94" rx="45" ry="46" fill="#c2410c" />
+        <ellipse cx="100" cy="94" rx="42" ry="43" fill="#ea580c" />
+        {/* Placas Escamosas da Testa */}
+        <polygon points="94,54 100,42 106,54" fill="#9a3412" stroke="#7c2d12" strokeWidth="1" />
+        <polygon points="82,58 88,48 94,60" fill="#9a3412" stroke="#7c2d12" strokeWidth="1" />
+        <polygon points="106,60 112,48 118,58" fill="#9a3412" stroke="#7c2d12" strokeWidth="1" />
+
+        {/* Focinho Dracônico Marcante */}
+        <polygon points="88,86 112,86 100,108" fill="#9a3412" stroke="#7c2d12" strokeWidth="1.2" />
+        <circle cx="95" cy="100" r="2" fill="#431407" />
+        <circle cx="105" cy="100" r="2" fill="#431407" />
+        {/* Presas Pequenas Dracônicas */}
+        <polygon points="91,107 94,113 97,107" fill="#fff" />
+        <polygon points="103,107 106,113 109,107" fill="#fff" />
+
+        {/* 5. Olhos Dracônicos de Fogo Ancestral */}
         {state === "celebrating" ? (
-          <g>
-            <path d="M 72 84 Q 78 76 84 84" stroke="#7c2d12" strokeWidth="3" strokeLinecap="round" fill="none" />
-            <path d="M 116 84 Q 122 76 128 84" stroke="#7c2d12" strokeWidth="3" strokeLinecap="round" fill="none" />
+          <g id="ignisaur-celebrating-eyes">
+            <path d="M 72 82 Q 80 74 88 82" stroke="#431407" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+            <path d="M 112 82 Q 120 74 128 82" stroke="#431407" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+            <circle cx="70" cy="88" r="2.5" fill="#f97316" filter={glow} />
+            <circle cx="130" cy="88" r="2.5" fill="#f97316" filter={glow} />
           </g>
         ) : (
-          <g>
-            <ellipse cx="78" cy="84" rx="8" ry="6.5" fill="#fbbf24" stroke="#7c2d12" strokeWidth="1.5" filter={glow} />
-            <ellipse cx="122" cy="84" rx="8" ry="6.5" fill="#fbbf24" stroke="#7c2d12" strokeWidth="1.5" filter={glow} />
-            <ellipse cx={state === "thinking" ? 80 : 78} cy={state === "thinking" ? 82 : 84} rx="2.5" ry="5.5" fill="#431407" />
-            <ellipse cx={state === "thinking" ? 124 : 122} cy={state === "thinking" ? 82 : 84} rx="2.5" ry="5.5" fill="#431407" />
-            <circle cx={state === "thinking" ? 78 : 76} cy={state === "thinking" ? 80 : 82} r="2" fill="#fff" />
-            <circle cx={state === "thinking" ? 122 : 120} cy={state === "thinking" ? 80 : 82} r="2" fill="#fff" />
+          <g id="ignisaur-eyes">
+            {/* Olho Esquerdo */}
+            <ellipse cx="78" cy="82" rx="9" ry="8" fill="#431407" stroke="#7c2d12" strokeWidth="1.5" />
+            <ellipse cx="78" cy="82" rx="7.5" ry="6.5" fill="#fef08a" filter={glow} />
+            <ellipse cx="78" cy="82" rx="5.5" ry="5" fill="#f97316" />
+            {/* Pupila Fendida Dracônica */}
+            <ellipse cx={state === "thinking" ? 80 : 78} cy="82" rx="2" ry="6" fill="#1c1917" />
+            <circle cx={state === "thinking" ? 77 : 75} cy="79" r="2.2" fill="#ffffff" />
+            <circle cx="81" cy="85" r="1.2" fill="#ffffff" />
+            <path d="M 68 76 Q 78 70 88 75" stroke="#431407" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+
+            {/* Olho Direito */}
+            <ellipse cx="122" cy="82" rx="9" ry="8" fill="#431407" stroke="#7c2d12" strokeWidth="1.5" />
+            <ellipse cx="122" cy="82" rx="7.5" ry="6.5" fill="#fef08a" filter={glow} />
+            <ellipse cx="122" cy="82" rx="5.5" ry="5" fill="#f97316" />
+            {/* Pupila Fendida Dracônica */}
+            <ellipse cx={state === "thinking" ? 124 : 122} cy="82" rx="2" ry="6" fill="#1c1917" />
+            <circle cx={state === "thinking" ? 121 : 119} cy="79" r="2.2" fill="#ffffff" />
+            <circle cx="125" cy="85" r="1.2" fill="#ffffff" />
+            <path d="M 112 75 Q 122 70 132 76" stroke="#431407" strokeWidth="2.5" strokeLinecap="round" fill="none" />
           </g>
         )}
+
+        {/* 6. Expressão Bucal e Chamas Faladas */}
         {isSpeaking ? (
-          <ellipse cx="100" cy="112" rx="7" ry="5" fill="#ea580c" />
+          <g>
+            <ellipse cx="100" cy="113" rx="8" ry="6" fill="#431407" />
+            <ellipse cx="100" cy="114" rx="5" ry="3.5" fill="#f97316" filter={glow} />
+            <circle cx="100" cy="114" r="2" fill="#fef08a" />
+          </g>
         ) : state === "celebrating" ? (
-          <path d="M 90 108 Q 100 118 110 108" stroke="#f97316" strokeWidth="3" strokeLinecap="round" fill="none" />
+          <path d="M 88 108 Q 100 120 112 108" stroke="#431407" strokeWidth="3" strokeLinecap="round" fill="#9a3412" />
         ) : (
-          <path d="M 92 110 Q 100 115 108 110" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <path d="M 90 110 Q 100 115 110 110" stroke="#7c2d12" strokeWidth="2.5" strokeLinecap="round" fill="none" />
         )}
       </g>
     );
@@ -1132,9 +1643,10 @@ function renderLegsApparel(
   legsId?: string | null,
   primaryColor: string = "#3b82f6",
   secondaryColor: string = "#f59e0b",
-  ctx?: SvgContext
+  ctx?: SvgContext,
+  isMascot: boolean = false
 ) {
-  if (!legsId) return null;
+  if (!legsId || isMascot) return null;
 
   switch (legsId) {
     case "legs_botas_rusticas":
@@ -1183,11 +1695,24 @@ function renderBodyApparel(
   bodyId?: string | null,
   primaryColor: string = "#3b82f6",
   secondaryColor: string = "#f59e0b",
-  ctx?: SvgContext
+  ctx?: SvgContext,
+  isMascot: boolean = false
 ) {
   if (!bodyId) return null;
   const glow = ctx?.glowEffect || "url(#glowEffect)";
   const gold = ctx?.goldGrad || "url(#goldGrad)";
+
+  if (isMascot) {
+    // Para mascotes (Angeling, Baphomet Jr.), não cortar o corpo arredondado com túnica de corte humano
+    // Renderizamos um elegante broche / laço / medalhão proporcional ao formato esférico
+    return (
+      <g id="mascot-body-accessory">
+        <path d="M 80 152 Q 100 162 120 152" stroke={secondaryColor || "#fbbf24"} strokeWidth="2.5" fill="none" />
+        <circle cx="100" cy="158" r="4.5" fill={primaryColor || "#38bdf8"} stroke="#fbbf24" strokeWidth="1.5" filter={glow} />
+        <circle cx="100" cy="158" r="2" fill="#ffffff" />
+      </g>
+    );
+  }
 
   switch (bodyId) {
     case "chest_tunica_novico":
