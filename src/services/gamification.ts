@@ -194,7 +194,8 @@ export function getCombinedStats(
   let itemStreakProtection = 0;
   let itemCoinBonus = 0;
 
-  for (const slot of ALL_SLOT_TYPES) {
+  const checkedSlots = Array.from(new Set([...ALL_SLOT_TYPES, ...Object.keys(equipment)]));
+  for (const slot of checkedSlots) {
     const itemId = equipment[slot];
     if (itemId) {
       const item = getShopItemById(itemId);
@@ -328,7 +329,7 @@ export function equipShopItem(current: UserProgress, itemId: string): UserProgre
   };
 }
 
-export function unequipShopSlot(current: UserProgress, slot: SlotType): UserProgress {
+export function unequipShopSlot(current: UserProgress, slot: SlotType | string): UserProgress {
   const prepared = ensureGamificationProgress(current);
   const currentEquipment = {
     ...STARTER_EQUIPMENT,
@@ -344,7 +345,7 @@ export function unequipShopSlot(current: UserProgress, slot: SlotType): UserProg
   const newEquipped = { ...currentConfig.equipped };
   newEquipped[slot] = null;
 
-  const lowerMap: Record<SlotType, string> = {
+  const lowerMap: Record<string, string> = {
     HEAD: "head",
     CHEST: "body",
     LEGS: "legs",
@@ -352,8 +353,20 @@ export function unequipShopSlot(current: UserProgress, slot: SlotType): UserProg
     OFF_HAND: "off_hand",
     BACK: "back",
     ACCESSORY: "accessory",
+    HEAD_UPPER: "head",
+    HEAD_MIDDLE: "head",
+    HEAD_LOWER: "head",
+    ARMOR: "body",
+    GARMENT: "body",
+    FOOTGEAR: "legs",
+    RIGHT_HAND: "hand",
+    LEFT_HAND: "off_hand",
+    BACKPACK: "back",
+    PET_FAMILIAR: "accessory",
   };
-  newEquipped[lowerMap[slot]] = null;
+  if (lowerMap[slot]) {
+    newEquipped[lowerMap[slot]] = null;
+  }
 
   return {
     ...prepared,

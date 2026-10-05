@@ -55,14 +55,17 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
     return null;
   };
 
-  const backId = resolveSlot("BACK", "back");
-  const legsId = resolveSlot("LEGS", "legs");
-  const chestId = resolveSlot("CHEST", "chest", "body");
-  const headId = resolveSlot("HEAD", "head");
-  const mainHandId = resolveSlot("MAIN_HAND", "hand");
-  const offHandId = resolveSlot("OFF_HAND", "off_hand", "offHand");
+  const backId = resolveSlot("GARMENT", "BACK", "back");
+  const backpackId = resolveSlot("BACKPACK", "backpack");
+  const legsId = resolveSlot("FOOTGEAR", "LEGS", "legs");
+  const chestId = resolveSlot("ARMOR", "CHEST", "chest", "body");
+  const headId = resolveSlot("HEAD_UPPER", "HEAD", "head");
+  const eyesId = resolveSlot("HEAD_MIDDLE", "eyes");
+  const headLowerId = resolveSlot("HEAD_LOWER", "head_lower");
+  const mainHandId = resolveSlot("RIGHT_HAND", "MAIN_HAND", "hand");
+  const offHandId = resolveSlot("LEFT_HAND", "OFF_HAND", "off_hand", "offHand");
+  const petId = resolveSlot("PET_FAMILIAR", "pet", "pet_familiar");
   const accessoryId = resolveSlot("ACCESSORY", "accessory");
-  const eyesId = eq["eyes"] || undefined;
   const auraId = eq["aura"] || undefined;
 
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
@@ -144,34 +147,43 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
         {/* 1. CAMADA DE AURA / BACKGROUND */}
         {renderAuraLayer(auraId, primaryColor, state, ctx)}
 
-        {/* 2. CAMADA DE COSTAS (BACK) - Renderiza atrás do corpo */}
+        {/* 2. LAYER_BACK (GARMENT / ASAS / CAPAS) */}
         {renderBackItem(backId, primaryColor, secondaryColor, ctx)}
 
-        {/* 3. CAMADA DE CORPO BASE / ARQUÉTIPO RPG */}
+        {/* 3. LAYER_BACKPACK (MOCHILAS / ALFORGE) */}
+        {renderBackpackItem(backpackId, ctx)}
+
+        {/* 4. LAYER_BODY_BASE (CORPO BASE CHIBI & ARQUÉTIPOS) */}
         {renderBaseArchetype(archetype, subType, primaryColor, secondaryColor, state, ctx)}
 
-        {/* 4. CAMADA DE PERNAS (LEGS) */}
+        {/* 5. LAYER_FOOTGEAR (PERNAS / BOTAS / GREVAS) */}
         {renderLegsApparel(legsId, primaryColor, secondaryColor, ctx)}
 
-        {/* 5. CAMADA DE PEITORAL / TRAJE (CHEST) */}
+        {/* 6. LAYER_ARMOR (PEITORAL / TÚNICAS / ARMADURAS) */}
         {renderBodyApparel(chestId, primaryColor, secondaryColor, ctx)}
 
-        {/* 6. CAMADA DE ROSTO / OLHOS (EYES) */}
+        {/* 7. LAYER_HEAD_LOWER (ROSTO INFERIOR / FOLHA NA BOCA) */}
+        {renderHeadLowerItem(headLowerId, state, ctx)}
+
+        {/* 8. LAYER_HEAD_MIDDLE (ROSTO / OLHOS / VISEIRA) */}
         {renderEyewear(eyesId, state, ctx)}
 
-        {/* 7. CAMADA DE ACESSÓRIO (ACCESSORY) */}
+        {/* 9. CAMADA DE ACESSÓRIO (ACCESSORY) */}
         {renderAccessoryItem(accessoryId, primaryColor, secondaryColor, ctx)}
 
-        {/* 8. CAMADA DE CABEÇA / CHAPÉU / ELMO (HEAD) */}
+        {/* 10. LAYER_HEAD_UPPER (CHAPÉU / ORELHAS DE COELHO / MAÇÃ) */}
         {renderHeadwear(headId, primaryColor, secondaryColor, ctx)}
 
-        {/* 9. CAMADA DE MÃO PRINCIPAL (MAIN_HAND) */}
-        {renderHandItem(mainHandId, state, ctx)}
-
-        {/* 10. CAMADA DE MÃO SECUNDÁRIA (OFF_HAND) */}
+        {/* 11. LAYER_HAND_L (MÃO SECUNDÁRIA / ESCUDOS / GRIMÓRIOS) */}
         {renderOffHandItem(offHandId, state, ctx)}
 
-        {/* 11. EFEITOS DE ESTADO (Fala, Escuta, Celebração, Pensamento) */}
+        {/* 12. LAYER_HAND_R (MÃO PRINCIPAL / MARTELO / CAJADO) */}
+        {renderHandItem(mainHandId, state, ctx)}
+
+        {/* 13. LAYER_PET_GROUND (MASCOTE NO CHÃO / PORING / SPORE) */}
+        {renderPetGroundItem(petId, state, ctx)}
+
+        {/* 14. EFEITOS DE ESTADO (Fala, Escuta, Celebração, Pensamento) */}
         {renderStateOverlays(state, ctx)}
       </svg>
 
@@ -301,6 +313,96 @@ function renderBackItem(
           <circle cx="180" cy="65" r="2" fill="#fff" />
         </g>
       );
+    case "garment_angel_wings":
+      return (
+        <g id="back-angel-wings" filter={glow}>
+          {/* Asas de Anjo Celestiais (Ragnarok Online) */}
+          {/* Asa Esquerda */}
+          <path
+            d="M 55 125 C 15 105 -5 65 18 35 C 28 65 42 85 62 105 Z"
+            fill="#f8fafc"
+            stroke="#e2e8f0"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M 48 135 C 10 120 -8 85 10 55 C 22 80 40 105 56 122 Z"
+            fill="#f1f5f9"
+            stroke="#cbd5e1"
+            strokeWidth="1.2"
+          />
+          <path
+            d="M 42 142 C 15 135 5 110 18 85 C 26 102 38 118 50 132 Z"
+            fill="#e2e8f0"
+            stroke="#94a3b8"
+            strokeWidth="1"
+          />
+          {/* Asa Direita */}
+          <path
+            d="M 145 125 C 185 105 205 65 182 35 C 172 65 158 85 138 105 Z"
+            fill="#f8fafc"
+            stroke="#e2e8f0"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M 152 135 C 190 120 208 85 190 55 C 178 80 160 105 144 122 Z"
+            fill="#f1f5f9"
+            stroke="#cbd5e1"
+            strokeWidth="1.2"
+          />
+          <path
+            d="M 158 142 C 185 135 195 110 182 85 C 174 102 162 118 150 132 Z"
+            fill="#e2e8f0"
+            stroke="#94a3b8"
+            strokeWidth="1"
+          />
+          {/* Brilho e auréola de penas divinas */}
+          <circle cx="28" cy="45" r="3" fill="#fef08a" />
+          <circle cx="172" cy="45" r="3" fill="#fef08a" />
+          <circle cx="14" cy="72" r="2" fill="#fff" />
+          <circle cx="186" cy="72" r="2" fill="#fff" />
+        </g>
+      );
+    default:
+      return null;
+  }
+}
+
+// =========================================================================
+// 2b. BACKPACK LAYER (SLOT BACKPACK: MOCHILAS DE CARGA RO & ESCRIBA)
+// =========================================================================
+function renderBackpackItem(backpackId?: string | null, ctx?: SvgContext) {
+  if (!backpackId) return null;
+  const glow = ctx?.glowEffect || "url(#glowEffect)";
+
+  switch (backpackId) {
+    case "pack_merchant_wooden":
+      return (
+        <g id="pack-merchant-wooden" filter={glow}>
+          {/* Crate de madeira do Mercador de RO */}
+          <rect x="30" y="90" width="30" height="55" rx="4" fill="#854d0e" stroke="#451a03" strokeWidth="2" />
+          <rect x="140" y="90" width="30" height="55" rx="4" fill="#854d0e" stroke="#451a03" strokeWidth="2" />
+          {/* Rolo de esteira / cobertor no topo */}
+          <rect x="25" y="80" width="150" height="15" rx="7.5" fill="#fef08a" stroke="#ca8a04" strokeWidth="2" />
+          <line x1="55" y1="80" x2="55" y2="95" stroke="#78350f" strokeWidth="2.5" />
+          <line x1="145" y1="80" x2="145" y2="95" stroke="#78350f" strokeWidth="2.5" />
+          {/* Cordas de amarração cruzadas */}
+          <line x1="30" y1="115" x2="60" y2="115" stroke="#fef08a" strokeWidth="2" strokeDasharray="3 2" />
+          <line x1="140" y1="115" x2="170" y2="115" stroke="#fef08a" strokeWidth="2" strokeDasharray="3 2" />
+          {/* Cantoneiras de ferro reforçado */}
+          <rect x="29" y="140" width="10" height="6" fill="#e2e8f0" stroke="#475569" strokeWidth="1" />
+          <rect x="161" y="140" width="10" height="6" fill="#e2e8f0" stroke="#475569" strokeWidth="1" />
+        </g>
+      );
+    case "back_mochila_escriba":
+      return (
+        <g id="back-mochila-escriba">
+          <rect x="36" y="105" width="22" height="42" rx="4" fill="#78350f" stroke="#451a03" strokeWidth="2" />
+          <rect x="142" y="105" width="22" height="42" rx="4" fill="#78350f" stroke="#451a03" strokeWidth="2" />
+          <rect x="30" y="98" width="140" height="12" rx="6" fill="#fef3c7" stroke="#b45309" strokeWidth="1.5" />
+          <line x1="60" y1="98" x2="60" y2="110" stroke="#78350f" strokeWidth="2" />
+          <line x1="140" y1="98" x2="140" y2="110" stroke="#78350f" strokeWidth="2" />
+        </g>
+      );
     default:
       return null;
   }
@@ -319,6 +421,285 @@ function renderBaseArchetype(
 ) {
   const isSpeaking = state === "speaking";
   const glow = ctx?.glowEffect || "url(#glowEffect)";
+
+  // -------------------------------------------------------------
+  // RAGNAROK ONLINE (RO) CHIBI LINE-UP (8 PERSONAGENS)
+  // -------------------------------------------------------------
+
+  // RO 1: ESPADACHIM PRONTERIANO (MALE, SWORDSMAN)
+  if (subType === "ro_chibi_swordsman_male_base" || subType === "char_swordsman_m") {
+    return (
+      <g id="ro-swordsman">
+        <rect x="88" y="115" width="24" height="25" fill="#fed7aa" />
+        <path d="M 48 138 Q 100 122 152 138 L 160 185 L 40 185 Z" fill="#2563eb" />
+        <rect x="58" y="166" width="84" height="8" fill="#78350f" />
+        <rect x="94" y="163" width="12" height="14" rx="2" fill="#e2e8f0" stroke="#475569" strokeWidth="1.5" />
+        <circle cx="56" cy="92" r="10" fill="#fed7aa" />
+        <circle cx="144" cy="92" r="10" fill="#fed7aa" />
+        <ellipse cx="100" cy="94" rx="43" ry="45" fill="#ffedd5" />
+        <path d="M 52 78 L 42 50 L 62 55 L 75 32 L 95 48 L 115 28 L 128 50 L 148 40 L 146 78 Z" fill="#78350f" />
+        <path d="M 54 75 Q 100 50 146 75 Q 120 62 100 62 Q 80 62 54 75 Z" fill="#92400e" />
+        <path d="M 56 68 Q 100 56 144 68 L 142 75 Q 100 63 58 75 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1" />
+        <circle cx="100" cy="69" r="3.5" fill="#0284c7" />
+        <circle cx="80" cy="88" r="7" fill="#1c1917" />
+        <circle cx="120" cy="88" r="7" fill="#1c1917" />
+        <circle cx="78" cy="85" r="2.5" fill="#fff" />
+        <circle cx="118" cy="85" r="2.5" fill="#fff" />
+        <circle cx="82" cy="91" r="1" fill="#fff" />
+        <circle cx="122" cy="91" r="1" fill="#fff" />
+        <path d="M 72 77 Q 80 73 88 76" stroke="#451a03" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 112 76 Q 120 73 128 77" stroke="#451a03" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <ellipse cx="72" cy="98" rx="6" ry="3.5" fill="#fda4af" opacity="0.6" />
+        <ellipse cx="128" cy="98" rx="6" ry="3.5" fill="#fda4af" opacity="0.6" />
+        <circle cx="100" cy="96" r="1.5" fill="#fca5a5" />
+        {isSpeaking ? (
+          <ellipse cx="100" cy="107" rx="8" ry="6" fill="#e11d48" />
+        ) : (
+          <path d="M 92 105 Q 100 112 108 105" stroke="#b91c1c" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        )}
+      </g>
+    );
+  }
+
+  // RO 2: MAGO DE GEFFEN (MALE, MAGICIAN)
+  if (subType === "ro_chibi_wizard_male_base" || subType === "char_wizard_m") {
+    return (
+      <g id="ro-wizard">
+        <rect x="88" y="115" width="24" height="25" fill="#fed7aa" />
+        <path d="M 48 138 Q 100 120 152 138 L 160 185 L 40 185 Z" fill="#312e81" />
+        <path d="M 78 136 L 100 162 L 122 136 Z" fill="#4338ca" stroke="#fbbf24" strokeWidth="1" />
+        <circle cx="56" cy="92" r="10" fill="#fed7aa" />
+        <circle cx="144" cy="92" r="10" fill="#fed7aa" />
+        <ellipse cx="100" cy="94" rx="42" ry="44" fill="#ffedd5" />
+        <path d="M 54 80 Q 56 42 100 42 Q 144 42 146 80 Q 135 55 100 52 Q 65 55 54 80 Z" fill="#1e1b4b" />
+        <path d="M 52 75 L 68 85 L 64 68 Z" fill="#1e1b4b" />
+        <path d="M 148 75 L 132 85 L 136 68 Z" fill="#1e1b4b" />
+        <ellipse cx="100" cy="62" rx="4" ry="6" fill="#06b6d4" stroke="#fbbf24" strokeWidth="1" filter={glow} />
+        <circle cx="80" cy="88" r="6.5" fill="#4338ca" />
+        <circle cx="120" cy="88" r="6.5" fill="#4338ca" />
+        <circle cx="78" cy="86" r="2.5" fill="#fff" />
+        <circle cx="118" cy="86" r="2.5" fill="#fff" />
+        <path d="M 74 77 Q 82 74 90 77" stroke="#1e1b4b" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M 110 77 Q 118 74 126 77" stroke="#1e1b4b" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        {isSpeaking ? (
+          <ellipse cx="100" cy="107" rx="7" ry="5" fill="#be123c" />
+        ) : (
+          <path d="M 94 106 Q 100 110 106 106" stroke="#991b1b" strokeWidth="2" strokeLinecap="round" fill="none" />
+        )}
+      </g>
+    );
+  }
+
+  // RO 3: FERREIRO DE ALBERTA (MALE, BLACKSMITH)
+  if (subType === "ro_chibi_blacksmith_male_base" || subType === "char_blacksmith_m") {
+    return (
+      <g id="ro-blacksmith">
+        <rect x="86" y="115" width="28" height="25" fill="#fde68a" />
+        <path d="M 46 138 Q 100 120 154 138 L 162 185 L 38 185 Z" fill="#78350f" />
+        <path d="M 75 138 Q 100 158 125 138 L 100 168 Z" fill="#dc2626" />
+        <circle cx="54" cy="92" r="10" fill="#fde68a" />
+        <circle cx="146" cy="92" r="10" fill="#fde68a" />
+        <ellipse cx="100" cy="94" rx="44" ry="46" fill="#fef08a" />
+        <path d="M 50 78 L 40 48 L 65 52 L 78 30 L 98 48 L 118 28 L 132 50 L 150 42 L 148 78 Z" fill="#b45309" />
+        <rect x="68" y="48" width="26" height="14" rx="4" fill="#78350f" stroke="#fbbf24" strokeWidth="1.5" />
+        <rect x="106" y="48" width="26" height="14" rx="4" fill="#78350f" stroke="#fbbf24" strokeWidth="1.5" />
+        <rect x="72" y="51" width="18" height="8" rx="2" fill="#06b6d4" opacity="0.85" />
+        <rect x="110" y="51" width="18" height="8" rx="2" fill="#06b6d4" opacity="0.85" />
+        <line x1="94" y1="55" x2="106" y2="55" stroke="#fbbf24" strokeWidth="2" />
+        <ellipse cx="126" cy="96" rx="5" ry="4" fill="#292524" opacity="0.4" />
+        <circle cx="80" cy="88" r="6.5" fill="#292524" />
+        <circle cx="120" cy="88" r="6.5" fill="#292524" />
+        <circle cx="78" cy="86" r="2" fill="#fff" />
+        <circle cx="118" cy="86" r="2" fill="#fff" />
+        <path d="M 70 76 L 90 77" stroke="#78350f" strokeWidth="3.5" strokeLinecap="round" />
+        <path d="M 110 77 L 130 76" stroke="#78350f" strokeWidth="3.5" strokeLinecap="round" />
+        {isSpeaking ? (
+          <ellipse cx="100" cy="108" rx="9" ry="7" fill="#b91c1c" />
+        ) : (
+          <path d="M 90 106 Q 100 116 110 106" stroke="#991b1b" strokeWidth="3" strokeLinecap="round" fill="none" />
+        )}
+      </g>
+    );
+  }
+
+  // RO 4: MAGA ARCANA DE ALBERTA (FEMALE, MAGICIAN)
+  if (subType === "ro_chibi_magician_female_base" || subType === "char_magician_f") {
+    return (
+      <g id="ro-magician-f">
+        <rect x="89" y="115" width="22" height="25" fill="#ffe4e6" />
+        <path d="M 50 140 Q 100 124 150 140 L 158 185 L 42 185 Z" fill="#0d9488" />
+        <path d="M 85 140 L 100 165 L 115 140 Z" fill="#fef08a" />
+        <circle cx="100" cy="150" r="3.5" fill="#9333ea" />
+        <circle cx="58" cy="92" r="9" fill="#ffe4e6" />
+        <circle cx="142" cy="92" r="9" fill="#ffe4e6" />
+        <ellipse cx="100" cy="94" rx="41" ry="43" fill="#fff1f2" />
+        <path d="M 54 80 Q 58 40 100 40 Q 142 40 146 80 Q 125 58 100 58 Q 75 58 54 80 Z" fill="#14b8a6" />
+        <path d="M 52 75 Q 35 110 40 155 Q 48 115 58 85 Z" fill="#0d9488" />
+        <path d="M 148 75 Q 165 110 160 155 Q 152 115 142 85 Z" fill="#0d9488" />
+        <circle cx="48" cy="80" r="5" fill="#9333ea" />
+        <circle cx="152" cy="80" r="5" fill="#9333ea" />
+        <ellipse cx="80" cy="88" rx="6.5" ry="6" fill="#7c3aed" />
+        <ellipse cx="120" cy="88" rx="6.5" ry="6" fill="#7c3aed" />
+        <circle cx="78" cy="86" r="2.5" fill="#fff" />
+        <circle cx="118" cy="86" r="2.5" fill="#fff" />
+        <circle cx="82" cy="90" r="1" fill="#fff" />
+        <circle cx="122" cy="90" r="1" fill="#fff" />
+        <path d="M 73 83 L 70 80" stroke="#1e1b4b" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M 127 83 L 130 80" stroke="#1e1b4b" strokeWidth="1.5" strokeLinecap="round" />
+        <ellipse cx="72" cy="98" rx="6" ry="3.5" fill="#f43f5e" opacity="0.65" />
+        <ellipse cx="128" cy="98" rx="6" ry="3.5" fill="#f43f5e" opacity="0.65" />
+        {isSpeaking ? (
+          <ellipse cx="100" cy="107" rx="7" ry="5" fill="#be123c" />
+        ) : (
+          <path d="M 94 106 Q 100 110 106 106" stroke="#e11d48" strokeWidth="2" strokeLinecap="round" fill="none" />
+        )}
+      </g>
+    );
+  }
+
+  // RO 5: NOVIÇA DE PRONTERA (FEMALE, PRIEST)
+  if (subType === "ro_chibi_acolyte_female_base" || subType === "char_acolyte_f") {
+    return (
+      <g id="ro-acolyte">
+        <rect x="89" y="115" width="22" height="25" fill="#ffedd5" />
+        <path d="M 50 140 Q 100 124 150 140 L 158 185 L 42 185 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1" />
+        <path d="M 80 138 L 100 168 L 120 138 Z" fill="#fef08a" stroke="#eab308" strokeWidth="1" />
+        <rect x="98" y="152" width="4" height="12" fill="#eab308" filter={glow} />
+        <rect x="94" y="155" width="12" height="4" fill="#eab308" filter={glow} />
+        <circle cx="58" cy="92" r="9" fill="#ffedd5" />
+        <circle cx="142" cy="92" r="9" fill="#ffedd5" />
+        <ellipse cx="100" cy="94" rx="41" ry="43" fill="#fff7ed" />
+        <path d="M 54 80 Q 58 40 100 40 Q 142 40 146 80 Q 125 56 100 56 Q 75 56 54 80 Z" fill="#f59e0b" />
+        <ellipse cx="46" cy="85" rx="8" ry="12" fill="#d97706" />
+        <ellipse cx="154" cy="85" rx="8" ry="12" fill="#d97706" />
+        <circle cx="48" cy="78" r="4" fill="#fff" stroke="#cbd5e1" strokeWidth="1" />
+        <circle cx="152" cy="78" r="4" fill="#fff" stroke="#cbd5e1" strokeWidth="1" />
+        <circle cx="80" cy="88" r="6.5" fill="#78350f" />
+        <circle cx="120" cy="88" r="6.5" fill="#78350f" />
+        <circle cx="78" cy="86" r="2.5" fill="#fff" />
+        <circle cx="118" cy="86" r="2.5" fill="#fff" />
+        <ellipse cx="72" cy="98" rx="6" ry="3.5" fill="#fda4af" opacity="0.65" />
+        <ellipse cx="128" cy="98" rx="6" ry="3.5" fill="#fda4af" opacity="0.65" />
+        {isSpeaking ? (
+          <ellipse cx="100" cy="107" rx="7" ry="5.5" fill="#e11d48" />
+        ) : (
+          <path d="M 94 106 Q 100 111 106 106" stroke="#b91c1c" strokeWidth="2" strokeLinecap="round" fill="none" />
+        )}
+      </g>
+    );
+  }
+
+  // RO 6: CAÇADORA COM LOBO (FEMALE, HUNTER)
+  if (subType === "ro_chibi_hunter_female_base" || subType === "char_hunter_f") {
+    return (
+      <g id="ro-hunter">
+        <rect x="89" y="115" width="22" height="25" fill="#fed7aa" />
+        <path d="M 50 140 Q 100 124 150 140 L 158 185 L 42 185 Z" fill="#15803d" />
+        <path d="M 82 138 L 100 166 L 118 138 Z" fill="#78350f" />
+        <circle cx="58" cy="92" r="9" fill="#fed7aa" />
+        <circle cx="142" cy="92" r="9" fill="#fed7aa" />
+        <ellipse cx="100" cy="94" rx="41" ry="43" fill="#ffedd5" />
+        <path d="M 54 80 Q 58 40 100 40 Q 142 40 146 80 Q 125 58 100 58 Q 75 58 54 80 Z" fill="#292524" />
+        <path d="M 100 40 Q 130 18 155 35 Q 135 48 115 45 Z" fill="#1c1917" />
+        <path d="M 125 40 Q 145 25 152 10 Q 138 25 125 35 Z" fill="#22c55e" stroke="#15803d" strokeWidth="1" filter={glow} />
+        <circle cx="80" cy="88" r="6.5" fill="#047857" />
+        <circle cx="120" cy="88" r="6.5" fill="#047857" />
+        <circle cx="78" cy="86" r="2.5" fill="#fff" />
+        <circle cx="118" cy="86" r="2.5" fill="#fff" />
+        <circle cx="82" cy="90" r="1" fill="#a7f3d0" />
+        <circle cx="122" cy="90" r="1" fill="#a7f3d0" />
+        <circle cx="74" cy="96" r="1" fill="#b45309" />
+        <circle cx="77" cy="98" r="1" fill="#b45309" />
+        <circle cx="126" cy="96" r="1" fill="#b45309" />
+        <circle cx="123" cy="98" r="1" fill="#b45309" />
+        {isSpeaking ? (
+          <ellipse cx="100" cy="107" rx="7.5" ry="5.5" fill="#e11d48" />
+        ) : (
+          <path d="M 94 106 Q 102 110 108 104" stroke="#b91c1c" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        )}
+      </g>
+    );
+  }
+
+  // RO 7: BAPHOMET JR. MITOLÓGICO (NEUTRAL_CREATURE, MYTHIC_BEAST)
+  if (subType === "ro_chibi_baphomet_jr_base" || subType === "char_baphomet_jr") {
+    return (
+      <g id="ro-baphomet-jr">
+        <path d="M 52 140 Q 100 128 148 140 L 155 185 L 45 185 Z" fill="#18181b" />
+        <path d="M 45 130 C 15 110 15 75 40 85 C 30 100 45 115 55 125 Z" fill="#312e81" stroke="#000" strokeWidth="1.5" />
+        <path d="M 155 130 C 185 110 185 75 160 85 C 170 100 155 115 145 125 Z" fill="#312e81" stroke="#000" strokeWidth="1.5" />
+        <ellipse cx="52" cy="92" rx="12" ry="7" fill="#3f3f46" transform="rotate(-15 52 92)" />
+        <ellipse cx="148" cy="92" rx="12" ry="7" fill="#3f3f46" transform="rotate(15 148 92)" />
+        <path
+          d="M 68 70 C 40 40 30 15 55 10 C 75 8 75 40 68 70 Z"
+          fill="#78350f"
+          stroke="#451a03"
+          strokeWidth="2"
+        />
+        <path
+          d="M 132 70 C 160 40 170 15 145 10 C 125 8 125 40 132 70 Z"
+          fill="#78350f"
+          stroke="#451a03"
+          strokeWidth="2"
+        />
+        <line x1="45" y1="25" x2="65" y2="35" stroke="#b45309" strokeWidth="1.5" />
+        <line x1="155" y1="25" x2="135" y2="35" stroke="#b45309" strokeWidth="1.5" />
+        <ellipse cx="100" cy="94" rx="42" ry="43" fill="#27272a" />
+        <path d="M 90 56 L 100 40 L 110 56 Z" fill="#3f3f46" />
+        <circle cx="80" cy="88" r="7" fill="#ef4444" filter={glow} />
+        <circle cx="120" cy="88" r="7" fill="#ef4444" filter={glow} />
+        <ellipse cx="80" cy="88" rx="2" ry="5.5" fill="#450a0a" />
+        <ellipse cx="120" cy="88" rx="2" ry="5.5" fill="#450a0a" />
+        <circle cx="77" cy="85" r="2.5" fill="#fff" />
+        <circle cx="117" cy="85" r="2.5" fill="#fff" />
+        <polygon points="97,98 103,98 100,102" fill="#18181b" />
+        {isSpeaking ? (
+          <ellipse cx="100" cy="110" rx="6" ry="5" fill="#991b1b" />
+        ) : (
+          <path d="M 92 106 Q 96 110 100 107 Q 104 110 108 106" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" fill="none" />
+        )}
+        <polygon points="98,106 100,110 102,106" fill="#fff" />
+      </g>
+    );
+  }
+
+  // RO 8: ANGELING ALADO (NEUTRAL_CREATURE, MYTHIC_BEAST)
+  if (subType === "ro_chibi_angeling_base" || subType === "char_angeling") {
+    return (
+      <g id="ro-angeling">
+        <path
+          d="M 55 105 C 20 85 10 55 35 40 C 42 60 55 80 68 95 Z"
+          fill="#f8fafc"
+          stroke="#cbd5e1"
+          strokeWidth="1.5"
+          filter={glow}
+        />
+        <path
+          d="M 145 105 C 180 85 190 55 165 40 C 158 60 145 80 132 95 Z"
+          fill="#f8fafc"
+          stroke="#cbd5e1"
+          strokeWidth="1.5"
+          filter={glow}
+        />
+        <ellipse cx="100" cy="52" rx="26" ry="7" fill="none" stroke="#fbbf24" strokeWidth="3.5" filter={glow} />
+        <ellipse cx="100" cy="115" rx="46" ry="38" fill="#f472b6" stroke="#db2777" strokeWidth="2" />
+        <path d="M 72 95 Q 100 84 128 95" stroke="#fbcfe8" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+        <circle cx="86" cy="112" r="6.5" fill="#18181b" />
+        <circle cx="114" cy="112" r="6.5" fill="#18181b" />
+        <circle cx="84" cy="109" r="2.5" fill="#fff" />
+        <circle cx="112" cy="109" r="2.5" fill="#fff" />
+        <circle cx="88" cy="114" r="1.2" fill="#fff" />
+        <circle cx="116" cy="114" r="1.2" fill="#fff" />
+        <ellipse cx="76" cy="120" rx="5" ry="3" fill="#f43f5e" opacity="0.65" />
+        <ellipse cx="124" cy="120" rx="5" ry="3" fill="#f43f5e" opacity="0.65" />
+        {isSpeaking ? (
+          <ellipse cx="100" cy="124" rx="6" ry="5" fill="#be123c" />
+        ) : (
+          <path d="M 95 122 Q 100 126 105 122" stroke="#9f1239" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        )}
+      </g>
+    );
+  }
 
   // 1. VALERIUS, O ESCRIBA ERRANTE (HUMAN_MALE)
   if (subType === "valerius_scribe" || subType === "valerius") {
@@ -674,6 +1055,55 @@ function renderBodyApparel(
           <rect x="94" y="165" width="12" height="14" rx="2" fill="#fbbf24" stroke="#78350f" strokeWidth="1.5" />
         </g>
       );
+    case "armor_apprentice_robe":
+      return (
+        <g id="armor-apprentice-robe">
+          {/* Túnica azul cerúleo com botões de latão (Ragnarok Online) */}
+          <path d="M 50 136 Q 100 122 150 136 L 158 185 L 42 185 Z" fill="#0284c7" stroke="#0369a1" strokeWidth="1.5" />
+          <path d="M 85 136 L 100 168 L 115 136 Z" fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
+          <rect x="56" y="165" width="88" height="8" fill="#78350f" />
+          <rect x="94" y="162" width="12" height="14" rx="2" fill="#fbbf24" stroke="#78350f" strokeWidth="1.5" />
+          <circle cx="100" cy="144" r="2.5" fill="#fbbf24" />
+          <circle cx="100" cy="154" r="2.5" fill="#fbbf24" />
+        </g>
+      );
+    case "armor_blacksmith_overalls":
+      return (
+        <g id="armor-blacksmith-overalls">
+          {/* Jardineira do Forjador de Alberta */}
+          <path d="M 48 136 Q 100 124 152 136 L 160 185 L 40 185 Z" fill="#78350f" stroke="#451a03" strokeWidth="1.5" />
+          <rect x="68" y="136" width="10" height="32" fill="#92400e" stroke="#451a03" strokeWidth="1" />
+          <rect x="122" y="136" width="10" height="32" fill="#92400e" stroke="#451a03" strokeWidth="1" />
+          <rect x="67" y="152" width="12" height="6" rx="1" fill="#fbbf24" stroke="#78350f" strokeWidth="1" />
+          <rect x="121" y="152" width="12" height="6" rx="1" fill="#fbbf24" stroke="#78350f" strokeWidth="1" />
+          <rect x="85" y="154" width="30" height="22" rx="3" fill="#451a03" stroke="#b45309" strokeWidth="1.5" />
+          <circle cx="92" cy="152" r="3.5" fill="#fbbf24" />
+          <line x1="108" y1="147" x2="108" y2="157" stroke="#cbd5e1" strokeWidth="3" strokeLinecap="round" />
+        </g>
+      );
+    default:
+      return null;
+  }
+}
+
+// =========================================================================
+// 5b. HEAD_LOWER LAYER (ROSTO INFERIOR: FOLHINHA ROMÂNTICA)
+// =========================================================================
+function renderHeadLowerItem(headLowerId?: string | null, state: string = "idle", ctx?: SvgContext) {
+  if (!headLowerId) return null;
+  const glow = ctx?.glowEffect || "url(#glowEffect)";
+
+  switch (headLowerId) {
+    case "head_leaf_mouth":
+      return (
+        <g id="head-leaf-mouth" filter={glow}>
+          {/* Caule curvado saindo do canto direito da boca */}
+          <path d="M 106 108 Q 120 110 134 102" stroke="#15803d" strokeWidth="2" fill="none" strokeLinecap="round" />
+          {/* Folhinha de trevo verde delicada com brilho */}
+          <path d="M 134 102 Q 138 92 146 96 Q 148 104 138 106 Q 146 112 142 118 Q 134 114 134 102 Z" fill="#22c55e" stroke="#16a34a" strokeWidth="1" />
+          <circle cx="139" cy="100" r="1.5" fill="#86efac" />
+        </g>
+      );
     default:
       return null;
   }
@@ -682,7 +1112,7 @@ function renderBodyApparel(
 // =========================================================================
 // 6. EYEWEAR LAYER (ÓCULOS / MÁSCARAS)
 // =========================================================================
-function renderEyewear(eyesId?: string, state: string = "idle", ctx?: SvgContext) {
+function renderEyewear(eyesId?: string | null, state: string = "idle", ctx?: SvgContext) {
   if (!eyesId) return null;
   const glow = ctx?.glowEffect || "url(#glowEffect)";
 
@@ -850,6 +1280,39 @@ function renderHeadwear(
           <circle cx="102" cy="24" r="2" fill="#ef4444" />
         </g>
       );
+    case "head_bunny_ears":
+      return (
+        <g id="head-bunny-ears" filter={glow}>
+          {/* Orelhas de Coelho Brancas (Ragnarok Online) */}
+          <ellipse cx="78" cy="38" rx="8" ry="24" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1.5" transform="rotate(-10 78 38)" />
+          <ellipse cx="78" cy="38" rx="4" ry="17" fill="#f472b6" opacity="0.6" transform="rotate(-10 78 38)" />
+          <ellipse cx="122" cy="38" rx="8" ry="24" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1.5" transform="rotate(10 122 38)" />
+          <ellipse cx="122" cy="38" rx="4" ry="17" fill="#f472b6" opacity="0.6" transform="rotate(10 122 38)" />
+          <path d="M 68 64 Q 100 48 132 64" stroke="#e2e8f0" strokeWidth="3" fill="none" />
+          <circle cx="126" cy="58" r="4" fill="#fbbf24" stroke="#d97706" strokeWidth="1" />
+        </g>
+      );
+    case "head_apple_archer":
+      return (
+        <g id="head-apple-archer" filter={glow}>
+          {/* Maçã de Archer (Ragnarok Online) */}
+          <circle cx="100" cy="38" r="13" fill="#ef4444" stroke="#991b1b" strokeWidth="1.2" />
+          <ellipse cx="96" cy="35" rx="3.5" ry="5.5" fill="#fca5a5" transform="rotate(-20 96 35)" />
+          <path d="M 100 26 Q 102 20 106 18" stroke="#78350f" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          <path d="M 105 20 Q 114 18 116 24 Q 110 26 105 20 Z" fill="#22c55e" stroke="#15803d" strokeWidth="0.8" />
+        </g>
+      );
+    case "head_mage_hat":
+      return (
+        <g id="head-mage-hat" filter={glow}>
+          {/* Chapéu Cônico de Bruxo (Ragnarok Online) */}
+          <ellipse cx="100" cy="64" rx="56" ry="13" fill="#1e1b4b" stroke="#312e81" strokeWidth="2" />
+          <path d="M 64 64 Q 92 12 136 10 Q 112 40 136 64 Z" fill="#312e81" stroke="#1e1b4b" strokeWidth="1.5" />
+          <path d="M 68 61 Q 100 56 132 61 L 132 67 Q 100 62 68 67 Z" fill="#d97706" />
+          <rect x="94" y="58" width="12" height="10" rx="1.5" fill="#fbbf24" stroke="#78350f" strokeWidth="1" />
+          <circle cx="136" cy="11" r="3" fill="#fbbf24" />
+        </g>
+      );
     case "starter_cap":
       return (
         <g id="headwear-starter-cap">
@@ -864,7 +1327,7 @@ function renderHeadwear(
 }
 
 // =========================================================================
-// 9. MAIN HAND ITEM LAYER (SLOT MAIN_HAND: ESPADAS, CAJADOS, PENA)
+// 9. MAIN HAND ITEM LAYER (SLOT MAIN_HAND: ESPADAS, CAJADOS, PENA, MARTELO)
 // =========================================================================
 function renderHandItem(handId?: string | null, state: string = "idle", ctx?: SvgContext) {
   if (!handId) return null;
@@ -872,6 +1335,29 @@ function renderHandItem(handId?: string | null, state: string = "idle", ctx?: Sv
   const cyber = ctx?.cyberGrad || "url(#cyberGrad)";
 
   switch (handId) {
+    case "wpn_forging_hammer":
+      return (
+        <g id="wpn-forging-hammer" filter={glow}>
+          {/* Martelo de Batalha do Ferreiro (Ragnarok Online) */}
+          <line x1="152" y1="185" x2="170" y2="60" stroke="#78350f" strokeWidth="5.5" strokeLinecap="round" />
+          <line x1="152" y1="185" x2="170" y2="60" stroke="#b45309" strokeWidth="2" strokeDasharray="6 4" />
+          <rect x="146" y="50" width="46" height="26" rx="3" fill="#334155" stroke="#0f172a" strokeWidth="2" transform="rotate(-15 168 62)" />
+          <line x1="156" y1="62" x2="180" y2="62" stroke="#fbbf24" strokeWidth="2.5" transform="rotate(-15 168 62)" />
+          <line x1="168" y1="54" x2="168" y2="70" stroke="#fbbf24" strokeWidth="2.5" transform="rotate(-15 168 62)" />
+        </g>
+      );
+    case "wpn_wizard_staff":
+      return (
+        <g id="wpn-wizard-staff" filter={glow}>
+          {/* Cajado do Éter Elemental (Ragnarok Online) */}
+          <line x1="152" y1="185" x2="170" y2="60" stroke="#b45309" strokeWidth="4.5" strokeLinecap="round" />
+          <circle cx="170" cy="55" r="14" fill="none" stroke="#fbbf24" strokeWidth="2.5" />
+          <circle cx="166" cy="53" r="6" fill="#ef4444" stroke="#f97316" strokeWidth="1" filter={glow} />
+          <circle cx="175" cy="57" r="5" fill="#38bdf8" stroke="#0284c7" strokeWidth="1" filter={glow} />
+          <circle cx="162" cy="44" r="1.5" fill="#fbbf24" />
+          <circle cx="178" cy="46" r="1.5" fill="#38bdf8" />
+        </g>
+      );
     case "main_hand_pena_prata":
       return (
         <g id="main-hand-pena" filter={glow}>
@@ -984,7 +1470,75 @@ function renderOffHandItem(offHandId?: string | null, state: string = "idle", ct
 }
 
 // =========================================================================
-// 11. STATE OVERLAYS (FALA, ESCUTA, PENSAMENTO, CELEBRAÇÃO)
+// 12. PET_GROUND LAYER (PETS / MASCOTES NO CHÃO: PORING, SPORE)
+// =========================================================================
+function renderPetGroundItem(petId?: string | null, state: string = "idle", ctx?: SvgContext) {
+  if (!petId) return null;
+  const glow = ctx?.glowEffect || "url(#glowEffect)";
+
+  switch (petId) {
+    case "pet_poring_cute":
+      return (
+        <g id="pet-poring" filter={glow} className="transition-transform duration-300">
+          {/* Sombra no chão */}
+          <ellipse cx="156" cy="184" rx="18" ry="6" fill="#000" opacity="0.25" />
+          {/* Geleia rosada translúcida e fofa do Poring (Ragnarok Online) */}
+          <path
+            d="M 140 178 C 138 162 144 150 156 150 C 168 150 174 162 172 178 C 172 184 140 184 140 178 Z"
+            fill="#f472b6"
+            stroke="#db2777"
+            strokeWidth="1.5"
+          />
+          {/* Brilho de gota do Poring */}
+          <path
+            d="M 146 158 Q 154 153 162 155"
+            stroke="#fbcfe8"
+            strokeWidth="2"
+            strokeLinecap="round"
+            fill="none"
+          />
+          {/* Olhinhos pretos brilhantes */}
+          <ellipse cx="149" cy="166" rx="2.5" ry="3.5" fill="#18181b" />
+          <ellipse cx="163" cy="166" rx="2.5" ry="3.5" fill="#18181b" />
+          <circle cx="148" cy="165" r="1" fill="#fff" />
+          <circle cx="162" cy="165" r="1" fill="#fff" />
+          {/* Bochechas rosadas */}
+          <ellipse cx="144" cy="172" rx="2.5" ry="1.5" fill="#f43f5e" opacity="0.6" />
+          <ellipse cx="168" cy="172" rx="2.5" ry="1.5" fill="#f43f5e" opacity="0.6" />
+          {/* Sorriso do Poring */}
+          <path d="M 153 172 Q 156 175 159 172" stroke="#9f1239" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+        </g>
+      );
+    case "pet_spore_hat":
+      return (
+        <g id="pet-spore" filter={glow}>
+          {/* Sombra no chão */}
+          <ellipse cx="156" cy="184" rx="17" ry="5.5" fill="#000" opacity="0.25" />
+          {/* Tronco do cogumelo */}
+          <rect x="150" y="168" width="12" height="15" rx="4" fill="#fef3c7" stroke="#d97706" strokeWidth="1" />
+          <circle cx="153" cy="174" r="1.5" fill="#451a03" />
+          <circle cx="159" cy="174" r="1.5" fill="#451a03" />
+          <circle cx="152.5" cy="173.5" r="0.5" fill="#fff" />
+          <circle cx="158.5" cy="173.5" r="0.5" fill="#fff" />
+          {/* Chapéu do Spore de RO */}
+          <path
+            d="M 138 168 Q 156 142 174 168 Q 156 172 138 168 Z"
+            fill="#6366f1"
+            stroke="#4338ca"
+            strokeWidth="1.5"
+          />
+          <circle cx="156" cy="154" r="3.5" fill="#e0e7ff" />
+          <circle cx="146" cy="162" r="2.5" fill="#e0e7ff" />
+          <circle cx="166" cy="162" r="2.5" fill="#e0e7ff" />
+        </g>
+      );
+    default:
+      return null;
+  }
+}
+
+// =========================================================================
+// 13. STATE OVERLAYS (FALA, ESCUTA, PENSAMENTO, CELEBRAÇÃO)
 // =========================================================================
 function renderStateOverlays(state: string, ctx?: SvgContext) {
   const glow = ctx?.glowEffect || "url(#glowEffect)";

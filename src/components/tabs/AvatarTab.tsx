@@ -8,6 +8,7 @@ import {
   CharacterBase,
   ItemRarity,
   AvatarEquipment,
+  EquipmentSlot,
 } from "@/types/avatar";
 import { ModularAvatar } from "@/components/avatar/ModularAvatar";
 import {
@@ -16,6 +17,10 @@ import {
   DEFAULT_AVATAR_CONFIG,
   getShopItemById,
   getCharacterById,
+  BASE_AVATARS,
+  ITEM_CATALOG,
+  adaptRoAvatarToCharacterBase,
+  adaptRoItemToShopItem,
 } from "@/data/avatar-items";
 import {
   calculateLevelInfo,
@@ -65,9 +70,16 @@ interface AvatarTabProps {
   onOpenConversation?: () => void;
 }
 
-const SLOT_TABS: { id: SlotType | "all" | "archetype"; label: string; icon: string }[] = [
+const SLOT_TABS: { id: string; label: string; icon: string }[] = [
   { id: "all", label: "Tudo", icon: "✨" },
   { id: "archetype", label: "Heróis", icon: "🧙‍♂️" },
+  { id: EquipmentSlot.HEAD_UPPER, label: "Chapéus RO", icon: "🐰" },
+  { id: EquipmentSlot.HEAD_LOWER, label: "Boca RO", icon: "🍃" },
+  { id: EquipmentSlot.ARMOR, label: "Armaduras RO", icon: "👘" },
+  { id: EquipmentSlot.GARMENT, label: "Asas & Capas RO", icon: "🪽" },
+  { id: EquipmentSlot.BACKPACK, label: "Mochilas RO", icon: "📦" },
+  { id: EquipmentSlot.RIGHT_HAND, label: "Armas RO", icon: "🔨" },
+  { id: EquipmentSlot.PET_FAMILIAR, label: "Pets RO", icon: "🐣" },
   { id: "HEAD", label: "Cabeça", icon: "🎩" },
   { id: "CHEST", label: "Peitoral", icon: "🥋" },
   { id: "LEGS", label: "Pernas", icon: "👢" },
@@ -109,19 +121,39 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
   const levelInfo = calculateLevelInfo(prepared.xp);
   const combinedStats = getCombinedStats(prepared, prepared.selectedLanguage);
   const avatarConfig = prepared.equippedAvatar || DEFAULT_AVATAR_CONFIG;
-  const currentEquipment: AvatarEquipment = (prepared.equipment || {}) as AvatarEquipment;
+  const currentEquipment = (prepared.equipment || {}) as Record<string, string | null | undefined>;
   const inventoryIds = prepared.inventoryItemIds || [];
   const selectedChar = getCharacterById(prepared.selectedCharacterId || "valerius");
 
-  const [activeSlot, setActiveSlot] = useState<SlotType | "all" | "archetype">("all");
+  const allHeroes: CharacterBase[] = [
+    ...BASE_AVATARS.map(adaptRoAvatarToCharacterBase),
+    ...CHARACTERS_DATABASE,
+  ];
+
+  const fullShopCatalog: ShopItem[] = [
+    ...ITEM_CATALOG.map(adaptRoItemToShopItem),
+    ...SHOP_ITEMS_CATALOG,
+  ];
+
+  const [activeSlot, setActiveSlot] = useState<string>("all");
   const [shopMode, setShopMode] = useState<"shop" | "closet">("shop");
   const [rarityFilter, setRarityFilter] = useState<ItemRarity | "ALL">("ALL");
   const [previewState, setPreviewState] = useState<AvatarAnimationState>("idle");
 
-  const filteredItems = SHOP_ITEMS_CATALOG.filter((item) => {
+  const filteredItems = fullShopCatalog.filter((item) => {
     // Filtro por slot
-    if (activeSlot !== "all" && activeSlot !== "archetype" && item.slot !== activeSlot) {
-      return false;
+    if (activeSlot !== "all" && activeSlot !== "archetype") {
+      const directMatch = item.slot === activeSlot;
+      const mappedMatch =
+        (activeSlot === "HEAD" && (item.slot === EquipmentSlot.HEAD_UPPER || item.slot === EquipmentSlot.HEAD_LOWER || item.slot === EquipmentSlot.HEAD_MIDDLE)) ||
+        (activeSlot === "CHEST" && item.slot === EquipmentSlot.ARMOR) ||
+        (activeSlot === "BACK" && (item.slot === EquipmentSlot.GARMENT || item.slot === EquipmentSlot.BACKPACK)) ||
+        (activeSlot === "MAIN_HAND" && item.slot === EquipmentSlot.RIGHT_HAND) ||
+        (activeSlot === "OFF_HAND" && item.slot === EquipmentSlot.LEFT_HAND) ||
+        (activeSlot === "ACCESSORY" && item.slot === EquipmentSlot.PET_FAMILIAR) ||
+        (activeSlot === "LEGS" && item.slot === EquipmentSlot.FOOTGEAR);
+
+      if (!directMatch && !mappedMatch) return false;
     }
     if (activeSlot === "archetype") return false;
 
@@ -157,7 +189,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
     toast.success(`${item.name} equipado com sucesso!`);
   };
 
-  const handleUnequip = (slot: SlotType) => {
+  const handleUnequip = (slot: string) => {
     playOptionSelectSound();
     const updated = unequipShopSlot(prepared, slot);
     onUpdateProgress(updated);
@@ -173,7 +205,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
     });
   };
 
-  const isEquipped = (itemId: string, slot: SlotType) => {
+  const isEquipped = (itemId: string, slot: string) => {
     return currentEquipment[slot] === itemId;
   };
 
@@ -373,10 +405,10 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            {ALL_SLOT_TYPES.map((slot) => {
+            {Array.from(new Set([...ALL_SLOT_TYPES, ...Object.keys(currentEquipment).filter((k) => currentEquipment[k])])).map((slot) => {
               const itemId = currentEquipment[slot];
               const item = itemId ? getShopItemById(itemId) : null;
-              const slotLabelMap: Record<SlotType, { label: string; icon: string }> = {
+              const slotLabelMap: Record<string, { label: string; icon: string }> = {
                 HEAD: { label: "Cabeça", icon: "🎩" },
                 CHEST: { label: "Peitoral", icon: "🥋" },
                 LEGS: { label: "Pernas", icon: "👢" },
@@ -384,8 +416,18 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                 OFF_HAND: { label: "Mão Secundária", icon: "🛡️" },
                 BACK: { label: "Costas", icon: "🎒" },
                 ACCESSORY: { label: "Acessório", icon: "💎" },
+                HEAD_UPPER: { label: "Chapéu RO", icon: "🐰" },
+                HEAD_MIDDLE: { label: "Óculos RO", icon: "👓" },
+                HEAD_LOWER: { label: "Boca RO", icon: "🍃" },
+                ARMOR: { label: "Armadura RO", icon: "👘" },
+                GARMENT: { label: "Asas RO", icon: "🪽" },
+                FOOTGEAR: { label: "Botas RO", icon: "🥾" },
+                RIGHT_HAND: { label: "Arma RO", icon: "🔨" },
+                LEFT_HAND: { label: "Escudo RO", icon: "🛡️" },
+                BACKPACK: { label: "Mochila RO", icon: "📦" },
+                PET_FAMILIAR: { label: "Pet RO", icon: "🐣" },
               };
-              const slotInfo = slotLabelMap[slot];
+              const slotInfo = slotLabelMap[slot] || { label: slot, icon: "⚔️" };
 
               return (
                 <div
@@ -465,7 +507,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-          {CHARACTERS_DATABASE.map((char) => {
+          {allHeroes.map((char) => {
             const isCurrent = prepared.selectedCharacterId === char.id;
             return (
               <div

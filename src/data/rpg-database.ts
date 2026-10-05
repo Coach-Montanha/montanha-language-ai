@@ -4,6 +4,17 @@ import {
   AvatarEquipment,
   SlotType,
 } from "@/types/avatar";
+import {
+  BASE_AVATARS,
+  ITEM_CATALOG,
+  AntigravityAvatarEngine,
+  getRoAvatarById,
+  getRoItemById,
+  adaptRoAvatarToCharacterBase,
+  adaptRoItemToShopItem,
+} from "./ro-rpg";
+
+export * from "./ro-rpg";
 
 // =========================================================================
 // 1. BANCO DE DADOS DE PERSONAGENS & ARQUÉTIPOS RPG
@@ -80,7 +91,11 @@ export const CHARACTERS_DATABASE: CharacterBase[] = [
 export const DEFAULT_CHARACTER_ID = "valerius";
 
 export function getCharacterById(id: string): CharacterBase | undefined {
-  return CHARACTERS_DATABASE.find((c) => c.id === id);
+  const existing = CHARACTERS_DATABASE.find((c) => c.id === id);
+  if (existing) return existing;
+  const roAvatar = getRoAvatarById(id);
+  if (roAvatar) return adaptRoAvatarToCharacterBase(roAvatar);
+  return undefined;
 }
 
 // =========================================================================
@@ -461,11 +476,17 @@ export const STARTER_SHOP_ITEM_IDS: string[] = [
 ];
 
 export function getShopItemById(id: string): ShopItem | undefined {
-  return SHOP_ITEMS_CATALOG.find((item) => item.id === id);
+  const existing = SHOP_ITEMS_CATALOG.find((item) => item.id === id);
+  if (existing) return existing;
+  const roItem = getRoItemById(id);
+  if (roItem) return adaptRoItemToShopItem(roItem);
+  return undefined;
 }
 
 export function getShopItemsBySlot(slot: SlotType): ShopItem[] {
-  return SHOP_ITEMS_CATALOG.filter((item) => item.slot === slot);
+  const existing = SHOP_ITEMS_CATALOG.filter((item) => item.slot === slot);
+  const roItems = ITEM_CATALOG.filter((item) => item.slot === slot).map(adaptRoItemToShopItem);
+  return [...existing, ...roItems];
 }
 
 export function getShopItemsByRarity(rarity: ShopItem["rarity"]): ShopItem[] {

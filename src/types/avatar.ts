@@ -1,3 +1,6 @@
+export * from "./rpg";
+import { EquipmentSlot } from "./rpg";
+
 // RPG Gamification Enums and Types
 
 export type SlotType =
@@ -7,7 +10,8 @@ export type SlotType =
   | "MAIN_HAND"
   | "OFF_HAND"
   | "BACK"
-  | "ACCESSORY";
+  | "ACCESSORY"
+  | EquipmentSlot;
 
 export const ALL_SLOT_TYPES: SlotType[] = [
   "HEAD",
@@ -18,6 +22,8 @@ export const ALL_SLOT_TYPES: SlotType[] = [
   "BACK",
   "ACCESSORY",
 ];
+
+export const ALL_RO_SLOT_TYPES: EquipmentSlot[] = Object.values(EquipmentSlot);
 
 export type ItemRarity = "COMMON" | "RARE" | "EPIC" | "LEGENDARY" | "MYTHIC";
 
@@ -55,7 +61,7 @@ export interface ShopItem {
   icon?: string;
 }
 
-export type AvatarEquipment = Record<SlotType, string | null>;
+export type AvatarEquipment = Partial<Record<SlotType | string, string | null>>;
 
 export interface CombinedStats {
   finalXpMultiplier: number;

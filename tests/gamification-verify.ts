@@ -25,9 +25,12 @@ import {
   getCharacterById,
   getShopItemById,
   STARTER_EQUIPMENT,
+  BASE_AVATARS,
+  ITEM_CATALOG,
+  AntigravityAvatarEngine,
 } from "../src/data/avatar-items";
 import { UserProgress, SupportedLanguage } from "../src/types/language";
-import { AvatarItem, SlotType, ALL_SLOT_TYPES } from "../src/types/avatar";
+import { AvatarItem, SlotType, ALL_SLOT_TYPES, EquipmentSlot, ItemTier, ArchetypeRole } from "../src/types/avatar";
 
 console.log("🎮 Starting Gamification & Modular Avatar Verification Suite...");
 
@@ -672,6 +675,219 @@ console.log("➡️ Test 13: Astrid Nordic & Russian Affinity Bonus");
   assert.strictEqual(statsGerman.characterBonus.active, true);
 
   console.log("  ✓ Astrid Russian and Nordic affinity verified!");
+}
+
+// ==========================================
+// Test 14: Ragnarok Online (RO) BASE_AVATARS & ITEM_CATALOG Completeness
+// ==========================================
+console.log("➡️ Test 14: Ragnarok Online BASE_AVATARS & ITEM_CATALOG completeness");
+{
+  // 14a: Verify BASE_AVATARS (8 Chibi RO characters)
+  assert.strictEqual(BASE_AVATARS.length, 8, "Must have exactly 8 RO base avatars");
+  const expectedAvatarIds = [
+    "char_swordsman_m",
+    "char_wizard_m",
+    "char_blacksmith_m",
+    "char_magician_f",
+    "char_acolyte_f",
+    "char_hunter_f",
+    "char_baphomet_jr",
+    "char_angeling",
+  ];
+  for (const id of expectedAvatarIds) {
+    const char = BASE_AVATARS.find((c) => c.id === id);
+    assert.ok(char, `Avatar ${id} must exist in BASE_AVATARS`);
+    assert.ok(char.name.length > 0, `Avatar ${id} must have a name`);
+    assert.ok(char.languagePerk.length > 0, `Avatar ${id} must have a language perk`);
+    assert.ok(char.baseSpriteKey.length > 0, `Avatar ${id} must have a baseSpriteKey`);
+  }
+
+  // 14b: Verify ITEM_CATALOG (12 items)
+  assert.strictEqual(ITEM_CATALOG.length, 12, "Must have exactly 12 RO catalog items");
+  const expectedItemIds = [
+    "head_bunny_ears",
+    "head_apple_archer",
+    "head_mage_hat",
+    "head_leaf_mouth",
+    "armor_apprentice_robe",
+    "armor_blacksmith_overalls",
+    "pack_merchant_wooden",
+    "garment_angel_wings",
+    "wpn_forging_hammer",
+    "wpn_wizard_staff",
+    "pet_poring_cute",
+    "pet_spore_hat",
+  ];
+  for (const id of expectedItemIds) {
+    const item = ITEM_CATALOG.find((it) => it.id === id);
+    assert.ok(item, `Item ${id} must exist in ITEM_CATALOG`);
+    assert.ok(item.name.length > 0, `Item ${id} must have a name`);
+    assert.ok(item.costZeny > 0, `Item ${id} must have a zeny cost`);
+    assert.ok(item.requiredLevel >= 1, `Item ${id} must have a required level`);
+    assert.ok(item.spriteLayer.length > 0, `Item ${id} must have a spriteLayer`);
+  }
+
+  // Verify RO slots representation
+  const slotsInCatalog = new Set(ITEM_CATALOG.map((it) => it.slot));
+  assert.ok(slotsInCatalog.has(EquipmentSlot.HEAD_UPPER));
+  assert.ok(slotsInCatalog.has(EquipmentSlot.HEAD_LOWER));
+  assert.ok(slotsInCatalog.has(EquipmentSlot.ARMOR));
+  assert.ok(slotsInCatalog.has(EquipmentSlot.GARMENT));
+  assert.ok(slotsInCatalog.has(EquipmentSlot.BACKPACK));
+  assert.ok(slotsInCatalog.has(EquipmentSlot.RIGHT_HAND));
+  assert.ok(slotsInCatalog.has(EquipmentSlot.PET_FAMILIAR));
+
+  console.log("  ✓ RO BASE_AVATARS (8) & ITEM_CATALOG (12) verified!");
+}
+
+// ==========================================
+// Test 15: AntigravityAvatarEngine State Machine & Render Tree Order
+// ==========================================
+console.log("➡️ Test 15: AntigravityAvatarEngine buy, equip, unequip, boosts, and render layers");
+{
+  const swordsman = BASE_AVATARS[0]!;
+  const engine = new AntigravityAvatarEngine(swordsman, 1, 500);
+
+  assert.strictEqual(engine.getActiveAvatar().id, "char_swordsman_m");
+  assert.strictEqual(engine.getUserLevel(), 1);
+  assert.strictEqual(engine.getZenyWallet(), 500);
+
+  // 15a: Buy item - invalid ID
+  const invalidBuy = engine.buyItem("non_existent_item");
+  assert.strictEqual(invalidBuy.success, false);
+
+  // 15b: Buy item - level gate failure (garment_angel_wings requires level 25)
+  const levelGated = engine.buyItem("garment_angel_wings");
+  assert.strictEqual(levelGated.success, false);
+  assert.ok(levelGated.reason.includes("Requer Nível de Base 25"));
+
+  // 15c: Buy item - zeny gate failure (armor_apprentice_robe costs 800, user has 500)
+  engine.setUserLevel(10);
+  const zenyGated = engine.buyItem("armor_apprentice_robe");
+  assert.strictEqual(zenyGated.success, false);
+  assert.ok(zenyGated.reason.includes("Zeny insuficiente"));
+
+  // 15d: Buy item - success (pet_poring_cute: 350 zeny, level 1)
+  const validBuy = engine.buyItem("pet_poring_cute");
+  assert.strictEqual(validBuy.success, true);
+  assert.strictEqual(engine.getZenyWallet(), 150); // 500 - 350
+  assert.ok(engine.getInventory().has("pet_poring_cute"));
+
+  // 15e: Buy item - duplicate purchase error
+  const duplicateBuy = engine.buyItem("pet_poring_cute");
+  assert.strictEqual(duplicateBuy.success, false);
+  assert.ok(duplicateBuy.reason.includes("já possui este equipamento"));
+
+  // 15f: Equip - unowned item error
+  const unownedEquip = engine.equip("wpn_forging_hammer");
+  assert.strictEqual(unownedEquip.success, false);
+
+  // 15g: Equip - valid pet
+  const validEquip = engine.equip("pet_poring_cute");
+  assert.strictEqual(validEquip.success, true);
+  assert.strictEqual(validEquip.previousItemName, undefined);
+
+  // Add more funds & buy items
+  engine.addZeny(10000);
+  engine.setUserLevel(30);
+  assert.strictEqual(engine.buyItem("head_bunny_ears").success, true);
+  assert.strictEqual(engine.buyItem("head_apple_archer").success, true);
+  assert.strictEqual(engine.buyItem("garment_angel_wings").success, true);
+  assert.strictEqual(engine.buyItem("wpn_forging_hammer").success, true);
+
+  // Equip bunny ears (HEAD_UPPER)
+  const equipBunny = engine.equip("head_bunny_ears");
+  assert.strictEqual(equipBunny.success, true);
+
+  // Replace HEAD_UPPER with apple_archer -> should report previousItemName
+  const equipApple = engine.equip("head_apple_archer");
+  assert.strictEqual(equipApple.success, true);
+  assert.strictEqual(equipApple.previousItemName, "Orelhas de Coelho Brancas");
+
+  // Equip wings and hammer
+  assert.strictEqual(engine.equip("garment_angel_wings").success, true);
+  assert.strictEqual(engine.equip("wpn_forging_hammer").success, true);
+
+  // 15h: calculateCombinedLessonBoosts()
+  // Active equipped:
+  // head_apple_archer: xpMultiplier 1.08
+  // garment_angel_wings: xpMultiplier 1.35, streakShieldPercent 0.30
+  // wpn_forging_hammer: xpMultiplier 1.20
+  // pet_poring_cute: streakShieldPercent 0.10
+  // xpMult = 1.0 + (1.08 - 1) + (1.35 - 1) + (1.20 - 1) = 1.63
+  // streakShield = 0.30 + 0.10 = 0.40 -> 40%
+  const boosts = engine.calculateCombinedLessonBoosts();
+  assert.strictEqual(boosts.finalXpMultiplier, 1.63);
+  assert.strictEqual(boosts.finalStreakProtection, "40%");
+
+  // 15i: unequip()
+  const unequipHammer = engine.unequip(EquipmentSlot.RIGHT_HAND);
+  assert.strictEqual(unequipHammer.success, true);
+  assert.strictEqual(unequipHammer.unequippedName, "Martelo de Batalha do Ferreiro");
+
+  const unequipEmpty = engine.unequip(EquipmentSlot.RIGHT_HAND);
+  assert.strictEqual(unequipEmpty.success, false);
+
+  // 15j: getAntigravityRenderTree()
+  // Expected order:
+  // LAYER_BACK (wings), LAYER_BODY_BASE (char base), LAYER_HEAD_UPPER (apple), LAYER_PET_GROUND (poring)
+  const tree = engine.getAntigravityRenderTree();
+  assert.strictEqual(tree.avatarBase, swordsman.baseSpriteKey);
+  const layers = tree.renderSequence.map((node) => node.layer);
+  assert.deepStrictEqual(layers, [
+    "LAYER_BACK",
+    "LAYER_BODY_BASE",
+    "LAYER_HEAD_UPPER",
+    "LAYER_PET_GROUND",
+  ]);
+
+  console.log("  ✓ AntigravityAvatarEngine state, boosts, and render layers verified!");
+}
+
+// ==========================================
+// Test 16: RO Integration with UserProgress, getCharacterById & getShopItemById
+// ==========================================
+console.log("➡️ Test 16: RO Integration with UserProgress and Adapters");
+{
+  // 16a: getCharacterById resolves RO avatars
+  const roHero = getCharacterById("char_angeling");
+  assert.ok(roHero, "Angeling must resolve via getCharacterById");
+  assert.strictEqual(roHero.name, "Angeling Alado");
+  assert.strictEqual(roHero.category, "MYTHIC_BEAST");
+
+  // 16b: getShopItemById resolves RO items
+  const roItem = getShopItemById("pet_poring_cute");
+  assert.ok(roItem, "pet_poring_cute must resolve via getShopItemById");
+  assert.strictEqual(roItem.name, "Poring Saltitante");
+  assert.strictEqual(roItem.slot, EquipmentSlot.PET_FAMILIAR);
+
+  // 16c: Switching character to RO avatar
+  const player: UserProgress = {
+    xp: 1200, // Level 6
+    coins: 2000,
+    selectedCharacterId: "char_swordsman_m",
+    equipment: {},
+    inventoryItemIds: ["head_bunny_ears"],
+  };
+  const switched = selectRpgCharacter(player, "char_wizard_m");
+  assert.strictEqual(switched.selectedCharacterId, "char_wizard_m");
+  assert.strictEqual(switched.equippedAvatar?.subType, "ro_chibi_wizard_male_base");
+
+  // 16d: Buying and equipping RO item through standard gamification service
+  const bought = buyShopItem(player, "head_bunny_ears");
+  // already in inventory -> shouldn't double charge
+  assert.strictEqual(bought.success, false);
+
+  const buyApple = buyShopItem(player, "head_apple_archer");
+  assert.strictEqual(buyApple.success, true);
+  assert.ok(buyApple.updated);
+  assert.strictEqual(buyApple.updated.equipment?.[EquipmentSlot.HEAD_UPPER], "head_apple_archer");
+
+  // 16e: Combined stats calculation with RO item
+  const stats = getCombinedStats(buyApple.updated, "es");
+  assert.ok(stats.finalXpMultiplier > 1.0);
+
+  console.log("  ✓ RO Integration with UserProgress, getCharacterById, and getShopItemById verified!");
 }
 
 console.log("\n🎉 ALL GAMIFICATION, RPG & AVATAR VERIFICATION TESTS PASSED FLAWLESSLY!\n");

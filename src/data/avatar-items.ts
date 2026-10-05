@@ -535,6 +535,16 @@ export function getItemById(id?: string): AvatarItem | undefined {
       OFF_HAND: "hand",
       BACK: "body",
       ACCESSORY: "aura",
+      HEAD_UPPER: "head",
+      HEAD_MIDDLE: "head",
+      HEAD_LOWER: "head",
+      ARMOR: "body",
+      GARMENT: "body",
+      FOOTGEAR: "body",
+      RIGHT_HAND: "hand",
+      LEFT_HAND: "hand",
+      BACKPACK: "body",
+      PET_FAMILIAR: "aura",
     };
     return {
       id: shopItem.id,
