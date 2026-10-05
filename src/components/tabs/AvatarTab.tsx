@@ -1,18 +1,32 @@
 import React, { useState } from "react";
-import { UserProgress } from "@/types/language";
-import { AvatarAnimationState, AvatarSlot, AvatarItem } from "@/types/avatar";
+import { UserProgress, SupportedLanguage } from "@/types/language";
+import {
+  AvatarAnimationState,
+  SlotType,
+  ALL_SLOT_TYPES,
+  ShopItem,
+  CharacterBase,
+  ItemRarity,
+  AvatarEquipment,
+} from "@/types/avatar";
 import { ModularAvatar } from "@/components/avatar/ModularAvatar";
 import {
-  AVATAR_ITEMS,
+  CHARACTERS_DATABASE,
+  SHOP_ITEMS_CATALOG,
   DEFAULT_AVATAR_CONFIG,
-  getItemById,
+  getShopItemById,
+  getCharacterById,
 } from "@/data/avatar-items";
 import {
   calculateLevelInfo,
   ensureGamificationProgress,
+  getCombinedStats,
+  buyShopItem,
+  equipShopItem,
+  unequipShopSlot,
+  selectRpgCharacter,
   buyAvatarItem,
   equipAvatarItem,
-  unequipAvatarSlot,
 } from "@/services/gamification";
 import {
   playSuccessSound,
@@ -32,8 +46,13 @@ import {
   Mic,
   Smile,
   Brain,
-  Layers,
   ChevronRight,
+  Flame,
+  Sword,
+  Wand2,
+  Backpack,
+  Gem,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,32 +65,38 @@ interface AvatarTabProps {
   onOpenConversation?: () => void;
 }
 
-const SLOT_TABS: { id: AvatarSlot | "all"; label: string; icon: string }[] = [
+const SLOT_TABS: { id: SlotType | "all" | "archetype"; label: string; icon: string }[] = [
   { id: "all", label: "Tudo", icon: "✨" },
-  { id: "archetype", label: "Arquétipos", icon: "🧬" },
-  { id: "head", label: "Cabeça", icon: "🎩" },
-  { id: "eyes", label: "Rosto", icon: "👓" },
-  { id: "body", label: "Traje", icon: "🥋" },
-  { id: "hand", label: "Mão", icon: "🪄" },
-  { id: "aura", label: "Aura", icon: "🌌" },
+  { id: "archetype", label: "Heróis", icon: "🧙‍♂️" },
+  { id: "HEAD", label: "Cabeça", icon: "🎩" },
+  { id: "CHEST", label: "Peitoral", icon: "🥋" },
+  { id: "LEGS", label: "Pernas", icon: "👢" },
+  { id: "MAIN_HAND", label: "Mão Principal", icon: "⚔️" },
+  { id: "OFF_HAND", label: "Mão Secundária", icon: "🛡️" },
+  { id: "BACK", label: "Costas", icon: "🎒" },
+  { id: "ACCESSORY", label: "Acessório", icon: "💎" },
 ];
 
-const RARITY_COLORS: Record<string, { badge: string; border: string }> = {
-  common: {
-    badge: "bg-slate-500/15 text-slate-400 border-slate-500/30",
-    border: "border-slate-700/50 hover:border-slate-500",
+const RARITY_COLORS: Record<ItemRarity, { badge: string; border: string }> = {
+  COMMON: {
+    badge: "bg-slate-500/15 text-slate-300 border-slate-500/30",
+    border: "border-slate-800 hover:border-slate-600",
   },
-  rare: {
+  RARE: {
     badge: "bg-blue-500/15 text-blue-400 border-blue-500/30",
     border: "border-blue-900/40 hover:border-blue-500",
   },
-  epic: {
+  EPIC: {
     badge: "bg-purple-500/15 text-purple-400 border-purple-500/30",
     border: "border-purple-900/40 hover:border-purple-500",
   },
-  legendary: {
+  LEGENDARY: {
     badge: "bg-amber-500/15 text-amber-400 border-amber-500/30",
     border: "border-amber-700/50 hover:border-amber-400 shadow-sm shadow-amber-500/10",
+  },
+  MYTHIC: {
+    badge: "bg-rose-500/15 text-rose-400 border-rose-500/30 animate-pulse",
+    border: "border-rose-600/60 hover:border-rose-400 shadow-md shadow-rose-500/20",
   },
 };
 
@@ -82,96 +107,107 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
 }) => {
   const prepared = ensureGamificationProgress(progress);
   const levelInfo = calculateLevelInfo(prepared.xp);
+  const combinedStats = getCombinedStats(prepared, prepared.selectedLanguage);
   const avatarConfig = prepared.equippedAvatar || DEFAULT_AVATAR_CONFIG;
-  const unlockedIds = prepared.unlockedAvatarItems || [];
+  const currentEquipment: AvatarEquipment = (prepared.equipment || {}) as AvatarEquipment;
+  const inventoryIds = prepared.inventoryItemIds || [];
+  const selectedChar = getCharacterById(prepared.selectedCharacterId || "valerius");
 
-  const [activeSlot, setActiveSlot] = useState<AvatarSlot | "all">("all");
+  const [activeSlot, setActiveSlot] = useState<SlotType | "all" | "archetype">("all");
   const [shopMode, setShopMode] = useState<"shop" | "closet">("shop");
+  const [rarityFilter, setRarityFilter] = useState<ItemRarity | "ALL">("ALL");
   const [previewState, setPreviewState] = useState<AvatarAnimationState>("idle");
 
-  const filteredItems = AVATAR_ITEMS.filter((item) => {
+  const filteredItems = SHOP_ITEMS_CATALOG.filter((item) => {
     // Filtro por slot
-    if (activeSlot !== "all" && item.slot !== activeSlot) return false;
+    if (activeSlot !== "all" && activeSlot !== "archetype" && item.slot !== activeSlot) {
+      return false;
+    }
+    if (activeSlot === "archetype") return false;
 
-    // Filtro por modo: loja (todos) ou closet (apenas os que já possui)
+    // Filtro por raridade
+    if (rarityFilter !== "ALL" && item.rarity !== rarityFilter) return false;
+
+    // Filtro por modo: loja vs closet (itens adquiridos)
     if (shopMode === "closet") {
-      return unlockedIds.includes(item.id);
+      return inventoryIds.includes(item.id);
     }
     return true;
   });
 
-  const handleBuy = (item: AvatarItem) => {
-    const res = buyAvatarItem(prepared, item);
+  const handleBuy = (item: ShopItem) => {
+    const res = buyShopItem(prepared, item.id);
     if (!res.success) {
       toast.error(res.error || "Não foi possível comprar este item.");
       return;
     }
     playSprintCompleteSound();
     toast.success(`🎉 Você desbloqueou: ${item.name}!`, {
-      description: "Item equipado automaticamente no seu avatar tutor!",
+      description: "Item adicionado ao inventário e equipado automaticamente!",
     });
     if (res.updated) {
       onUpdateProgress(res.updated);
     }
   };
 
-  const handleEquip = (item: AvatarItem) => {
+  const handleEquip = (item: ShopItem) => {
     playOptionSelectSound();
-    const updated = equipAvatarItem(prepared, item);
+    const updated = equipShopItem(prepared, item.id);
     onUpdateProgress(updated);
     toast.success(`${item.name} equipado com sucesso!`);
   };
 
-  const handleUnequip = (slot: "head" | "eyes" | "body" | "hand" | "aura") => {
+  const handleUnequip = (slot: SlotType) => {
     playOptionSelectSound();
-    const updated = unequipAvatarSlot(prepared, slot);
+    const updated = unequipShopSlot(prepared, slot);
     onUpdateProgress(updated);
-    toast.info("Item desequipado.");
+    toast.info("Slot desequipado.");
   };
 
-  const isEquipped = (item: AvatarItem) => {
-    if (item.slot === "archetype") {
-      const sub = avatarConfig.subType;
-      return (
-        item.id.includes(sub) ||
-        (avatarConfig.archetype === item.archetype &&
-          item.id === "starter_human" &&
-          sub === "adventurer")
-      );
-    }
-    return avatarConfig.equipped[item.slot] === item.id;
+  const handleSelectCharacter = (character: CharacterBase) => {
+    playOptionSelectSound();
+    const updated = selectRpgCharacter(prepared, character.id);
+    onUpdateProgress(updated);
+    toast.success(`Herói selecionado: ${character.name}!`, {
+      description: `${character.avatarGreeting || "Pronto para os estudos!"}`,
+    });
+  };
+
+  const isEquipped = (itemId: string, slot: SlotType) => {
+    return currentEquipment[slot] === itemId;
   };
 
   return (
-    <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 max-w-5xl mx-auto w-full space-y-6 pb-20">
+    <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 max-w-6xl mx-auto w-full space-y-6 pb-20">
       {/* ============================================================ */}
-      {/* 1. BANNER RPG: NÍVEL, XP, TÍTULO E MOEDAS */}
+      {/* 1. BANNER RPG: NÍVEL, XP, TÍTULO, MOEDAS E BÔNUS COMBINADOS */}
       {/* ============================================================ */}
-      <div className="relative overflow-hidden rounded-2xl border border-violet-500/30 bg-gradient-to-r from-violet-950/60 via-slate-900/80 to-indigo-950/60 p-4 sm:p-5 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Badge className="bg-amber-500 text-slate-950 font-black px-2.5 py-0.5 text-xs">
+      <div className="relative overflow-hidden rounded-3xl border border-violet-500/30 bg-gradient-to-r from-violet-950/80 via-slate-900/90 to-indigo-950/80 p-5 sm:p-6 shadow-2xl backdrop-blur-xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="bg-amber-500 text-slate-950 font-black px-3 py-0.5 text-xs">
                 Nível {levelInfo.level}
               </Badge>
-              <h2 className="text-base sm:text-lg font-extrabold text-foreground">
-                {levelInfo.title}
+              <h2 className="text-lg sm:text-xl font-black text-white">
+                {selectedChar ? selectedChar.name : levelInfo.title}
               </h2>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Ganhe XP e Moedas em treinos diários e conversas com o Tutor IA para equipar e evoluir seu avatar RPG.
+            <p className="text-xs text-slate-300 max-w-xl">
+              {selectedChar?.lore ||
+                "Ganhe XP e Moedas em treinos diários e conversas com o Tutor IA para equipar e evoluir seu avatar RPG."}
             </p>
           </div>
 
           {/* Saldo de Moedas & Botão Conversar */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-amber-500/15 border border-amber-500/30 px-3.5 py-2 rounded-xl">
-              <Coins className="h-5 w-5 text-amber-400 animate-spin origin-center duration-3000" />
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2.5 bg-amber-500/15 border border-amber-500/30 px-4 py-2.5 rounded-2xl shadow-inner">
+              <Coins className="h-6 w-6 text-amber-400" />
               <div>
-                <span className="text-[10px] text-amber-300 font-semibold block uppercase tracking-wider">
-                  Moedas Montanha
+                <span className="text-[10px] text-amber-300 font-bold block uppercase tracking-wider">
+                  Moedas RPG
                 </span>
-                <span className="text-base font-black text-amber-400 leading-none">
+                <span className="text-lg font-black text-amber-400 leading-none">
                   {prepared.coins ?? 150} 🪙
                 </span>
               </div>
@@ -181,18 +217,69 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
               <Button
                 onClick={onOpenConversation}
                 size="sm"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-md cursor-pointer text-xs"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg cursor-pointer text-xs h-10 px-4 rounded-xl"
               >
-                Conversar com Tutor
-                <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                Praticar com Tutor
+                <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             )}
           </div>
         </div>
 
-        {/* Barra de Progresso de XP até o Próximo Nível */}
-        <div className="mt-3.5 pt-3 border-t border-border/40 space-y-1.5">
-          <div className="flex justify-between text-[11px] font-semibold text-muted-foreground">
+        {/* Estatísticas RPG Combinadas (Atributos de Equipamento) */}
+        <div className="mt-4 pt-4 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="flex items-center gap-3 bg-slate-950/60 border border-slate-800/80 p-3 rounded-xl">
+            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+              <Flame className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 font-semibold block uppercase">
+                Multiplicador de XP
+              </span>
+              <span className="text-sm font-black text-indigo-300">
+                {combinedStats.finalXpMultiplier}x{" "}
+                <span className="text-xs font-medium text-emerald-400">
+                  (+{Math.round((combinedStats.finalXpMultiplier - 1) * 100)}%)
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 bg-slate-950/60 border border-slate-800/80 p-3 rounded-xl">
+            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+              <Coins className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 font-semibold block uppercase">
+                Bônus de Moedas
+              </span>
+              <span className="text-sm font-black text-emerald-300">
+                {combinedStats.finalCoinBonus}x{" "}
+                <span className="text-xs font-medium text-emerald-400">
+                  (+{Math.round((combinedStats.finalCoinBonus - 1) * 100)}%)
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 bg-slate-950/60 border border-slate-800/80 p-3 rounded-xl">
+            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
+              <Shield className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 font-semibold block uppercase">
+                Proteção de Ofensiva
+              </span>
+              <span className="text-sm font-black text-blue-300">
+                {combinedStats.finalStreakProtection} Dias Protegidos
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Barra de Progresso de Nível */}
+        <div className="mt-4 pt-3 border-t border-slate-800/60 space-y-1.5">
+          <div className="flex justify-between text-[11px] font-semibold text-slate-300">
             <span>Progresso para o Nível {levelInfo.level + 1}</span>
             <span className="text-violet-400 font-bold">
               {levelInfo.currentXp} / {levelInfo.xpForNextLevel} XP ({levelInfo.progressPercent}%)
@@ -203,373 +290,448 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
       </div>
 
       {/* ============================================================ */}
-      {/* 2. PALCO DO AVATAR & VISUALIZADOR DE ESTADOS */}
+      {/* 2. VITRINE DE AVATAR RPG & OS 7 SLOTS DE EQUIPAMENTO */}
       {/* ============================================================ */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-center">
-        {/* Painel Central do Avatar */}
-        <div className="md:col-span-1 flex flex-col items-center justify-center p-6 rounded-2xl bg-card border border-border/80 shadow-md">
-          <div className="relative p-2">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Painel Central: Avatar 3D-like + Controles de Estado */}
+        <div className="lg:col-span-5 rounded-3xl border border-slate-800 bg-card/60 backdrop-blur-md p-6 flex flex-col items-center justify-center space-y-4">
+          <div className="text-center space-y-1">
+            <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block">
+              Pré-visualização do Personagem
+            </span>
+            <h3 className="text-base font-extrabold text-foreground">
+              {selectedChar?.name || "Herói Aventureiro"}
+            </h3>
+            {selectedChar && (
+              <Badge variant="outline" className="text-[10px] border-indigo-500/40 text-indigo-300">
+                ⚡ Afinidade: {selectedChar.nativeLanguageBonus}
+              </Badge>
+            )}
+          </div>
+
+          <div className="p-4 rounded-2xl bg-gradient-to-b from-indigo-950/20 to-slate-950/40 border border-indigo-500/20 shadow-inner">
             <ModularAvatar
               config={avatarConfig}
               state={previewState}
               size="xl"
-              showBadge
               level={levelInfo.level}
+              showBadge={true}
             />
           </div>
 
-          <div className="mt-3 text-center">
-            <h3 className="text-sm font-bold text-foreground">
-              {avatarConfig.archetype === "animal"
-                ? `Animal Místico (${avatarConfig.subType})`
-                : avatarConfig.archetype === "monster"
-                ? `Monstro Fantasia (${avatarConfig.subType})`
-                : "Humano Poliglota"}
-            </h3>
-            <p className="text-[11px] text-muted-foreground">
-              Este avatar é o seu companheiro e tutor na aba Conversa com IA.
-            </p>
-          </div>
-
-          {/* Testador de Expressões / Animações do Avatar */}
-          <div className="mt-3 flex items-center justify-center gap-1.5 flex-wrap">
-            <span className="text-[10px] text-muted-foreground mr-1 font-semibold">
-              Pose:
+          {/* Seletor de Estados de Animação */}
+          <div className="w-full pt-2 border-t border-border/40">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2 text-center">
+              Testar Animações do Avatar
             </span>
-            <button
-              type="button"
-              onClick={() => setPreviewState("idle")}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
-                previewState === "idle"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Parado
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreviewState("speaking")}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
-                previewState === "speaking"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Falando
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreviewState("listening")}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
-                previewState === "listening"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Ouvindo
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreviewState("celebrating")}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
-                previewState === "celebrating"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Festa
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreviewState("thinking")}
-              className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
-                previewState === "thinking"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Pensando
-            </button>
+            <div className="grid grid-cols-5 gap-1.5">
+              {(
+                [
+                  { id: "idle", label: "Normal", icon: Smile },
+                  { id: "speaking", label: "Falando", icon: Volume2 },
+                  { id: "listening", label: "Ouvindo", icon: Mic },
+                  { id: "celebrating", label: "Vitória", icon: Trophy },
+                  { id: "thinking", label: "Pensando", icon: Brain },
+                ] as const
+              ).map((st) => {
+                const Icon = st.icon;
+                const active = previewState === st.id;
+                return (
+                  <Button
+                    key={st.id}
+                    variant={active ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      playOptionSelectSound();
+                      setPreviewState(st.id);
+                    }}
+                    className={`flex flex-col items-center h-auto py-1.5 px-1 text-[10px] gap-0.5 ${
+                      active ? "bg-indigo-600 text-white" : "border-slate-800 text-slate-300"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{st.label}</span>
+                  </Button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Resumo de Equipamentos Atuais & Seletor de Arquétipo Rápido */}
-        <div className="md:col-span-2 space-y-4">
-          <div className="p-4 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Shirt className="h-3.5 w-3.5 text-primary" />
-              Equipamento Atual do Avatar Tutor
-            </h4>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {(["head", "eyes", "body", "hand", "aura"] as const).map((slot) => {
-                const itemId = avatarConfig.equipped[slot];
-                const item = getItemById(itemId);
-                return (
-                  <div
-                    key={slot}
-                    className="p-2.5 rounded-xl border border-border/60 bg-muted/30 flex items-center justify-between text-xs"
-                  >
-                    <div className="truncate mr-1">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">
-                        {slot === "head"
-                          ? "Cabeça"
-                          : slot === "eyes"
-                          ? "Rosto"
-                          : slot === "body"
-                          ? "Traje"
-                          : slot === "hand"
-                          ? "Item"
-                          : "Aura"}
-                      </span>
-                      <span className="font-semibold text-foreground truncate block">
-                        {item ? item.name : "Nenhum"}
-                      </span>
-                    </div>
-
-                    {item && (
-                      <button
-                        type="button"
-                        onClick={() => handleUnequip(slot)}
-                        className="text-[10px] text-destructive hover:underline cursor-pointer ml-1 font-bold shrink-0"
-                        title="Desequipar este item"
-                      >
-                        Tirar
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+        {/* Painel dos 7 Slots de Equipamento (Paper Doll) */}
+        <div className="lg:col-span-7 rounded-3xl border border-slate-800 bg-card/60 backdrop-blur-md p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-extrabold text-foreground flex items-center gap-2">
+                <Shirt className="w-4 h-4 text-indigo-400" />
+                Equipamento Atual (7 Slots RPG)
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Equipe elmos, armaduras, armas e relíquias para multiplicar seu aprendizado.
+              </p>
             </div>
           </div>
 
-          {/* Troca Rápida de Arquétipo Base (Humano, Animal, Monstro) */}
-          <div className="p-4 rounded-2xl bg-card border border-border/80 shadow-xs space-y-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-              Escolha sua Espécie / Arquétipo Base
-            </h4>
-            <div className="flex flex-wrap gap-1.5">
-              {[
-                { id: "starter_human", label: "Humano", icon: "🧑" },
-                { id: "starter_animal_owl", label: "Coruja Sábia", icon: "🦉" },
-                { id: "starter_animal_wolf", label: "Lobo Guardião", icon: "🐺" },
-                { id: "starter_animal_cat", label: "Gato Místico", icon: "🐱" },
-                { id: "starter_animal_dragon", label: "Dragão", icon: "🐉" },
-                { id: "starter_monster_golem", label: "Golem", icon: "💎" },
-                { id: "starter_monster_elemental", label: "Elemental", icon: "⚡" },
-                { id: "starter_monster_goblin", label: "Duende", icon: "🧝" },
-              ].map((arch) => {
-                const item = getItemById(arch.id);
-                if (!item) return null;
-                const active = isEquipped(item);
-                const owned = unlockedIds.includes(item.id);
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            {ALL_SLOT_TYPES.map((slot) => {
+              const itemId = currentEquipment[slot];
+              const item = itemId ? getShopItemById(itemId) : null;
+              const slotLabelMap: Record<SlotType, { label: string; icon: string }> = {
+                HEAD: { label: "Cabeça", icon: "🎩" },
+                CHEST: { label: "Peitoral", icon: "🥋" },
+                LEGS: { label: "Pernas", icon: "👢" },
+                MAIN_HAND: { label: "Mão Principal", icon: "⚔️" },
+                OFF_HAND: { label: "Mão Secundária", icon: "🛡️" },
+                BACK: { label: "Costas", icon: "🎒" },
+                ACCESSORY: { label: "Acessório", icon: "💎" },
+              };
+              const slotInfo = slotLabelMap[slot];
 
-                return (
-                  <button
-                    key={arch.id}
-                    type="button"
-                    onClick={() => {
-                      if (!owned) {
-                        handleBuy(item);
-                      } else {
-                        handleEquip(item);
-                      }
-                    }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      active
-                        ? "bg-primary text-primary-foreground shadow-sm scale-105"
-                        : owned
-                        ? "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
-                        : "bg-muted/40 text-muted-foreground/60 border border-dashed border-border"
-                    }`}
-                  >
-                    <span>{arch.icon}</span>
-                    <span>{arch.label}</span>
-                    {!owned && <span className="text-[10px] text-amber-400 font-extrabold">{item.price}🪙</span>}
-                  </button>
-                );
-              })}
-            </div>
+              return (
+                <div
+                  key={slot}
+                  onClick={() => setActiveSlot(slot)}
+                  className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                    item
+                      ? RARITY_COLORS[item.rarity].border + " bg-slate-900/60"
+                      : "border-slate-800/80 bg-slate-950/40 hover:border-slate-700"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl p-2 rounded-xl bg-slate-800/60">
+                      {slotInfo.icon}
+                    </span>
+                    <div>
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">
+                        {slotInfo.label}
+                      </span>
+                      <span className="text-xs font-bold text-foreground block truncate max-w-[140px]">
+                        {item ? item.name : "Vazio"}
+                      </span>
+                      {item && (
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {item.statBonus.xpMultiplier && (
+                            <span className="text-[9px] text-indigo-400 font-bold">
+                              +{Math.round(item.statBonus.xpMultiplier * 100)}% XP
+                            </span>
+                          )}
+                          {item.statBonus.streakProtection && (
+                            <span className="text-[9px] text-blue-400 font-bold">
+                              +{item.statBonus.streakProtection} Prot.
+                            </span>
+                          )}
+                          {item.statBonus.coinBonus && (
+                            <span className="text-[9px] text-emerald-400 font-bold">
+                              +{Math.round(item.statBonus.coinBonus * 100)}% 🪙
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {item && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUnequip(slot);
+                      }}
+                      className="text-[10px] text-slate-400 hover:text-rose-400 h-7 px-2 cursor-pointer"
+                    >
+                      Remover
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
 
       {/* ============================================================ */}
-      {/* 3. CATÁLOGO DA LOJA VIRTUAL & GUARDA-ROUPA */}
+      {/* 3. SELEÇÃO DE HERÓIS E ARQUÉTIPOS RPG */}
       {/* ============================================================ */}
-      <div className="space-y-4">
-        {/* Alternância Loja vs Guarda-Roupa & Filtros por Slot */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-3">
-          {/* Toggle Loja / Armário */}
-          <div className="flex items-center bg-muted/60 p-1 rounded-xl self-start">
-            <button
-              type="button"
-              onClick={() => setShopMode("shop")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                shopMode === "shop"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <ShoppingBag className="h-3.5 w-3.5 text-primary" />
-              <span>Loja de Itens</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShopMode("closet")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                shopMode === "closet"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Shirt className="h-3.5 w-3.5 text-violet-400" />
-              <span>Meu Guarda-Roupa ({unlockedIds.length})</span>
-            </button>
-          </div>
-
-          {/* Filtros de Slot */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 max-w-full">
-            {SLOT_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveSlot(tab.id)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  activeSlot === tab.id
-                    ? "bg-primary/15 text-primary font-bold border border-primary/30"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
+      <div className="rounded-3xl border border-slate-800 bg-card/60 backdrop-blur-md p-6 space-y-4">
+        <div>
+          <h3 className="text-base font-extrabold text-foreground flex items-center gap-2">
+            <UserCheck className="w-5 h-5 text-indigo-400" />
+            Galeria de Heróis &amp; Companheiros Linguistas
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Escolha seu companheiro de jornada. Cada herói possui bônus de afinidade para famílias de línguas.
+          </p>
         </div>
 
-        {/* Grid de Itens */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filteredItems.map((item) => {
-            const owned = unlockedIds.includes(item.id);
-            const equipped = isEquipped(item);
-            const canAfford = (prepared.coins ?? 0) >= item.price;
-            const meetsLevel = levelInfo.level >= item.minLevel;
-            const rarityStyle = RARITY_COLORS[item.rarity] || RARITY_COLORS["common"]!;
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+          {CHARACTERS_DATABASE.map((char) => {
+            const isCurrent = prepared.selectedCharacterId === char.id;
             return (
               <div
-                key={item.id}
-                className={`rounded-2xl border p-4 bg-card transition-all flex flex-col justify-between ${
-                  equipped
-                    ? "border-primary ring-2 ring-primary/20 bg-primary/5"
-                    : rarityStyle.border
+                key={char.id}
+                className={`p-4 rounded-2xl border transition-all space-y-3 flex flex-col justify-between ${
+                  isCurrent
+                    ? "border-indigo-500 bg-indigo-950/30 shadow-lg shadow-indigo-500/10"
+                    : "border-slate-800 bg-slate-900/50 hover:border-slate-700"
                 }`}
               >
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <h4 className="text-sm font-bold text-foreground">
-                          {item.name}
-                        </h4>
-                        <span
-                          className={`text-[9.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${rarityStyle.badge}`}
-                        >
-                          {item.rarity === "legendary"
-                            ? "Lendário"
-                            : item.rarity === "epic"
-                            ? "Épico"
-                            : item.rarity === "rare"
-                            ? "Raro"
-                            : "Comum"}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-semibold block capitalize mt-0.5">
-                        Slot: {item.slot}
-                      </span>
-                    </div>
-
-                    {equipped && (
-                      <Badge className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5">
-                        Equipado
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className="text-[10px] border-slate-700 text-slate-300">
+                      {char.category}
+                    </Badge>
+                    {isCurrent && (
+                      <Badge className="bg-indigo-600 text-white font-bold text-[10px]">
+                        Ativo ✓
                       </Badge>
                     )}
                   </div>
 
-                  <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-                    {item.description}
+                  <div>
+                    <h4 className="font-extrabold text-sm text-foreground">{char.name}</h4>
+                    <span className="text-[11px] text-indigo-400 font-semibold block">
+                      {char.title}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground line-clamp-3">
+                    {char.lore}
                   </p>
+
+                  <div className="pt-1">
+                    <span className="text-[10px] font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                      Afinidade: {char.nativeLanguageBonus} (+15% XP)
+                    </span>
+                  </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2">
-                  {owned ? (
-                    <div className="text-[11px] font-bold text-emerald-500 flex items-center gap-1">
-                      <Check className="h-3.5 w-3.5" />
-                      <span>Desbloqueado</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5 text-xs font-black text-amber-400">
-                      <Coins className="h-4 w-4" />
-                      <span>{item.price === 0 ? "Grátis" : `${item.price} Moedas`}</span>
-                    </div>
-                  )}
+                <Button
+                  size="sm"
+                  variant={isCurrent ? "secondary" : "default"}
+                  disabled={isCurrent}
+                  onClick={() => handleSelectCharacter(char)}
+                  className={`w-full text-xs font-bold ${
+                    isCurrent
+                      ? "bg-slate-800 text-slate-400 cursor-default"
+                      : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer"
+                  }`}
+                >
+                  {isCurrent ? "Herói Selecionado" : "Escolher Herói"}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* 4. LOJA & ARMORY RPG COM CATÁLOGO DOS 7 SLOTS */}
+      {/* ============================================================ */}
+      <div className="rounded-3xl border border-slate-800 bg-card/60 backdrop-blur-md p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-base font-extrabold text-foreground flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 text-indigo-400" />
+              Arsenal &amp; Loja de Itens RPG
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Compre relíquias lendárias e equipe seu personagem para acelerar o progresso nos idiomas.
+            </p>
+          </div>
+
+          {/* Toggle Loja vs Inventário */}
+          <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 p-1 rounded-xl">
+            <Button
+              size="sm"
+              variant={shopMode === "shop" ? "default" : "ghost"}
+              onClick={() => {
+                playOptionSelectSound();
+                setShopMode("shop");
+              }}
+              className={`text-xs font-bold ${
+                shopMode === "shop" ? "bg-indigo-600 text-white" : "text-slate-400"
+              }`}
+            >
+              Loja Completa
+            </Button>
+            <Button
+              size="sm"
+              variant={shopMode === "closet" ? "default" : "ghost"}
+              onClick={() => {
+                playOptionSelectSound();
+                setShopMode("closet");
+              }}
+              className={`text-xs font-bold ${
+                shopMode === "closet" ? "bg-indigo-600 text-white" : "text-slate-400"
+              }`}
+            >
+              Meu Inventário ({inventoryIds.length})
+            </Button>
+          </div>
+        </div>
+
+        {/* Abas dos Slots RPG */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
+          {SLOT_TABS.map((slot) => {
+            const active = activeSlot === slot.id;
+            return (
+              <Button
+                key={slot.id}
+                variant={active ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  playOptionSelectSound();
+                  setActiveSlot(slot.id);
+                }}
+                className={`text-xs font-bold whitespace-nowrap cursor-pointer ${
+                  active
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700"
+                }`}
+              >
+                <span className="mr-1.5">{slot.icon}</span>
+                {slot.label}
+              </Button>
+            );
+          })}
+        </div>
+
+        {/* Filtros de Raridade */}
+        <div className="flex items-center gap-1.5 flex-wrap pt-1">
+          <span className="text-[11px] text-muted-foreground mr-1">Raridade:</span>
+          {(["ALL", "COMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC"] as const).map((rarity) => (
+            <button
+              key={rarity}
+              onClick={() => {
+                playOptionSelectSound();
+                setRarityFilter(rarity);
+              }}
+              className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                rarityFilter === rarity
+                  ? "bg-primary text-primary-foreground border-primary shadow"
+                  : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-foreground"
+              }`}
+            >
+              {rarity}
+            </button>
+          ))}
+        </div>
+
+        {/* Grid de Itens */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+          {filteredItems.map((item) => {
+            const owned = inventoryIds.includes(item.id);
+            const equipped = isEquipped(item.id, item.slot);
+            const canAfford = (prepared.coins ?? 0) >= item.costCoins;
+            const levelMet = levelInfo.level >= item.requiredLevel;
+            const rarityStyle = RARITY_COLORS[item.rarity];
+
+            return (
+              <div
+                key={item.id}
+                className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 bg-slate-900/40 backdrop-blur-sm ${rarityStyle.border}`}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className={`text-[10px] font-bold ${rarityStyle.badge}`}>
+                      {item.rarity}
+                    </Badge>
+                    <span className="text-[10px] font-bold text-muted-foreground">
+                      Slot: {item.slot}
+                    </span>
+                  </div>
 
                   <div>
-                    {equipped ? (
-                      item.slot !== "archetype" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleUnequip(item.slot as any)}
-                          className="h-8 text-xs font-semibold cursor-pointer"
-                        >
-                          Desequipar
-                        </Button>
-                      )
-                    ) : owned ? (
-                      <Button
-                        size="sm"
-                        onClick={() => handleEquip(item)}
-                        className="h-8 text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-xs"
-                      >
-                        Equipar
-                      </Button>
-                    ) : !meetsLevel ? (
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20">
-                        <Lock className="h-3 w-3" />
-                        <span>Nível {item.minLevel}</span>
-                      </div>
-                    ) : (
-                      <Button
-                        size="sm"
-                        disabled={!canAfford}
-                        onClick={() => handleBuy(item)}
-                        className={`h-8 text-xs font-bold cursor-pointer ${
-                          canAfford
-                            ? "bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-sm"
-                            : "opacity-50 cursor-not-allowed"
-                        }`}
-                      >
-                        {canAfford ? "Comprar" : "Faltam Moedas"}
-                      </Button>
+                    <h4 className="font-black text-sm text-foreground">{item.name}</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-2">
+                      {item.description}
+                    </p>
+                  </div>
+
+                  {/* Inspiração Épica */}
+                  <div className="text-[10px] text-indigo-300/90 italic bg-indigo-950/30 p-2 rounded-lg border border-indigo-900/30">
+                    🗡️ Inspirado em: {item.inspiration}
+                  </div>
+
+                  {/* Bônus de Atributos */}
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {item.statBonus.xpMultiplier && (
+                      <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                        +{Math.round(item.statBonus.xpMultiplier * 100)}% XP
+                      </span>
+                    )}
+                    {item.statBonus.streakProtection && (
+                      <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                        +{item.statBonus.streakProtection} Dias Protegidos
+                      </span>
+                    )}
+                    {item.statBonus.coinBonus && (
+                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                        +{Math.round(item.statBonus.coinBonus * 100)}% Moedas
+                      </span>
                     )}
                   </div>
+                </div>
+
+                <div className="pt-2 border-t border-border/40 flex items-center justify-between gap-3">
+                  <div>
+                    {!owned && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-black text-amber-400">
+                          {item.costCoins > 0 ? `${item.costCoins} 🪙` : "Grátis"}
+                        </span>
+                        {!levelMet && (
+                          <span className="text-[10px] text-rose-400 block font-semibold">
+                            (Requer Nvl {item.requiredLevel})
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {equipped ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled
+                      className="text-xs font-bold bg-emerald-600/20 text-emerald-400 border border-emerald-500/40"
+                    >
+                      <Check className="w-3.5 h-3.5 mr-1" /> Equipado
+                    </Button>
+                  ) : owned ? (
+                    <Button
+                      size="sm"
+                      onClick={() => handleEquip(item)}
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer"
+                    >
+                      Equipar
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      disabled={!canAfford || !levelMet}
+                      onClick={() => handleBuy(item)}
+                      className={`text-xs font-bold cursor-pointer ${
+                        canAfford && levelMet
+                          ? "bg-amber-500 hover:bg-amber-400 text-slate-950 font-black"
+                          : "bg-slate-800 text-slate-500 cursor-not-allowed"
+                      }`}
+                    >
+                      {!levelMet ? (
+                        <>
+                          <Lock className="w-3.5 h-3.5 mr-1" /> Nível {item.requiredLevel}
+                        </>
+                      ) : (
+                        `Comprar (${item.costCoins} 🪙)`
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
-
-        {filteredItems.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground border border-dashed rounded-2xl">
-            <Shirt className="h-10 w-10 mx-auto opacity-30 mb-2" />
-            <p className="text-sm font-semibold">Nenhum item encontrado neste filtro.</p>
-            <p className="text-xs">Experimente selecionar outro slot ou alternar para a Loja.</p>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ import { getLanguageById } from "@/data/languages";
 import { getTutorsForLanguage } from "@/data/tutors";
 import { evaluatePronunciation, PronunciationEvaluation } from "@/services/pronunciation-scorer";
 import { PronunciationScore } from "@/components/ui/pronunciation-score";
-import { awardGamificationRewards } from "@/services/gamification";
+import { awardGamificationRewards, getCombinedStats } from "@/services/gamification";
 import {
   BookOpen,
   Headphones,
@@ -118,8 +118,11 @@ export const DailySprintTab: React.FC<DailySprintTabProps> = ({
       setStep(5);
       playSprintCompleteSound();
 
-      // Conclui o sprint e concede +50 XP e +100 Moedas
-      const rewardResult = awardGamificationRewards(progress, 50, 100);
+      // Conclui o sprint com multiplicadores de RPG
+      const stats = getCombinedStats(progress, language);
+      const earnedXp = Math.max(1, Math.round(50 * stats.finalXpMultiplier));
+      const earnedCoins = Math.max(1, Math.round(100 * stats.finalCoinBonus));
+      const rewardResult = awardGamificationRewards(progress, earnedXp, earnedCoins);
       const updated: UserProgress = {
         ...rewardResult.updated,
         dailySprintDone: true,
@@ -131,7 +134,7 @@ export const DailySprintTab: React.FC<DailySprintTabProps> = ({
           description: `Bônus de ${rewardResult.bonusCoins} moedas concedido para sua loja RPG!`,
         });
       } else {
-        toast.success("Treino concluído com maestria! +50 XP e +100 Moedas!");
+        toast.success(`Treino concluído com maestria! +${earnedXp} XP e +${earnedCoins} Moedas!`);
       }
     }
   };

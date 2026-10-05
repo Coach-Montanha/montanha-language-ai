@@ -1,4 +1,4 @@
-import { AvatarConfig } from "./avatar";
+import { AvatarConfig, AvatarEquipment } from "./avatar";
 
 export type TabType =
   | "treino"
@@ -211,6 +211,9 @@ export interface UserProgress {
   skillPoints?: number | undefined;
   equippedAvatar?: AvatarConfig | undefined;
   unlockedAvatarItems?: string[] | undefined;
+  selectedCharacterId?: string | undefined;
+  equipment?: AvatarEquipment | undefined;
+  inventoryItemIds?: string[] | undefined;
 }
 
 export interface LearnerTopicMemory {

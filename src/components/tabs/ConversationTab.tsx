@@ -42,11 +42,17 @@ import {
 } from "@/services/audio-effects";
 import { getTutorById } from "@/data/tutors";
 import { getLanguageById } from "@/data/languages";
+import { getCharacterById } from "@/data/avatar-items";
 import { TutorSelectorModal } from "@/components/TutorSelectorModal";
 import { ModularAvatar } from "@/components/avatar/ModularAvatar";
 import { AvatarAnimationState } from "@/types/avatar";
-import { ensureGamificationProgress, awardGamificationRewards } from "@/services/gamification";
+import {
+  ensureGamificationProgress,
+  awardGamificationRewards,
+  getCombinedStats,
+} from "@/services/gamification";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -146,6 +152,8 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
   const activeTutor = getTutorById(progress.selectedTutorId);
   const activeLanguage = getLanguageById(activeTutor.language);
+  const selectedHero = getCharacterById(preparedProgress.selectedCharacterId || "valerius");
+  const combinedStats = getCombinedStats(preparedProgress, activeTutor.language);
   const currentFontSize: FontKey = (progress.fontSize as FontKey) || "md";
   const fontConfig = FONT_LEVELS[currentFontSize] || FONT_LEVELS.md;
 
@@ -497,7 +505,10 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         handleSpeakMessage(tutorMsgId, response.replyText);
       }
 
-      const rewardResult = awardGamificationRewards(progress, 15, 5);
+      const stats = getCombinedStats(progress, activeTutor.language);
+      const earnedXp = Math.max(1, Math.round(15 * stats.finalXpMultiplier));
+      const earnedCoins = Math.max(1, Math.round(5 * stats.finalCoinBonus));
+      const rewardResult = awardGamificationRewards(progress, earnedXp, earnedCoins);
       onUpdateProgress({
         ...rewardResult.updated,
         messagesSentCount: progress.messagesSentCount + 1,
@@ -905,6 +916,40 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
           </DropdownMenu>
         </div>
       </div>
+
+      {/* RPG Companion & Language Bonus HUD */}
+      {selectedHero && (
+        <div className="flex items-center justify-between px-3 py-1.5 bg-gradient-to-r from-indigo-950/50 via-slate-900/60 to-purple-950/50 border-b border-indigo-500/20 text-xs shrink-0 select-none">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm shrink-0">🧙‍♂️</span>
+            <div className="min-w-0">
+              <span className="font-bold text-indigo-300 truncate block text-[11px]">
+                {selectedHero.name}
+              </span>
+              <span className="text-[10px] text-muted-foreground block truncate">
+                {combinedStats.characterBonus.active
+                  ? `⚡ Bônus Ativo: +15% XP em ${selectedHero.nativeLanguageBonus}`
+                  : `🛡️ Companheiro em campo (+5% XP geral)`}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Badge variant="outline" className="text-[10px] border-indigo-500/40 text-indigo-300 font-bold bg-indigo-500/10">
+              {combinedStats.finalXpMultiplier}x XP
+            </Badge>
+            {onOpenAvatarShop && (
+              <button
+                type="button"
+                onClick={onOpenAvatarShop}
+                className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold cursor-pointer underline underline-offset-2 ml-1"
+                title="Abrir Loja RPG e Trocar Herói"
+              >
+                Loja RPG
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Seletor de Modo Pedagógico de Conversa */}
       <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/60 bg-muted/20 overflow-x-auto no-scrollbar shrink-0">

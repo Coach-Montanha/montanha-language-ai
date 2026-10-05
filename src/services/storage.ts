@@ -1,5 +1,9 @@
 import { UserProgress, ChatMessage, Flashcard } from "@/types/language";
-import { ensureGamificationProgress, awardGamificationRewards } from "./gamification";
+import {
+  ensureGamificationProgress,
+  awardGamificationRewards,
+  getCombinedStats,
+} from "./gamification";
 
 const STORAGE_KEY_PROGRESS = "smart_language_progress_v1";
 const STORAGE_KEY_CHAT = "smart_language_chat_v1";
@@ -42,8 +46,15 @@ export function loadUserProgress(): UserProgress {
         // Dia consecutivo!
         data.streakDays += 1;
       } else if (diffDays > 1) {
-        // Quebrou o streak
-        data.streakDays = 1;
+        // Verifica proteção de streak fornecida pelo equipamento RPG
+        const stats = getCombinedStats(data, data.selectedLanguage);
+        if (stats.finalStreakProtection > 0 && diffDays <= 1 + stats.finalStreakProtection) {
+          // Streak protegido pelo equipamento RPG!
+          data.streakDays += 1;
+        } else {
+          // Quebrou o streak
+          data.streakDays = 1;
+        }
       }
       data.lastActiveDate = today;
       data.dailySprintDone = false; // reseta o sprint diário para o novo dia
@@ -68,12 +79,19 @@ export function saveUserProgress(progress: UserProgress): void {
   }
 }
 
-export function addXP(amount: number): UserProgress {
+export function addXP(amount: number, language?: SupportedLanguage): UserProgress {
   const current = loadUserProgress();
+  const langToUse = language || current.selectedLanguage;
+  const stats = getCombinedStats(current, langToUse);
+
+  const boostedXp = Math.max(1, Math.round(amount * stats.finalXpMultiplier));
+  const baseCoins = Math.max(1, Math.floor(amount / 2));
+  const boostedCoins = Math.max(1, Math.round(baseCoins * stats.finalCoinBonus));
+
   const reward = awardGamificationRewards(
     current,
-    amount,
-    Math.max(1, Math.floor(amount / 2))
+    boostedXp,
+    boostedCoins
   );
   saveUserProgress(reward.updated);
   return reward.updated;

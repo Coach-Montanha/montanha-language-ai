@@ -1,6 +1,22 @@
-import { UserProgress } from "@/types/language";
-import { AvatarConfig, AvatarItem, LevelInfo, AvatarArchetype } from "@/types/avatar";
-import { DEFAULT_AVATAR_CONFIG, STARTER_UNLOCKED_ITEM_IDS, getItemById } from "@/data/avatar-items";
+import { UserProgress, SupportedLanguage } from "@/types/language";
+import {
+  AvatarConfig,
+  AvatarItem,
+  LevelInfo,
+  SlotType,
+  ALL_SLOT_TYPES,
+  CombinedStats,
+} from "@/types/avatar";
+import {
+  DEFAULT_AVATAR_CONFIG,
+  STARTER_UNLOCKED_ITEM_IDS,
+  STARTER_SHOP_ITEM_IDS,
+  STARTER_EQUIPMENT,
+  DEFAULT_CHARACTER_ID,
+  getCharacterById,
+  getShopItemById,
+  getItemById,
+} from "@/data/avatar-items";
 
 const LEVEL_THRESHOLDS = [
   { level: 1, minXp: 0, title: "Aprendiz Curioso" },
@@ -59,6 +75,20 @@ export function ensureGamificationProgress(progress: UserProgress): UserProgress
 
   const level = progress.level || levelInfo.level;
   const skillPoints = typeof progress.skillPoints === "number" ? progress.skillPoints : level;
+  const selectedCharacterId = progress.selectedCharacterId || DEFAULT_CHARACTER_ID;
+
+  const equipment = {
+    ...STARTER_EQUIPMENT,
+    ...(progress.equipment || {}),
+  };
+
+  const inventoryItemIds = Array.from(
+    new Set([
+      ...STARTER_SHOP_ITEM_IDS,
+      ...(progress.inventoryItemIds || []),
+      ...(progress.unlockedAvatarItems || []),
+    ])
+  );
 
   const equippedAvatar: AvatarConfig = {
     ...DEFAULT_AVATAR_CONFIG,
@@ -66,11 +96,17 @@ export function ensureGamificationProgress(progress: UserProgress): UserProgress
     equipped: {
       ...DEFAULT_AVATAR_CONFIG.equipped,
       ...(progress.equippedAvatar?.equipped || {}),
+      ...equipment,
     },
   };
 
   const unlockedAvatarItems = Array.from(
-    new Set([...STARTER_UNLOCKED_ITEM_IDS, ...(progress.unlockedAvatarItems || [])])
+    new Set([
+      ...STARTER_UNLOCKED_ITEM_IDS,
+      ...STARTER_SHOP_ITEM_IDS,
+      ...(progress.unlockedAvatarItems || []),
+      ...(progress.inventoryItemIds || []),
+    ])
   );
 
   return {
@@ -78,6 +114,9 @@ export function ensureGamificationProgress(progress: UserProgress): UserProgress
     coins,
     level,
     skillPoints,
+    selectedCharacterId,
+    equipment,
+    inventoryItemIds,
     equippedAvatar,
     unlockedAvatarItems,
   };
@@ -118,10 +157,223 @@ export function awardGamificationRewards(
   };
 }
 
+// =========================================================================
+// RPG COMBINED STATS CALCULATION
+// =========================================================================
+export function getCombinedStats(
+  progress: UserProgress,
+  targetLanguage?: SupportedLanguage
+): CombinedStats {
+  const prepared = ensureGamificationProgress(progress);
+  const equipment = prepared.equipment || STARTER_EQUIPMENT;
+
+  let itemXpMultiplier = 0;
+  let itemStreakProtection = 0;
+  let itemCoinBonus = 0;
+
+  for (const slot of ALL_SLOT_TYPES) {
+    const itemId = equipment[slot];
+    if (itemId) {
+      const item = getShopItemById(itemId);
+      if (item && item.statBonus) {
+        itemXpMultiplier += item.statBonus.xpMultiplier || 0;
+        itemStreakProtection += item.statBonus.streakProtection || 0;
+        itemCoinBonus += item.statBonus.coinBonus || 0;
+      }
+    }
+  }
+
+  const charId = prepared.selectedCharacterId || DEFAULT_CHARACTER_ID;
+  const character = getCharacterById(charId);
+
+  const lang = targetLanguage || prepared.selectedLanguage;
+  const matchesLang = Boolean(
+    character && lang && character.supportedLanguageBonusIds?.includes(lang)
+  );
+
+  const charXpBonus = matchesLang ? 0.15 : 0.05;
+  const charCoinBonus = matchesLang ? 0.10 : 0.05;
+
+  const totalItemStats = {
+    xpMultiplier: Number(itemXpMultiplier.toFixed(2)),
+    streakProtection: itemStreakProtection,
+    coinBonus: Number(itemCoinBonus.toFixed(2)),
+  };
+
+  const characterBonus = {
+    characterId: character ? character.id : null,
+    characterName: character ? character.name : null,
+    xpMultiplier: charXpBonus,
+    coinBonus: charCoinBonus,
+    active: matchesLang,
+    languageBonusCategory: character ? character.nativeLanguageBonus : null,
+  };
+
+  const finalXpMultiplier = Number(
+    (1.0 + totalItemStats.xpMultiplier + charXpBonus).toFixed(2)
+  );
+  const finalCoinBonus = Number(
+    (1.0 + totalItemStats.coinBonus + charCoinBonus).toFixed(2)
+  );
+  const finalStreakProtection = totalItemStats.streakProtection;
+
+  return {
+    finalXpMultiplier,
+    finalStreakProtection,
+    finalCoinBonus,
+    totalItemStats,
+    characterBonus,
+  };
+}
+
+// =========================================================================
+// RPG SHOP & ARMORY PURCHASING, EQUIPPING, UNEQUIPPING
+// =========================================================================
+export function buyShopItem(
+  current: UserProgress,
+  itemId: string
+): { success: boolean; error?: string; updated?: UserProgress } {
+  const prepared = ensureGamificationProgress(current);
+  const levelInfo = calculateLevelInfo(prepared.xp);
+  const item = getShopItemById(itemId);
+
+  if (!item) {
+    return { success: false, error: "Item não encontrado no catálogo da Loja!" };
+  }
+
+  const inventory = prepared.inventoryItemIds || [];
+  if (inventory.includes(item.id)) {
+    return { success: false, error: "Você já possui este item em seu inventário!" };
+  }
+
+  if (levelInfo.level < item.requiredLevel) {
+    return {
+      success: false,
+      error: `Este item requer nível ${item.requiredLevel}. Você está no nível ${levelInfo.level}. Continue praticando!`,
+    };
+  }
+
+  if ((prepared.coins ?? 0) < item.costCoins) {
+    const missing = item.costCoins - (prepared.coins ?? 0);
+    return {
+      success: false,
+      error: `Moedas insuficientes. Faltam ${missing} moedas. Complete mais treinos e diálogos!`,
+    };
+  }
+
+  const updatedProgress: UserProgress = {
+    ...prepared,
+    coins: (prepared.coins ?? 0) - item.costCoins,
+    inventoryItemIds: [...inventory, item.id],
+    unlockedAvatarItems: Array.from(new Set([...(prepared.unlockedAvatarItems || []), item.id])),
+  };
+
+  // Auto-equipa após comprar
+  const equipped = equipShopItem(updatedProgress, item.id);
+
+  return { success: true, updated: equipped };
+}
+
+export function equipShopItem(current: UserProgress, itemId: string): UserProgress {
+  const prepared = ensureGamificationProgress(current);
+  const item = getShopItemById(itemId);
+  if (!item) return prepared;
+
+  const currentEquipment = {
+    ...STARTER_EQUIPMENT,
+    ...(prepared.equipment || {}),
+  };
+
+  const newEquipment = {
+    ...currentEquipment,
+    [item.slot]: item.id,
+  };
+
+  const currentConfig = prepared.equippedAvatar || DEFAULT_AVATAR_CONFIG;
+  const newEquippedAvatar: AvatarConfig = {
+    ...currentConfig,
+    equipped: {
+      ...currentConfig.equipped,
+      [item.slot]: item.id,
+    },
+  };
+
+  return {
+    ...prepared,
+    equipment: newEquipment,
+    equippedAvatar: newEquippedAvatar,
+  };
+}
+
+export function unequipShopSlot(current: UserProgress, slot: SlotType): UserProgress {
+  const prepared = ensureGamificationProgress(current);
+  const currentEquipment = {
+    ...STARTER_EQUIPMENT,
+    ...(prepared.equipment || {}),
+  };
+
+  const newEquipment = {
+    ...currentEquipment,
+    [slot]: null,
+  };
+
+  const currentConfig = prepared.equippedAvatar || DEFAULT_AVATAR_CONFIG;
+  const newEquipped = { ...currentConfig.equipped };
+  delete newEquipped[slot];
+
+  const lowerMap: Record<SlotType, string> = {
+    HEAD: "head",
+    CHEST: "body",
+    LEGS: "legs",
+    MAIN_HAND: "hand",
+    OFF_HAND: "off_hand",
+    BACK: "back",
+    ACCESSORY: "accessory",
+  };
+  delete newEquipped[lowerMap[slot]];
+
+  return {
+    ...prepared,
+    equipment: newEquipment,
+    equippedAvatar: {
+      ...currentConfig,
+      equipped: newEquipped,
+    },
+  };
+}
+
+export function selectRpgCharacter(current: UserProgress, characterId: string): UserProgress {
+  const prepared = ensureGamificationProgress(current);
+  const character = getCharacterById(characterId);
+  if (!character) return prepared;
+
+  const currentConfig = prepared.equippedAvatar || DEFAULT_AVATAR_CONFIG;
+  const archetype = character.category === "MYTHIC_BEAST" ? "monster" : "human";
+
+  return {
+    ...prepared,
+    selectedCharacterId: characterId,
+    equippedAvatar: {
+      ...currentConfig,
+      archetype,
+      subType: character.baseSpriteAsset,
+    },
+  };
+}
+
+// =========================================================================
+// BACKWARD-COMPATIBLE AVATAR SHOP FUNCTIONS
+// =========================================================================
 export function buyAvatarItem(
   current: UserProgress,
   item: AvatarItem
 ): { success: boolean; error?: string; updated?: UserProgress } {
+  // Se for item da loja RPG, delega para buyShopItem
+  const shopItem = getShopItemById(item.id);
+  if (shopItem) {
+    return buyShopItem(current, item.id);
+  }
+
   const prepared = ensureGamificationProgress(current);
   const levelInfo = calculateLevelInfo(prepared.xp);
 
@@ -148,6 +400,7 @@ export function buyAvatarItem(
     ...prepared,
     coins: (prepared.coins ?? 0) - item.price,
     unlockedAvatarItems: [...(prepared.unlockedAvatarItems || []), item.id],
+    inventoryItemIds: [...(prepared.inventoryItemIds || []), item.id],
   };
 
   // Auto-equipa após comprar
@@ -157,6 +410,11 @@ export function buyAvatarItem(
 }
 
 export function equipAvatarItem(current: UserProgress, item: AvatarItem): UserProgress {
+  const shopItem = getShopItemById(item.id);
+  if (shopItem) {
+    return equipShopItem(current, item.id);
+  }
+
   const prepared = ensureGamificationProgress(current);
   const currentConfig = prepared.equippedAvatar || DEFAULT_AVATAR_CONFIG;
 
@@ -169,7 +427,7 @@ export function equipAvatarItem(current: UserProgress, item: AvatarItem): UserPr
       item.id.includes("golem") ? "golem" :
       item.id.includes("elemental") ? "elemental" :
       item.id.includes("goblin") ? "goblin" :
-      "adventurer";
+      "valerius_scribe";
 
     return {
       ...prepared,
@@ -181,13 +439,28 @@ export function equipAvatarItem(current: UserProgress, item: AvatarItem): UserPr
     };
   }
 
+  const upperMap: Record<string, SlotType> = {
+    head: "HEAD",
+    body: "CHEST",
+    hand: "MAIN_HAND",
+  };
+  const upper = upperMap[item.slot];
+
   return {
     ...prepared,
+    equipment: upper
+      ? {
+          ...STARTER_EQUIPMENT,
+          ...(prepared.equipment || {}),
+          [upper]: item.id,
+        }
+      : prepared.equipment,
     equippedAvatar: {
       ...currentConfig,
       equipped: {
         ...currentConfig.equipped,
         [item.slot]: item.id,
+        ...(upper ? { [upper]: item.id } : {}),
       },
     },
   };
@@ -195,12 +468,36 @@ export function equipAvatarItem(current: UserProgress, item: AvatarItem): UserPr
 
 export function unequipAvatarSlot(
   current: UserProgress,
-  slot: "head" | "eyes" | "body" | "hand" | "aura"
+  slot: "head" | "eyes" | "body" | "hand" | "aura" | SlotType
 ): UserProgress {
   const prepared = ensureGamificationProgress(current);
   const currentConfig = prepared.equippedAvatar || DEFAULT_AVATAR_CONFIG;
   const newEquipped = { ...currentConfig.equipped };
+
   delete newEquipped[slot];
+
+  const upperMap: Record<string, SlotType> = {
+    head: "HEAD",
+    body: "CHEST",
+    hand: "MAIN_HAND",
+  };
+  const upper = upperMap[slot] || (slot.toUpperCase() as SlotType);
+  if (ALL_SLOT_TYPES.includes(upper)) {
+    delete newEquipped[upper];
+    const currentEquipment = {
+      ...STARTER_EQUIPMENT,
+      ...(prepared.equipment || {}),
+      [upper]: null,
+    };
+    return {
+      ...prepared,
+      equipment: currentEquipment,
+      equippedAvatar: {
+        ...currentConfig,
+        equipped: newEquipped,
+      },
+    };
+  }
 
   return {
     ...prepared,

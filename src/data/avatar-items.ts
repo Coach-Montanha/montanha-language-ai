@@ -1,8 +1,10 @@
 import { AvatarItem, AvatarConfig } from "@/types/avatar";
+import { STARTER_SHOP_ITEM_IDS, getShopItemById } from "./rpg-database";
+export * from "./rpg-database";
 
 export const DEFAULT_AVATAR_CONFIG: AvatarConfig = {
   archetype: "human",
-  subType: "adventurer",
+  subType: "valerius_scribe",
   primaryColor: "#3b82f6",
   secondaryColor: "#f59e0b",
   equipped: {
@@ -11,6 +13,13 @@ export const DEFAULT_AVATAR_CONFIG: AvatarConfig = {
     body: "starter_adventurer_robe",
     hand: "starter_quill",
     aura: "starter_glow",
+    HEAD: "head_tiara_aprendiz",
+    CHEST: "chest_tunica_novico",
+    LEGS: "legs_botas_rusticas",
+    MAIN_HAND: "main_hand_pena_prata",
+    OFF_HAND: "off_hand_adaga_precisao",
+    BACK: "back_capa_viajante",
+    ACCESSORY: "accessory_amuleto_concentracao",
   },
 };
 
@@ -23,6 +32,7 @@ export const STARTER_UNLOCKED_ITEM_IDS = [
   "starter_adventurer_robe",
   "starter_quill",
   "starter_glow",
+  ...STARTER_SHOP_ITEM_IDS,
 ];
 
 export const AVATAR_ITEMS: AvatarItem[] = [
@@ -513,7 +523,33 @@ export const AVATAR_ITEMS: AvatarItem[] = [
 
 export function getItemById(id?: string): AvatarItem | undefined {
   if (!id) return undefined;
-  return AVATAR_ITEMS.find((item) => item.id === id);
+  const legacy = AVATAR_ITEMS.find((item) => item.id === id);
+  if (legacy) return legacy;
+  const shopItem = getShopItemById(id);
+  if (shopItem) {
+    const slotMap: Record<string, "head" | "body" | "hand" | "aura"> = {
+      HEAD: "head",
+      CHEST: "body",
+      LEGS: "body",
+      MAIN_HAND: "hand",
+      OFF_HAND: "hand",
+      BACK: "body",
+      ACCESSORY: "aura",
+    };
+    return {
+      id: shopItem.id,
+      name: shopItem.name,
+      slot: slotMap[shopItem.slot] || "body",
+      archetype: "all",
+      description: shopItem.description,
+      price: shopItem.costCoins,
+      minLevel: shopItem.requiredLevel,
+      rarity: shopItem.rarity.toLowerCase() as any,
+      inspiration: shopItem.inspiration,
+      statBonus: shopItem.statBonus,
+    };
+  }
+  return undefined;
 }
 
 export function getItemsBySlot(slot: string): AvatarItem[] {

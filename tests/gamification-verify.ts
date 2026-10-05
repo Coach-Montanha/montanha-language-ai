@@ -7,6 +7,11 @@ import {
   equipAvatarItem,
   unequipAvatarSlot,
   setAvatarColors,
+  getCombinedStats,
+  buyShopItem,
+  equipShopItem,
+  unequipShopSlot,
+  selectRpgCharacter,
 } from "../src/services/gamification";
 import {
   AVATAR_ITEMS,
@@ -15,9 +20,14 @@ import {
   getItemById,
   getItemsBySlot,
   getItemsForArchetype,
+  CHARACTERS_DATABASE,
+  SHOP_ITEMS_CATALOG,
+  getCharacterById,
+  getShopItemById,
+  STARTER_EQUIPMENT,
 } from "../src/data/avatar-items";
-import { UserProgress } from "../src/types/language";
-import { AvatarItem } from "../src/types/avatar";
+import { UserProgress, SupportedLanguage } from "../src/types/language";
+import { AvatarItem, SlotType, ALL_SLOT_TYPES } from "../src/types/avatar";
 
 console.log("🎮 Starting Gamification & Modular Avatar Verification Suite...");
 
@@ -349,4 +359,241 @@ console.log("➡️ Test 6: Storage addXP Gamification Synchronization");
   console.log("  ✓ Storage addXP Gamification Synchronization verified!");
 }
 
-console.log("\n🎉 ALL GAMIFICATION & AVATAR VERIFICATION TESTS PASSED FLAWLESSLY!\n");
+// ==========================================
+// Test 7: RPG Character Database & Language Affinities
+// ==========================================
+console.log("➡️ Test 7: RPG Characters Database & Language Affinities");
+{
+  assert.strictEqual(CHARACTERS_DATABASE.length, 6, "Must contain exactly 6 RPG characters");
+
+  const expectedIds = ["valerius", "kazan", "lyra", "astrid", "anubis_shadow", "tengu_kurama"];
+  for (const id of expectedIds) {
+    const char = getCharacterById(id);
+    assert.ok(char, `Character ${id} must exist`);
+    assert.ok(char.name, `Character ${id} must have a name`);
+    assert.ok(char.title, `Character ${id} must have a title`);
+    assert.ok(char.category, `Character ${id} must have a category`);
+    assert.ok(char.lore, `Character ${id} must have lore`);
+    assert.ok(char.nativeLanguageBonus, `Character ${id} must have nativeLanguageBonus`);
+    assert.ok(char.baseSpriteAsset, `Character ${id} must have baseSpriteAsset`);
+  }
+
+  // Valerius (HUMAN_MALE, Romance_Languages)
+  const valerius = getCharacterById("valerius")!;
+  assert.strictEqual(valerius.category, "HUMAN_MALE");
+  assert.strictEqual(valerius.nativeLanguageBonus, "Romance_Languages");
+  assert.ok(valerius.supportedLanguageBonusIds?.includes("es"));
+
+  // Kazan (HUMAN_MALE, Germanic_Languages)
+  const kazan = getCharacterById("kazan")!;
+  assert.strictEqual(kazan.category, "HUMAN_MALE");
+  assert.strictEqual(kazan.nativeLanguageBonus, "Germanic_Languages");
+  assert.ok(kazan.supportedLanguageBonusIds?.includes("de"));
+
+  // Lyra (HUMAN_FEMALE, Asian_Languages)
+  const lyra = getCharacterById("lyra")!;
+  assert.strictEqual(lyra.category, "HUMAN_FEMALE");
+  assert.strictEqual(lyra.nativeLanguageBonus, "Asian_Languages");
+  assert.ok(lyra.supportedLanguageBonusIds?.includes("ja"));
+
+  // Valkíria Astrid (HUMAN_FEMALE, Nordic_Languages)
+  const astrid = getCharacterById("astrid")!;
+  assert.strictEqual(astrid.category, "HUMAN_FEMALE");
+  assert.strictEqual(astrid.nativeLanguageBonus, "Nordic_Languages");
+
+  // Sombra de Anúbis (MYTHIC_BEAST, Semitic_Languages)
+  const anubis = getCharacterById("anubis_shadow")!;
+  assert.strictEqual(anubis.category, "MYTHIC_BEAST");
+  assert.strictEqual(anubis.nativeLanguageBonus, "Semitic_Languages");
+
+  // Tengu Kurama (MYTHIC_BEAST, East_Asian_Languages)
+  const tengu = getCharacterById("tengu_kurama")!;
+  assert.strictEqual(tengu.category, "MYTHIC_BEAST");
+  assert.strictEqual(tengu.nativeLanguageBonus, "East_Asian_Languages");
+
+  console.log("  ✓ All 6 RPG characters and archetypes verified!");
+}
+
+// ==========================================
+// Test 8: RPG Shop Catalog Completeness & 7 Slots
+// ==========================================
+console.log("➡️ Test 8: Shop Catalog Completeness & 7 Equipment Slots");
+{
+  assert.ok(SHOP_ITEMS_CATALOG.length >= 18, "Catalog should have comprehensive items");
+
+  // Verify all 7 slots are present
+  for (const slot of ALL_SLOT_TYPES) {
+    const itemsInSlot = SHOP_ITEMS_CATALOG.filter((i) => i.slot === slot);
+    assert.ok(itemsInSlot.length >= 2, `Slot ${slot} must have at least 2 items in catalog`);
+  }
+
+  // Verify specific items required by user specification:
+  // HEAD: Elmo de Astora, Chapéu Pontudo de Vivi, Coroa de Louros de Sangue
+  const elmoAstora = getShopItemById("head_elmo_astora");
+  assert.ok(elmoAstora, "Elmo de Astora must exist");
+  assert.strictEqual(elmoAstora.slot, "HEAD");
+
+  const chapeuVivi = getShopItemById("head_chapeu_vivi");
+  assert.ok(chapeuVivi, "Chapéu Pontudo de Vivi must exist");
+  assert.strictEqual(chapeuVivi.slot, "HEAD");
+
+  const coroaLouros = getShopItemById("head_coroa_louros_sangue");
+  assert.ok(coroaLouros, "Coroa de Louros de Sangue must exist");
+  assert.strictEqual(coroaLouros.slot, "HEAD");
+
+  // CHEST: Armadura do Lobo Branco, Manto de Dalaran
+  const loboBranco = getShopItemById("chest_armadura_lobo_branco");
+  assert.ok(loboBranco, "Armadura do Lobo Branco must exist");
+  assert.strictEqual(loboBranco.slot, "CHEST");
+
+  const dalaran = getShopItemById("chest_manto_dalaran");
+  assert.ok(dalaran, "Manto de Dalaran must exist");
+  assert.strictEqual(dalaran.slot, "CHEST");
+
+  // LEGS: Grevas do Andarilho de Hyrule
+  const grevasHyrule = getShopItemById("legs_grevas_hyrule");
+  assert.ok(grevasHyrule, "Grevas do Andarilho de Hyrule must exist");
+  assert.strictEqual(grevasHyrule.slot, "LEGS");
+
+  // MAIN_HAND: Espada do Selo Arcano, Lâmina Colossal de Aço
+  const espadaArcana = getShopItemById("main_hand_espada_selo_arcano");
+  assert.ok(espadaArcana, "Espada do Selo Arcano must exist");
+  assert.strictEqual(espadaArcana.slot, "MAIN_HAND");
+
+  const laminaColossal = getShopItemById("main_hand_lamina_colossal_aco");
+  assert.ok(laminaColossal, "Lâmina Colossal de Aço must exist");
+  assert.strictEqual(laminaColossal.slot, "MAIN_HAND");
+
+  // BACK: Mochila do Escriba Expedicionário, Asas do Éter Noturno
+  const mochila = getShopItemById("back_mochila_escriba");
+  assert.ok(mochila, "Mochila do Escriba Expedicionário must exist");
+  assert.strictEqual(mochila.slot, "BACK");
+
+  const asasEter = getShopItemById("back_asas_eter_noturno");
+  assert.ok(asasEter, "Asas do Éter Noturno must exist");
+  assert.strictEqual(asasEter.slot, "BACK");
+
+  // ACCESSORY: Fragmento da Pedra de Roseta
+  const pedraRoseta = getShopItemById("accessory_pedra_roseta");
+  assert.ok(pedraRoseta, "Fragmento da Pedra de Roseta must exist");
+  assert.strictEqual(pedraRoseta.slot, "ACCESSORY");
+  assert.strictEqual(pedraRoseta.rarity, "MYTHIC");
+
+  // OFF_HAND items
+  const offHandItems = SHOP_ITEMS_CATALOG.filter((i) => i.slot === "OFF_HAND");
+  assert.ok(offHandItems.length >= 3, "OFF_HAND must have accessible and advanced items");
+  assert.ok(getShopItemById("off_hand_grimorio_idiomas"), "Grimório dos Idiomas Perdidos must exist");
+
+  console.log("  ✓ All required shop catalog items and 7 slots verified!");
+}
+
+// ==========================================
+// Test 9: Combined Stats Calculation & Language Affinities
+// ==========================================
+console.log("➡️ Test 9: Combined Stats Calculation & Affinities");
+{
+  const baseUser: UserProgress = {
+    xp: 200,
+    coins: 500,
+    level: 2,
+    skillPoints: 2,
+    streakDays: 5,
+    lastActiveDate: "2026-10-04",
+    selectedCharacterId: "valerius",
+    equipment: {
+      HEAD: "head_elmo_astora", // xpMultiplier: 0.10, streakProtection: 1
+      CHEST: "chest_tunica_novico", // xpMultiplier: 0.02
+      LEGS: "legs_botas_rusticas", // coinBonus: 0.02
+      MAIN_HAND: "main_hand_pena_prata", // xpMultiplier: 0.03
+      OFF_HAND: "off_hand_adaga_precisao", // xpMultiplier: 0.03
+      BACK: "back_capa_viajante", // xpMultiplier: 0.02
+      ACCESSORY: "accessory_amuleto_concentracao", // xpMultiplier: 0.03
+    },
+  };
+
+  // With matching language for Valerius ("es" in Romance_Languages)
+  // Item XP: 0.10 + 0.02 + 0.03 + 0.03 + 0.02 + 0.03 = 0.23
+  // Char XP (matching): 0.15
+  // finalXpMultiplier: 1.0 + 0.23 + 0.15 = 1.38
+  // streakProtection: 1
+  const statsSpanish = getCombinedStats(baseUser, "es");
+  assert.strictEqual(statsSpanish.characterBonus.active, true);
+  assert.strictEqual(statsSpanish.characterBonus.xpMultiplier, 0.15);
+  assert.strictEqual(statsSpanish.finalXpMultiplier, 1.38);
+  assert.strictEqual(statsSpanish.finalStreakProtection, 1);
+
+  // With non-matching language for Valerius ("ja")
+  // Char XP (non-matching baseline): 0.05
+  // finalXpMultiplier: 1.0 + 0.23 + 0.05 = 1.28
+  const statsJapanese = getCombinedStats(baseUser, "ja");
+  assert.strictEqual(statsJapanese.characterBonus.active, false);
+  assert.strictEqual(statsJapanese.finalXpMultiplier, 1.28);
+
+  // Equip Fragmento da Pedra de Roseta (+0.35 XP, +0.30 coins, +3 streak protection)
+  const boostedUser = equipShopItem(baseUser, "accessory_pedra_roseta");
+  const statsRosetta = getCombinedStats(boostedUser, "es");
+  // Item XP: 0.23 - 0.03 (amuleto) + 0.35 (roseta) = 0.55
+  // finalXpMultiplier: 1.0 + 0.55 + 0.15 = 1.70
+  assert.strictEqual(statsRosetta.finalXpMultiplier, 1.7);
+  // Streak protection: 1 (elmo) + 3 (roseta) = 4
+  assert.strictEqual(statsRosetta.finalStreakProtection, 4);
+  assert.ok(statsRosetta.finalCoinBonus > 1.3);
+
+  console.log("  ✓ Combined stats calculation and language bonuses verified!");
+}
+
+// ==========================================
+// Test 10: Shop Purchase, Equip, Unequip, and Character Selection
+// ==========================================
+console.log("➡️ Test 10: Shop Purchase, Equip, Unequip & Character Switching");
+{
+  const testPlayer: UserProgress = {
+    xp: 500, // Level 4
+    coins: 400,
+    level: 4,
+    skillPoints: 4,
+    streakDays: 3,
+    lastActiveDate: "2026-10-04",
+    inventoryItemIds: ["head_tiara_aprendiz"],
+    selectedCharacterId: "valerius",
+    equipment: { ...STARTER_EQUIPMENT },
+  };
+
+  // 10a: Level gate check (Asas do Éter Noturno requires level 6, user is level 4)
+  const buyGated = buyShopItem(testPlayer, "back_asas_eter_noturno");
+  assert.strictEqual(buyGated.success, false);
+  assert.ok(buyGated.error?.includes("requer nível 6"));
+
+  // 10b: Insufficient coins (Armadura do Lobo Branco costs 300, user has 50)
+  const buyBroke = buyShopItem({ ...testPlayer, coins: 50 }, "chest_armadura_lobo_branco");
+  assert.strictEqual(buyBroke.success, false);
+  assert.ok(buyBroke.error?.includes("Moedas insuficientes"));
+
+  // 10c: Valid buy (Armadura do Lobo Branco: 300 coins, requires level 4)
+  const buyArmour = buyShopItem(testPlayer, "chest_armadura_lobo_branco");
+  assert.strictEqual(buyArmour.success, true);
+  assert.ok(buyArmour.updated);
+  assert.strictEqual(buyArmour.updated.coins, 100); // 400 - 300
+  assert.ok(buyArmour.updated.inventoryItemIds?.includes("chest_armadura_lobo_branco"));
+  assert.strictEqual(buyArmour.updated.equipment?.CHEST, "chest_armadura_lobo_branco");
+
+  // 10d: Unequip slot
+  const unequipped = unequipShopSlot(buyArmour.updated, "CHEST");
+  assert.strictEqual(unequipped.equipment?.CHEST, null);
+
+  // 10e: Character switching to Tengu Kurama
+  const switchedChar = selectRpgCharacter(unequipped, "tengu_kurama");
+  assert.strictEqual(switchedChar.selectedCharacterId, "tengu_kurama");
+  assert.strictEqual(switchedChar.equippedAvatar?.archetype, "monster");
+  assert.strictEqual(switchedChar.equippedAvatar?.subType, "tengu_kurama_beast");
+
+  // Switch to Astrid
+  const switchedAstrid = selectRpgCharacter(switchedChar, "astrid");
+  assert.strictEqual(switchedAstrid.selectedCharacterId, "astrid");
+  assert.strictEqual(switchedAstrid.equippedAvatar?.archetype, "human");
+  assert.strictEqual(switchedAstrid.equippedAvatar?.subType, "astrid_valkyrie");
+
+  console.log("  ✓ Shop purchase, equip, unequip, and character switching verified!");
+}
+
+console.log("\n🎉 ALL GAMIFICATION, RPG & AVATAR VERIFICATION TESTS PASSED FLAWLESSLY!\n");
