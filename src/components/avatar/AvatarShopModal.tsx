@@ -285,23 +285,24 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
     });
   };
 
-  const handleEquipStudioKit = (heroId: "kaelen" | "lyanna" | "ignisaur" = "kaelen") => {
+  const handleEquipStudioKit = (heroId: "kaelen" | "lyanna" | "ignisaur" | "trixie" = "kaelen") => {
     playSuccessSound();
     const updated = equipStudioFantasyKit(prepared, heroId);
     onUpdateProgress(updated);
     const heroNames: Record<string, string> = {
       kaelen: "Kaelen, o Espadachim Linguista",
-      lyanna: "Lyanna, a Maga de Véu",
-      ignisaur: "Ignisaur, a Chama Ancestral",
+      lyanna: "Elena, a Arquivista Arcana",
+      ignisaur: "Glaurung, o Mentor Dracônico",
+      trixie: "Trixie, o Autômato em Miniatura",
     };
     toast.success(`✨ Visual Studio Fantasy Equipado!`, {
-      description: `Transformado em ${heroNames[heroId]} com o kit Studio Fantasy completo!`,
+      description: `Transformado em ${heroNames[heroId] || "Herói Studio"} com o kit Studio Fantasy completo!`,
     });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-3xl shadow-2xl">
+      <DialogContent className="w-full max-w-full sm:max-w-2xl md:max-w-4xl max-h-[90vh] overflow-y-auto p-2 sm:p-6 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-2xl sm:rounded-3xl shadow-2xl">
         <DialogHeader className="space-y-1">
           <div className="flex items-center justify-between gap-3 pr-6">
             <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -354,7 +355,7 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
                 onClick={() => handleEquipStudioKit("lyanna")}
                 className="border-purple-400/50 bg-purple-900/40 text-purple-200 hover:bg-purple-800/60 text-xs font-bold h-9 px-3 rounded-xl cursor-pointer"
               >
-                Lyanna Kit
+                Elena Kit
               </Button>
               <Button
                 variant="outline"
@@ -362,7 +363,15 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
                 onClick={() => handleEquipStudioKit("ignisaur")}
                 className="border-amber-400/50 bg-amber-900/40 text-amber-200 hover:bg-amber-800/60 text-xs font-bold h-9 px-3 rounded-xl cursor-pointer"
               >
-                Ignisaur Kit
+                Glaurung Kit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleEquipStudioKit("trixie")}
+                className="border-yellow-400/50 bg-yellow-900/40 text-yellow-200 hover:bg-yellow-800/60 text-xs font-bold h-9 px-3 rounded-xl cursor-pointer"
+              >
+                Trixie Kit
               </Button>
             </div>
           </div>
@@ -531,7 +540,7 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
 
         {/* Conteúdo: Galeria de Heróis */}
         {activeTab === "heroes" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
             {allHeroes.map((hero) => {
               const isSelected = (prepared.selectedCharacterId || "char_tactician_m") === hero.id;
               return (
@@ -646,7 +655,7 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
 
         {/* Conteúdo: Itens do Catálogo ou Armaria */}
         {activeTab !== "heroes" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
             {filteredItems.map((item) => {
               const isOwned = inventoryIds.includes(item.id);
               const isItemEquipped = currentEquipment[item.slot] === item.id;

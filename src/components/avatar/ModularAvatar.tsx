@@ -44,6 +44,245 @@ interface SvgContext {
   skinShade: string;
 }
 
+export interface IllustratedAvatarDef {
+  id: string;
+  name: string;
+  src: string;
+  accentColor: string;
+  glowColor: string;
+  bgGradient: string;
+}
+
+export const ILLUSTRATED_AVATARS_MAP: Record<string, IllustratedAvatarDef> = {
+  // 1. Linguist - Runeguard (Kaelen)
+  char_tactician_m: {
+    id: "char_tactician_m",
+    name: "Linguist - Runeguard",
+    src: "/assets/avatars/linguist_runeguard.png",
+    accentColor: "#38bdf8",
+    glowColor: "rgba(56, 189, 248, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(56, 189, 248, 0.22) 0%, rgba(14, 165, 233, 0.05) 60%, transparent 100%)",
+  },
+  tactician_swordsman: {
+    id: "tactician_swordsman",
+    name: "Linguist - Runeguard",
+    src: "/assets/avatars/linguist_runeguard.png",
+    accentColor: "#38bdf8",
+    glowColor: "rgba(56, 189, 248, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(56, 189, 248, 0.22) 0%, rgba(14, 165, 233, 0.05) 60%, transparent 100%)",
+  },
+  kaelen: {
+    id: "kaelen",
+    name: "Linguist - Runeguard",
+    src: "/assets/avatars/linguist_runeguard.png",
+    accentColor: "#38bdf8",
+    glowColor: "rgba(56, 189, 248, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(56, 189, 248, 0.22) 0%, rgba(14, 165, 233, 0.05) 60%, transparent 100%)",
+  },
+  kaelen_base: {
+    id: "kaelen_base",
+    name: "Linguist - Runeguard",
+    src: "/assets/avatars/linguist_runeguard.png",
+    accentColor: "#38bdf8",
+    glowColor: "rgba(56, 189, 248, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(56, 189, 248, 0.22) 0%, rgba(14, 165, 233, 0.05) 60%, transparent 100%)",
+  },
+  linguist_runeguard: {
+    id: "linguist_runeguard",
+    name: "Linguist - Runeguard",
+    src: "/assets/avatars/linguist_runeguard.png",
+    accentColor: "#38bdf8",
+    glowColor: "rgba(56, 189, 248, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(56, 189, 248, 0.22) 0%, rgba(14, 165, 233, 0.05) 60%, transparent 100%)",
+  },
+  char_swordsman_m: {
+    id: "char_swordsman_m",
+    name: "Linguist - Runeguard",
+    src: "/assets/avatars/linguist_runeguard.png",
+    accentColor: "#38bdf8",
+    glowColor: "rgba(56, 189, 248, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(56, 189, 248, 0.22) 0%, rgba(14, 165, 233, 0.05) 60%, transparent 100%)",
+  },
+  ro_chibi_swordsman_male_base: {
+    id: "ro_chibi_swordsman_male_base",
+    name: "Linguist - Runeguard",
+    src: "/assets/avatars/linguist_runeguard.png",
+    accentColor: "#38bdf8",
+    glowColor: "rgba(56, 189, 248, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(56, 189, 248, 0.22) 0%, rgba(14, 165, 233, 0.05) 60%, transparent 100%)",
+  },
+
+  // 2. Elena - Archivist (Lyanna)
+  char_archivist_f: {
+    id: "char_archivist_f",
+    name: "Elena - Archivist",
+    src: "/assets/avatars/elena_archivist.png",
+    accentColor: "#a855f7",
+    glowColor: "rgba(168, 85, 247, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.22) 0%, rgba(147, 51, 234, 0.05) 60%, transparent 100%)",
+  },
+  hooded_archivist: {
+    id: "hooded_archivist",
+    name: "Elena - Archivist",
+    src: "/assets/avatars/elena_archivist.png",
+    accentColor: "#a855f7",
+    glowColor: "rgba(168, 85, 247, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.22) 0%, rgba(147, 51, 234, 0.05) 60%, transparent 100%)",
+  },
+  lyanna: {
+    id: "lyanna",
+    name: "Elena - Archivist",
+    src: "/assets/avatars/elena_archivist.png",
+    accentColor: "#a855f7",
+    glowColor: "rgba(168, 85, 247, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.22) 0%, rgba(147, 51, 234, 0.05) 60%, transparent 100%)",
+  },
+  lyanna_base: {
+    id: "lyanna_base",
+    name: "Elena - Archivist",
+    src: "/assets/avatars/elena_archivist.png",
+    accentColor: "#a855f7",
+    glowColor: "rgba(168, 85, 247, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.22) 0%, rgba(147, 51, 234, 0.05) 60%, transparent 100%)",
+  },
+  elena: {
+    id: "elena",
+    name: "Elena - Archivist",
+    src: "/assets/avatars/elena_archivist.png",
+    accentColor: "#a855f7",
+    glowColor: "rgba(168, 85, 247, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.22) 0%, rgba(147, 51, 234, 0.05) 60%, transparent 100%)",
+  },
+  elena_archivist: {
+    id: "elena_archivist",
+    name: "Elena - Archivist",
+    src: "/assets/avatars/elena_archivist.png",
+    accentColor: "#a855f7",
+    glowColor: "rgba(168, 85, 247, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.22) 0%, rgba(147, 51, 234, 0.05) 60%, transparent 100%)",
+  },
+  char_magician_f: {
+    id: "char_magician_f",
+    name: "Elena - Archivist",
+    src: "/assets/avatars/elena_archivist.png",
+    accentColor: "#a855f7",
+    glowColor: "rgba(168, 85, 247, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.22) 0%, rgba(147, 51, 234, 0.05) 60%, transparent 100%)",
+  },
+  ro_chibi_magician_female_base: {
+    id: "ro_chibi_magician_female_base",
+    name: "Elena - Archivist",
+    src: "/assets/avatars/elena_archivist.png",
+    accentColor: "#a855f7",
+    glowColor: "rgba(168, 85, 247, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.22) 0%, rgba(147, 51, 234, 0.05) 60%, transparent 100%)",
+  },
+
+  // 3. Draconic Mentor - Glaurung (Ignisaur)
+  char_elemental_beast: {
+    id: "char_elemental_beast",
+    name: "Draconic Mentor - Glaurung",
+    src: "/assets/avatars/draconic_mentor.png",
+    accentColor: "#f97316",
+    glowColor: "rgba(249, 115, 22, 0.5)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(249, 115, 22, 0.25) 0%, rgba(234, 88, 12, 0.05) 60%, transparent 100%)",
+  },
+  mythic_elemental_mentor: {
+    id: "mythic_elemental_mentor",
+    name: "Draconic Mentor - Glaurung",
+    src: "/assets/avatars/draconic_mentor.png",
+    accentColor: "#f97316",
+    glowColor: "rgba(249, 115, 22, 0.5)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(249, 115, 22, 0.25) 0%, rgba(234, 88, 12, 0.05) 60%, transparent 100%)",
+  },
+  ignisaur: {
+    id: "ignisaur",
+    name: "Draconic Mentor - Glaurung",
+    src: "/assets/avatars/draconic_mentor.png",
+    accentColor: "#f97316",
+    glowColor: "rgba(249, 115, 22, 0.5)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(249, 115, 22, 0.25) 0%, rgba(234, 88, 12, 0.05) 60%, transparent 100%)",
+  },
+  ignisaur_base: {
+    id: "ignisaur_base",
+    name: "Draconic Mentor - Glaurung",
+    src: "/assets/avatars/draconic_mentor.png",
+    accentColor: "#f97316",
+    glowColor: "rgba(249, 115, 22, 0.5)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(249, 115, 22, 0.25) 0%, rgba(234, 88, 12, 0.05) 60%, transparent 100%)",
+  },
+  glaurung: {
+    id: "glaurung",
+    name: "Draconic Mentor - Glaurung",
+    src: "/assets/avatars/draconic_mentor.png",
+    accentColor: "#f97316",
+    glowColor: "rgba(249, 115, 22, 0.5)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(249, 115, 22, 0.25) 0%, rgba(234, 88, 12, 0.05) 60%, transparent 100%)",
+  },
+  draconic_mentor: {
+    id: "draconic_mentor",
+    name: "Draconic Mentor - Glaurung",
+    src: "/assets/avatars/draconic_mentor.png",
+    accentColor: "#f97316",
+    glowColor: "rgba(249, 115, 22, 0.5)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(249, 115, 22, 0.25) 0%, rgba(234, 88, 12, 0.05) 60%, transparent 100%)",
+  },
+
+  // 4. Miniature Automaton - Trixie
+  char_automaton_trixie: {
+    id: "char_automaton_trixie",
+    name: "Miniature Automaton - Trixie",
+    src: "/assets/avatars/miniature_automaton.png",
+    accentColor: "#eab308",
+    glowColor: "rgba(234, 179, 8, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(234, 179, 8, 0.22) 0%, rgba(202, 138, 4, 0.05) 60%, transparent 100%)",
+  },
+  miniature_automaton: {
+    id: "miniature_automaton",
+    name: "Miniature Automaton - Trixie",
+    src: "/assets/avatars/miniature_automaton.png",
+    accentColor: "#eab308",
+    glowColor: "rgba(234, 179, 8, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(234, 179, 8, 0.22) 0%, rgba(202, 138, 4, 0.05) 60%, transparent 100%)",
+  },
+  trixie: {
+    id: "trixie",
+    name: "Miniature Automaton - Trixie",
+    src: "/assets/avatars/miniature_automaton.png",
+    accentColor: "#eab308",
+    glowColor: "rgba(234, 179, 8, 0.45)",
+    bgGradient: "radial-gradient(circle at 50% 35%, rgba(234, 179, 8, 0.22) 0%, rgba(202, 138, 4, 0.05) 60%, transparent 100%)",
+  },
+};
+
+export function getIllustratedAvatar(subType?: string, archetype?: string): IllustratedAvatarDef | undefined {
+  if (subType) {
+    if (ILLUSTRATED_AVATARS_MAP[subType]) return ILLUSTRATED_AVATARS_MAP[subType];
+    const lower = subType.toLowerCase();
+    for (const [key, def] of Object.entries(ILLUSTRATED_AVATARS_MAP)) {
+      if (lower.includes(key.toLowerCase()) || lower.includes(def.id.toLowerCase())) {
+        return def;
+      }
+    }
+    if (lower.includes("kaelen") || lower.includes("tactician") || lower.includes("swordsman") || lower.includes("runeguard")) {
+      return ILLUSTRATED_AVATARS_MAP["char_tactician_m"];
+    }
+    if (lower.includes("lyanna") || lower.includes("archivist") || lower.includes("elena") || lower.includes("magician")) {
+      return ILLUSTRATED_AVATARS_MAP["char_archivist_f"];
+    }
+    if (lower.includes("ignisaur") || lower.includes("dragon") || lower.includes("glaurung") || lower.includes("elemental")) {
+      return ILLUSTRATED_AVATARS_MAP["char_elemental_beast"];
+    }
+    if (lower.includes("trixie") || lower.includes("automaton") || lower.includes("golem")) {
+      return ILLUSTRATED_AVATARS_MAP["char_automaton_trixie"];
+    }
+  }
+  if (!subType || subType === "starter_human" || archetype === "human") {
+    return ILLUSTRATED_AVATARS_MAP["char_tactician_m"];
+  }
+  return undefined;
+}
+
 export const ModularAvatar: React.FC<ModularAvatarProps> = ({
   config = DEFAULT_AVATAR_CONFIG,
   state = "idle",
@@ -59,6 +298,103 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
   const primaryColor = config?.primaryColor || "#38bdf8";
   const secondaryColor = config?.secondaryColor || "#fbbf24";
   const eq = (config?.equipped || {}) as Record<string, string | null | undefined>;
+
+  const getStateAnimationClass = () => {
+    switch (state) {
+      case "speaking":
+        return "animate-pulse scale-[1.03]";
+      case "listening":
+        return "transition-transform duration-300 scale-105 rotate-1";
+      case "celebrating":
+        return "animate-bounce";
+      case "thinking":
+        return "transition-transform duration-500 -rotate-2";
+      case "idle":
+      default:
+        return "transition-all duration-300 hover:scale-105";
+    }
+  };
+
+  // Se corresponder a um dos heróis ilustrados de alta resolução (Runeguard, Archivist, Glaurung, Trixie),
+  // renderiza diretamente o sprite ilustrado com moldura dinâmica, aura mística e efeitos de estado.
+  const illustrated = getIllustratedAvatar(subType, archetype);
+  if (illustrated) {
+    return (
+      <div
+        onClick={onClick}
+        className={`relative inline-flex items-center justify-center select-none ${
+          onClick ? "cursor-pointer active:scale-95 transition-transform" : ""
+        } ${className}`}
+        style={{ width: pixelSize, height: pixelSize }}
+        title={`Avatar: ${illustrated.name} (${state})`}
+      >
+        <div
+          className={`relative w-full h-full flex items-center justify-center rounded-2xl overflow-hidden p-1.5 transition-all duration-300 ${getStateAnimationClass()}`}
+          style={{
+            background: illustrated.bgGradient,
+            boxShadow: `0 0 ${Math.max(12, Math.round(pixelSize * 0.12))}px ${illustrated.glowColor}`,
+          }}
+        >
+          {/* Sombra de chão */}
+          <div
+            className="absolute bottom-1 w-3/4 h-2.5 rounded-full opacity-40 blur-[3px]"
+            style={{ background: "#0f172a" }}
+          />
+
+          {/* Sprite Ilustrado de Alta Definição */}
+          <img
+            src={illustrated.src}
+            alt={illustrated.name}
+            className="relative z-10 w-full h-full object-contain filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.35)] select-none pointer-events-none transition-transform duration-300"
+            loading="eager"
+            decoding="async"
+          />
+
+          {/* Efeitos de Estado */}
+          {state === "speaking" && (
+            <div className="absolute top-1 right-1 z-20 bg-emerald-500/90 text-white rounded-full p-0.5 shadow-md animate-pulse">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" strokeLinecap="round" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" strokeLinecap="round" />
+              </svg>
+            </div>
+          )}
+          {state === "listening" && (
+            <div className="absolute top-1 right-1 z-20 bg-sky-500/90 text-white rounded-full p-0.5 shadow-md animate-bounce">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" fill="currentColor" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" strokeLinecap="round" />
+              </svg>
+            </div>
+          )}
+          {state === "celebrating" && (
+            <div className="absolute top-1 right-1 z-20 bg-amber-400 text-slate-950 rounded-full p-0.5 shadow-md animate-spin">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            </div>
+          )}
+          {state === "thinking" && (
+            <div className="absolute top-1 right-1 z-20 bg-indigo-500/90 text-white rounded-full p-0.5 shadow-md">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" />
+                <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
+              </svg>
+            </div>
+          )}
+        </div>
+
+        {/* Badge de Nível */}
+        {showBadge && (
+          <span className="absolute -bottom-1 -right-1 z-20 bg-amber-500 text-slate-950 font-black text-[10px] sm:text-xs px-1.5 py-0.2 rounded-full border-2 border-background shadow-md">
+            {level}
+          </span>
+        )}
+      </div>
+    );
+  }
 
   // Apenas mascotes redondas/esféricas (como Angeling ou Slime) requerem adaptação de itens sobre o corpo
   const isBlobMascot =
@@ -134,22 +470,6 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
     baphometHorn: `url(#${baphometHornId})`,
     baphometEye: `url(#${baphometEyeId})`,
     skinShade: `url(#${skinShadeId})`,
-  };
-
-  const getStateAnimationClass = () => {
-    switch (state) {
-      case "speaking":
-        return "animate-pulse scale-[1.02]";
-      case "listening":
-        return "transition-transform duration-300 scale-105 rotate-1";
-      case "celebrating":
-        return "animate-bounce";
-      case "thinking":
-        return "transition-transform duration-500 -rotate-2";
-      case "idle":
-      default:
-        return "transition-all duration-300 hover:scale-105";
-    }
   };
 
   return (

@@ -568,14 +568,17 @@ export function selectRpgCharacter(current: UserProgress, characterId: string): 
   if (!character) return prepared;
 
   const charKey = characterId.toLowerCase();
-  if (charKey === "char_tactician_m" || charKey === "tactician_swordsman" || charKey.includes("kaelen")) {
+  if (charKey === "char_tactician_m" || charKey === "tactician_swordsman" || charKey.includes("kaelen") || charKey.includes("runeguard")) {
     return equipStudioFantasyKit(prepared, "kaelen");
   }
-  if (charKey === "char_archivist_f" || charKey === "hooded_archivist" || charKey.includes("lyanna")) {
+  if (charKey === "char_archivist_f" || charKey === "hooded_archivist" || charKey.includes("lyanna") || charKey.includes("elena")) {
     return equipStudioFantasyKit(prepared, "lyanna");
   }
-  if (charKey === "char_elemental_beast" || charKey === "mythic_elemental_mentor" || charKey.includes("ignisaur")) {
+  if (charKey === "char_elemental_beast" || charKey === "mythic_elemental_mentor" || charKey.includes("ignisaur") || charKey.includes("glaurung")) {
     return equipStudioFantasyKit(prepared, "ignisaur");
+  }
+  if (charKey === "char_automaton_trixie" || charKey === "miniature_automaton" || charKey.includes("trixie")) {
+    return equipStudioFantasyKit(prepared, "trixie");
   }
 
   const currentConfig = prepared.equippedAvatar || DEFAULT_AVATAR_CONFIG;
@@ -775,7 +778,7 @@ export function equipStudioFantasyKit(
   let backItem: string | null = "back_field_lexicon_pack";
   let familiarItem: string | null = "familiar_clockwork_golem";
 
-  if (heroKey.includes("lyanna") || heroKey === "char_archivist_f" || heroKey === "hooded_archivist") {
+  if (heroKey.includes("lyanna") || heroKey.includes("elena") || heroKey === "char_archivist_f" || heroKey === "hooded_archivist") {
     selectedCharacterId = "char_archivist_f";
     subType = "char_archivist_f";
     archetype = "human";
@@ -784,7 +787,7 @@ export function equipStudioFantasyKit(
     headItem = "hood_silk_archivist";
     outfitItem = "outfit_ceremonial_silks";
     weaponItem = "weapon_gnarled_staff";
-  } else if (heroKey.includes("ignisaur") || heroKey === "char_elemental_beast" || heroKey === "mythic_elemental_mentor") {
+  } else if (heroKey.includes("ignisaur") || heroKey.includes("glaurung") || heroKey === "char_elemental_beast" || heroKey === "mythic_elemental_mentor") {
     selectedCharacterId = "char_elemental_beast";
     subType = "char_elemental_beast";
     archetype = "monster";
@@ -793,6 +796,17 @@ export function equipStudioFantasyKit(
     headItem = null;
     outfitItem = "outfit_ceremonial_silks";
     weaponItem = "weapon_gnarled_staff";
+  } else if (heroKey.includes("trixie") || heroKey === "char_automaton_trixie" || heroKey === "miniature_automaton") {
+    selectedCharacterId = "char_automaton_trixie";
+    subType = "char_automaton_trixie";
+    archetype = "monster";
+    primaryColor = "#eab308";
+    secondaryColor = "#ca8a04";
+    headItem = null;
+    outfitItem = "outfit_scout_tunic";
+    weaponItem = null;
+    backItem = "back_field_lexicon_pack";
+    familiarItem = "familiar_clockwork_golem";
   }
 
   const kitItems = [headItem, outfitItem, weaponItem, backItem, familiarItem].filter(Boolean) as string[];

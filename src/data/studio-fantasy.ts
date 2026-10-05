@@ -74,8 +74,8 @@ export const ARCHETYPES_REGISTRY: Record<string, CharacterArchetype> = {
   tactician_swordsman: {
     id: "char_tactician_m",
     name: "Kaelen, o Espadachim Linguista",
-    title: "Vanguarda da Sintaxe",
-    lore: "Viajante de armadura leve que decifra dialetos perdidos em runas de combate.",
+    title: "Linguist - Runeguard",
+    lore: "Viajante de armadura leve que decifra dialetos perdidos em runas de combate com lâminas duplas e familiar alado.",
     baseSpriteKey: "sprites/characters/kaelen_base.png",
     defaultSkinTone: "#e5b89c",
     innatePassive: {
@@ -87,9 +87,9 @@ export const ARCHETYPES_REGISTRY: Record<string, CharacterArchetype> = {
   },
   hooded_archivist: {
     id: "char_archivist_f",
-    name: "Lyanna, a Maga de Véu",
-    title: "Arquivista do Éter",
-    lore: "Estudiosa com capuz e cajado de raízes entrelaçadas, mestre na audição atenta.",
+    name: "Elena, a Arquivista Arcana",
+    title: "Elena - Archivist",
+    lore: "Estudiosa com capuz místico, cajado ancestral e tomo mágico iluminado, mestre na audição atenta e gramática dos códices.",
     baseSpriteKey: "sprites/characters/lyanna_base.png",
     defaultSkinTone: "#f1c2a2",
     innatePassive: {
@@ -101,9 +101,9 @@ export const ARCHETYPES_REGISTRY: Record<string, CharacterArchetype> = {
   },
   mythic_elemental_mentor: {
     id: "char_elemental_beast",
-    name: "Ignisaur, a Chama Ancestral",
-    title: "Monstro Guardião do Léxico",
-    lore: "Entidade draconiana serena envolta em sedas cerimoniais e fogo espiritual.",
+    name: "Glaurung, o Mentor Dracônico",
+    title: "Draconic Mentor - Glaurung",
+    lore: "Entidade draconiana serena envolta em sedas cerimoniais imperiais e fogo espiritual de sabedoria ancestral.",
     baseSpriteKey: "sprites/characters/ignisaur_base.png",
     defaultSkinTone: "#ba7b56",
     innatePassive: {
@@ -111,6 +111,20 @@ export const ARCHETYPES_REGISTRY: Record<string, CharacterArchetype> = {
       description: "Dobra as moedas recebidas em revisões perfeitas sem erros.",
       xpMultiplier: 1.20,
       bonusCoinRate: 1.30
+    }
+  },
+  miniature_automaton: {
+    id: "char_automaton_trixie",
+    name: "Trixie, o Autômato em Miniatura",
+    title: "Miniature Automaton - Trixie",
+    lore: "Engenho mecânico de latão polido e engrenagens com mochila repleta de ferramentas de tradução e pontuação precisa.",
+    baseSpriteKey: "/assets/avatars/miniature_automaton.png",
+    defaultSkinTone: "#c28b62",
+    innatePassive: {
+      name: "Engrenagem Mnemônica",
+      description: "+15% de bônus de moedas e precisão refinada em desafios rápidos.",
+      xpMultiplier: 1.10,
+      bonusCoinRate: 1.25
     }
   }
 };
@@ -449,7 +463,7 @@ export function getStudioWardrobeItemById(id: string): WardrobeItem | undefined 
 }
 
 export function adaptStudioArchetypeToCharacterBase(archetype: CharacterArchetype): CharacterBase {
-  const category = archetype.id.includes("beast")
+  const category = archetype.id.includes("beast") || archetype.id.includes("automaton")
     ? "MYTHIC_BEAST"
     : archetype.id.includes("_f")
     ? "HUMAN_FEMALE"
@@ -460,6 +474,8 @@ export function adaptStudioArchetypeToCharacterBase(archetype: CharacterArchetyp
       ? ["es", "fr", "it", "pt"]
       : archetype.id === "char_archivist_f"
       ? ["de", "en", "ru", "el-koine"]
+      : archetype.id === "char_automaton_trixie"
+      ? ["en", "de", "ja"]
       : ["ja", "de", "en", "es"];
 
   return {

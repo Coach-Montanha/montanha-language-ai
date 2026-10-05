@@ -231,17 +231,18 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
     });
   };
 
-  const handleEquipStudioKit = (heroId: "kaelen" | "lyanna" | "ignisaur" = "kaelen") => {
+  const handleEquipStudioKit = (heroId: "kaelen" | "lyanna" | "ignisaur" | "trixie" = "kaelen") => {
     playSuccessSound();
     const updated = equipStudioFantasyKit(prepared, heroId);
     onUpdateProgress(updated);
     const heroNames: Record<string, string> = {
       kaelen: "Kaelen, o Espadachim Linguista",
-      lyanna: "Lyanna, a Maga de Véu",
-      ignisaur: "Ignisaur, a Chama Ancestral",
+      lyanna: "Elena, a Arquivista Arcana",
+      ignisaur: "Glaurung, o Mentor Dracônico",
+      trixie: "Trixie, o Autômato em Miniatura",
     };
     toast.success(`✨ Visual Studio Fantasy Ativado!`, {
-      description: `Transformado em ${heroNames[heroId]} com o kit Studio Fantasy completo equipado!`,
+      description: `Transformado em ${heroNames[heroId] || "Herói Studio"} com o kit Studio Fantasy completo equipado!`,
     });
   };
 
@@ -250,7 +251,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 max-w-6xl mx-auto w-full space-y-6 pb-20">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 sm:px-4 md:px-6 max-w-6xl mx-auto w-full max-w-full space-y-4 sm:space-y-6 pb-20">
       {/* ============================================================ */}
       {/* 1. BANNER RPG: NÍVEL, XP, TÍTULO, MOEDAS E BÔNUS COMBINADOS */}
       {/* ============================================================ */}
@@ -390,14 +391,14 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
               <Sparkles className="w-4 h-4 text-amber-300 animate-spin" />
               <span>Transformar em Kaelen (Visual Completo Studio Fantasy)</span>
             </Button>
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-center">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleEquipStudioKit("lyanna")}
                 className="flex-1 sm:flex-none border-purple-400/50 bg-purple-900/40 text-purple-200 hover:bg-purple-800/60 text-xs font-bold h-11 px-3.5 rounded-2xl cursor-pointer"
               >
-                ✨ Lyanna Kit
+                ✨ Elena Kit
               </Button>
               <Button
                 variant="outline"
@@ -405,7 +406,15 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                 onClick={() => handleEquipStudioKit("ignisaur")}
                 className="flex-1 sm:flex-none border-amber-400/50 bg-amber-900/40 text-amber-200 hover:bg-amber-800/60 text-xs font-bold h-11 px-3.5 rounded-2xl cursor-pointer"
               >
-                🔥 Ignisaur Kit
+                🔥 Glaurung Kit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleEquipStudioKit("trixie")}
+                className="flex-1 sm:flex-none border-yellow-400/50 bg-yellow-900/40 text-yellow-200 hover:bg-yellow-800/60 text-xs font-bold h-11 px-3.5 rounded-2xl cursor-pointer"
+              >
+                🤖 Trixie Kit
               </Button>
             </div>
           </div>
@@ -415,14 +424,14 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
       {/* ============================================================ */}
       {/* 2. VITRINE DE AVATAR RPG & OS SLOTS DE EQUIPAMENTO */}
       {/* ============================================================ */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="flex flex-col xl:grid xl:grid-cols-12 gap-4 w-full max-w-full items-start">
         {/* Painel Central: Avatar Preview + Controles de Estado */}
-        <div className="lg:col-span-5 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/95 p-6 flex flex-col items-center justify-center space-y-4 shadow-sm dark:shadow-xl">
-          <div className="text-center space-y-1">
+        <div className="w-full max-w-md mx-auto xl:col-span-5 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/95 p-4 sm:p-6 flex flex-col items-center justify-center space-y-4 shadow-sm dark:shadow-xl">
+          <div className="text-center space-y-1 w-full">
             <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">
               Pré-visualização do Personagem
             </span>
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white truncate">
               {selectedChar?.name || "Herói Aventureiro"}
             </h3>
             {selectedChar && (
@@ -430,6 +439,70 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                 ⚡ Afinidade: {selectedChar.nativeLanguageBonus}
               </Badge>
             )}
+          </div>
+
+          {/* Seletor Rápido de Heróis Ilustrados Studio Fantasy (1-Clique) */}
+          <div className="w-full space-y-1.5 pt-1">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">
+                Heróis Ilustrados Studio
+              </span>
+              <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">1-Clique</span>
+            </div>
+            <div className="grid grid-cols-4 gap-1.5 w-full">
+              <button
+                type="button"
+                onClick={() => handleEquipStudioKit("kaelen")}
+                className={`p-1.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center gap-0.5 cursor-pointer border ${
+                  selectedChar?.id === "char_tactician_m" || selectedChar?.id === "char_swordsman_m"
+                    ? "bg-sky-500/20 border-sky-500 text-sky-700 dark:text-sky-300 ring-2 ring-sky-500/30 font-black shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
+                title="Kaelen, o Espadachim Linguista (Runeguard)"
+              >
+                <span className="text-base">⚔️</span>
+                <span className="text-[10px] leading-tight font-extrabold truncate w-full text-center">Kaelen</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEquipStudioKit("lyanna")}
+                className={`p-1.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center gap-0.5 cursor-pointer border ${
+                  selectedChar?.id === "char_archivist_f" || selectedChar?.id === "char_magician_f"
+                    ? "bg-purple-500/20 border-purple-500 text-purple-700 dark:text-purple-300 ring-2 ring-purple-500/30 font-black shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
+                title="Elena, a Arquivista Arcana"
+              >
+                <span className="text-base">🔮</span>
+                <span className="text-[10px] leading-tight font-extrabold truncate w-full text-center">Elena</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEquipStudioKit("ignisaur")}
+                className={`p-1.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center gap-0.5 cursor-pointer border ${
+                  selectedChar?.id === "char_elemental_beast"
+                    ? "bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-300 ring-2 ring-amber-500/30 font-black shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
+                title="Glaurung, o Mentor Dracônico"
+              >
+                <span className="text-base">🐉</span>
+                <span className="text-[10px] leading-tight font-extrabold truncate w-full text-center">Glaurung</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEquipStudioKit("trixie")}
+                className={`p-1.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center gap-0.5 cursor-pointer border ${
+                  selectedChar?.id === "char_automaton_trixie"
+                    ? "bg-yellow-500/20 border-yellow-500 text-yellow-800 dark:text-yellow-300 ring-2 ring-yellow-500/30 font-black shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
+                title="Trixie, o Autômato em Miniatura"
+              >
+                <span className="text-base">🤖</span>
+                <span className="text-[10px] leading-tight font-extrabold truncate w-full text-center">Trixie</span>
+              </button>
+            </div>
           </div>
 
           <div className="p-5 rounded-2xl bg-gradient-to-b from-indigo-50/70 to-slate-100 dark:from-indigo-950/40 dark:to-slate-950/80 border border-indigo-100 dark:border-indigo-900/50 shadow-inner">
@@ -545,12 +618,12 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
         </div>
 
         {/* Painel dos Slots de Equipamento (Paper Doll) */}
-        <div className="lg:col-span-7 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/95 p-6 space-y-4 shadow-sm dark:shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
+        <div className="w-full xl:col-span-7 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/95 p-4 sm:p-6 space-y-4 shadow-sm dark:shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-wrap">
+            <div className="min-w-0">
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                <Shirt className="w-4 h-4 text-indigo-500" />
-                Equipamento Chibi &amp; Estúdio (Slots de Aventura)
+                <Shirt className="w-4 h-4 text-indigo-500 shrink-0" />
+                <span className="truncate">Equipamento Chibi &amp; Estúdio</span>
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                 Equipe chapéus, asas, martelos, capas e companheiros para potencializar seus estudos.
@@ -568,7 +641,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 w-full">
             {RO_PAPER_DOLL_SLOTS.map((slotDef) => {
               // Resolução com fallback seguro para preservação de progresso legado
               let itemId: string | null = currentEquipment[slotDef.slotKey] || null;
@@ -591,7 +664,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                 <div
                   key={slotDef.slotKey}
                   onClick={() => setActiveSlot(slotDef.slotKey)}
-                  className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between shadow-sm ${
+                  className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between shadow-sm min-w-0 overflow-hidden ${
                     isFilled
                       ? "bg-slate-50 dark:bg-slate-800/90 border-indigo-200 dark:border-indigo-800/80 hover:border-indigo-400 dark:hover:border-indigo-500"
                       : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
@@ -605,7 +678,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                       <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider block truncate">
                         {slotDef.label}
                       </span>
-                      <span className={`text-xs font-black block truncate max-w-[150px] ${
+                      <span className={`text-xs font-black block truncate max-w-[130px] sm:max-w-[180px] ${
                         isFilled ? "text-slate-900 dark:text-slate-100" : "text-slate-400 dark:text-slate-500 font-medium"
                       }`}>
                         {item ? item.name : "Vazio"}
@@ -660,7 +733,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
       {/* ============================================================ */}
       {/* 3. SELEÇÃO DE HERÓIS E ARQUÉTIPOS RPG */}
       {/* ============================================================ */}
-      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur-md p-6 space-y-4">
+      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur-md p-4 sm:p-6 space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
             <UserCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -789,7 +862,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
       {/* ============================================================ */}
       {/* 4. LOJA & ARMORY RPG COM CATÁLOGO DOS 7 SLOTS */}
       {/* ============================================================ */}
-      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur-md p-6 space-y-6">
+      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur-md p-4 sm:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">

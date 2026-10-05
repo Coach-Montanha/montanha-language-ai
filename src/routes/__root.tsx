@@ -93,7 +93,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       {
         name: "viewport",
-        content: "width=device-width, initial-scale=1, viewport-fit=cover",
+        content: "width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover",
       },
       { title: "Montanha Language AI — Tutor de Idiomas com IA, Treinos Diários de 5 Minutos & Imersão Fluida" },
       {
