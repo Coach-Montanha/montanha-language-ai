@@ -97,7 +97,7 @@ export const CHARACTERS_DATABASE: CharacterBase[] = [
   },
 ];
 
-export const DEFAULT_CHARACTER_ID = "valerius";
+export const DEFAULT_CHARACTER_ID = "char_tactician_m";
 
 export function getCharacterById(id: string): CharacterBase | undefined {
   const existing = CHARACTERS_DATABASE.find((c) => c.id === id);

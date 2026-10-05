@@ -15,6 +15,7 @@ import {
   CHARACTERS_DATABASE,
   SHOP_ITEMS_CATALOG,
   DEFAULT_AVATAR_CONFIG,
+  DEFAULT_CHARACTER_ID,
   getShopItemById,
   getCharacterById,
   BASE_AVATARS,
@@ -145,7 +146,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
   const avatarConfig = prepared.equippedAvatar || DEFAULT_AVATAR_CONFIG;
   const currentEquipment = (prepared.equipment || {}) as Record<string, string | null | undefined>;
   const inventoryIds = prepared.inventoryItemIds || [];
-  const selectedChar = getCharacterById(prepared.selectedCharacterId || "valerius");
+  const selectedChar = getCharacterById(prepared.selectedCharacterId || DEFAULT_CHARACTER_ID);
 
   const allHeroes: CharacterBase[] = [
     ...Object.values(ARCHETYPES_REGISTRY).map(adaptStudioArchetypeToCharacterBase),
@@ -694,11 +695,25 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                     )}
                   </div>
 
-                  <div>
-                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">{char.name}</h4>
-                    <span className="text-[11px] text-indigo-700 dark:text-indigo-400 font-bold block">
-                      {char.title}
-                    </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                      <ModularAvatar
+                        size="sm"
+                        config={{
+                          archetype: char.category === "MYTHIC_BEAST" ? "monster" : "human",
+                          subType: char.baseSpriteAsset,
+                          primaryColor: "#6366f1",
+                          secondaryColor: "#f59e0b",
+                          equipped: {},
+                        }}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">{char.name}</h4>
+                      <span className="text-[11px] text-indigo-700 dark:text-indigo-400 font-bold block truncate">
+                        {char.title}
+                      </span>
+                    </div>
                   </div>
 
                   <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-3 font-normal leading-relaxed">

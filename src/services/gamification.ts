@@ -8,6 +8,7 @@ import {
   CombinedStats,
   EquipmentSlot,
   AvatarArchetype,
+  AvatarEquipment,
 } from "@/types/avatar";
 import {
   DEFAULT_AVATAR_CONFIG,
@@ -79,13 +80,53 @@ export function ensureGamificationProgress(progress: UserProgress): UserProgress
   const skillPoints = typeof progress.skillPoints === "number" ? progress.skillPoints : level;
   const selectedCharacterId = progress.selectedCharacterId || DEFAULT_CHARACTER_ID;
   const activeChar = getCharacterById(selectedCharacterId);
-  const charSubType = activeChar?.baseSpriteAsset || "valerius_scribe";
+  const charSubType = activeChar?.baseSpriteAsset || "char_tactician_m";
   const charArchetype = activeChar?.category === "MYTHIC_BEAST" ? "monster" : "human";
 
-  const equipment = {
-    ...STARTER_EQUIPMENT,
+  const defaultEquipment: AvatarEquipment =
+    selectedCharacterId === "char_tactician_m" && !progress.equipment
+      ? {
+          ...STARTER_EQUIPMENT,
+          HEAD: "hat_pointed_wanderer",
+          HEADWEAR: "hat_pointed_wanderer",
+          CHEST: "outfit_scout_tunic",
+          OUTFIT: "outfit_scout_tunic",
+          MAIN_HAND: "weapon_runic_rapier",
+          MAIN_TOOL: "weapon_runic_rapier",
+          BACK: "back_field_lexicon_pack",
+          BACKPACK_CAPE: "back_field_lexicon_pack",
+          FAMILIAR: "familiar_clockwork_golem",
+        }
+      : STARTER_EQUIPMENT;
+
+  const equipment: AvatarEquipment = {
+    ...defaultEquipment,
     ...(progress.equipment || {}),
   };
+
+  // Se o progresso forneceu explicitamente slots desequipados (null) em qualquer alias de uma categoria,
+  // propaga o estado para os aliases irmãos correspondentes para evitar que itens padrão reapareçam
+  if (progress.equipment) {
+    const SLOT_GROUPS: string[][] = [
+      ["HEAD", "HEADWEAR", "HEAD_UPPER", "HEAD_MIDDLE", "HEAD_LOWER", "head"],
+      ["CHEST", "OUTFIT", "ARMOR", "body"],
+      ["LEGS", "FOOTGEAR", "legs"],
+      ["MAIN_HAND", "MAIN_TOOL", "RIGHT_HAND", "hand"],
+      ["OFF_HAND", "OFF_TOOL", "LEFT_HAND", "off_hand"],
+      ["BACK", "BACKPACK_CAPE", "GARMENT", "BACKPACK", "back"],
+      ["FAMILIAR", "PET_FAMILIAR", "pet"],
+      ["ACCESSORY", "accessory"],
+    ];
+
+    for (const group of SLOT_GROUPS) {
+      const explicitNull = group.some((k) => progress.equipment![k] === null);
+      if (explicitNull) {
+        for (const k of group) {
+          equipment[k] = null;
+        }
+      }
+    }
+  }
 
   const inventoryItemIds = Array.from(
     new Set([
@@ -163,6 +204,9 @@ export function ensureGamificationProgress(progress: UserProgress): UserProgress
         slotKey === "ARMOR" ||
         slotKey === "GARMENT" ||
         slotKey === "RIGHT_HAND";
+      if (equippedAvatar.equipped[lowerKey] === null) {
+        continue;
+      }
       if (!equippedAvatar.equipped[lowerKey] || isStudioOrRo) {
         equippedAvatar.equipped[lowerKey] = val;
       }
@@ -522,6 +566,17 @@ export function selectRpgCharacter(current: UserProgress, characterId: string): 
   const prepared = ensureGamificationProgress(current);
   const character = getCharacterById(characterId);
   if (!character) return prepared;
+
+  const charKey = characterId.toLowerCase();
+  if (charKey === "char_tactician_m" || charKey === "tactician_swordsman" || charKey.includes("kaelen")) {
+    return equipStudioFantasyKit(prepared, "kaelen");
+  }
+  if (charKey === "char_archivist_f" || charKey === "hooded_archivist" || charKey.includes("lyanna")) {
+    return equipStudioFantasyKit(prepared, "lyanna");
+  }
+  if (charKey === "char_elemental_beast" || charKey === "mythic_elemental_mentor" || charKey.includes("ignisaur")) {
+    return equipStudioFantasyKit(prepared, "ignisaur");
+  }
 
   const currentConfig = prepared.equippedAvatar || DEFAULT_AVATAR_CONFIG;
   const archetype = character.category === "MYTHIC_BEAST" ? "monster" : "human";

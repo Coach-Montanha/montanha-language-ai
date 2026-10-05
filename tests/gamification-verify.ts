@@ -1298,4 +1298,51 @@ console.log("➡️ Test 23: equipStudioFantasyKit 1-Click Transformation & Item
   console.log("  ✓ equipStudioFantasyKit 1-Click Transformation & Item Unlocks verified!");
 }
 
+// ==========================================
+// Test 24: Default Character & Auto-Equipping on Hero Selection
+// ==========================================
+console.log("➡️ Test 24: Default Character Kaelen & Seamless Studio Fantasy Auto-Equip");
+{
+  // 24a: New user / empty progress defaults to Kaelen with Studio Fantasy gear
+  const freshProgress = ensureGamificationProgress({
+    xp: 0,
+    streak: 0,
+    lastActiveDate: "2026-10-05",
+    completedScenarios: [],
+    savedPhrases: [],
+    customFlashcards: [],
+  } as any);
+
+  assert.strictEqual(freshProgress.selectedCharacterId, "char_tactician_m");
+  assert.strictEqual(freshProgress.equipment?.HEADWEAR, "hat_pointed_wanderer");
+  assert.strictEqual(freshProgress.equipment?.OUTFIT, "outfit_scout_tunic");
+  assert.strictEqual(freshProgress.equipment?.MAIN_TOOL, "weapon_runic_rapier");
+  assert.strictEqual(freshProgress.equipment?.BACKPACK_CAPE, "back_field_lexicon_pack");
+  assert.strictEqual(freshProgress.equipment?.FAMILIAR, "familiar_clockwork_golem");
+
+  // 24b: Selecting Lyanna via selectRpgCharacter automatically equips her Studio Fantasy kit
+  const selectedLyanna = selectRpgCharacter(freshProgress, "char_archivist_f");
+  assert.strictEqual(selectedLyanna.selectedCharacterId, "char_archivist_f");
+  assert.strictEqual(selectedLyanna.equipment?.HEADWEAR, "hood_silk_archivist");
+  assert.strictEqual(selectedLyanna.equipment?.OUTFIT, "outfit_ceremonial_silks");
+  assert.strictEqual(selectedLyanna.equipment?.MAIN_TOOL, "weapon_gnarled_staff");
+
+  // 24c: Selecting Ignisaur automatically equips his kit and safely clears headwear
+  const selectedIgnisaur = selectRpgCharacter(selectedLyanna, "char_elemental_beast");
+  assert.strictEqual(selectedIgnisaur.selectedCharacterId, "char_elemental_beast");
+  assert.strictEqual(selectedIgnisaur.equippedAvatar?.archetype, "monster");
+  assert.strictEqual(selectedIgnisaur.equipment?.HEADWEAR, null);
+  assert.strictEqual(selectedIgnisaur.equippedAvatar?.equipped.head, undefined);
+  assert.strictEqual(selectedIgnisaur.equipment?.OUTFIT, "outfit_ceremonial_silks");
+
+  // 24d: Selecting Kaelen switches back and equips his full kit
+  const reselectedKaelen = selectRpgCharacter(selectedIgnisaur, "char_tactician_m");
+  assert.strictEqual(reselectedKaelen.selectedCharacterId, "char_tactician_m");
+  assert.strictEqual(reselectedKaelen.equipment?.HEADWEAR, "hat_pointed_wanderer");
+  assert.strictEqual(reselectedKaelen.equipment?.OUTFIT, "outfit_scout_tunic");
+  assert.strictEqual(reselectedKaelen.equipment?.MAIN_TOOL, "weapon_runic_rapier");
+
+  console.log("  ✓ Default Character Kaelen & Seamless Studio Fantasy Auto-Equip verified!");
+}
+
 console.log("\n🎉 ALL GAMIFICATION, RPG & AVATAR VERIFICATION TESTS PASSED FLAWLESSLY!\n");

@@ -554,7 +554,28 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
                         </Badge>
                       )}
                     </div>
-                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">{hero.name}</h4>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                        <ModularAvatar
+                          size="sm"
+                          config={{
+                            archetype: hero.category === "MYTHIC_BEAST" ? "monster" : "human",
+                            subType: hero.baseSpriteAsset,
+                            primaryColor: "#6366f1",
+                            secondaryColor: "#f59e0b",
+                            equipped: {},
+                          }}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">{hero.name}</h4>
+                        <span className="text-[11px] text-indigo-700 dark:text-indigo-400 font-bold block truncate">
+                          {hero.title}
+                        </span>
+                      </div>
+                    </div>
+
                     <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
                       {hero.lore}
                     </p>
@@ -570,18 +591,53 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
                     </div>
                   </div>
 
-                  <Button
-                    size="sm"
-                    disabled={isSelected}
-                    onClick={() => handleSelectHero(hero)}
-                    className={`w-full text-xs font-bold ${
-                      isSelected
-                        ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-default"
-                        : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer shadow-sm"
-                    }`}
-                  >
-                    {isSelected ? "Selecionado" : "Escolher Herói"}
-                  </Button>
+                  <div className="space-y-1.5">
+                    <Button
+                      size="sm"
+                      disabled={isSelected}
+                      onClick={() => handleSelectHero(hero)}
+                      className={`w-full text-xs font-bold ${
+                        isSelected
+                          ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-default"
+                          : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer shadow-sm"
+                      }`}
+                    >
+                      {isSelected ? "Selecionado" : "Escolher Herói"}
+                    </Button>
+                    {(hero.id === "char_tactician_m" || hero.id.includes("kaelen")) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEquipStudioKit("kaelen")}
+                        className="w-full text-[11px] font-bold border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 cursor-pointer"
+                      >
+                        <Sparkles className="w-3 h-3 mr-1 text-amber-500" />
+                        Vestir Kit Completo Studio
+                      </Button>
+                    )}
+                    {(hero.id === "char_archivist_f" || hero.id.includes("lyanna")) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEquipStudioKit("lyanna")}
+                        className="w-full text-[11px] font-bold border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900 cursor-pointer"
+                      >
+                        <Sparkles className="w-3 h-3 mr-1 text-amber-500" />
+                        Vestir Kit Completo Studio
+                      </Button>
+                    )}
+                    {(hero.id === "char_elemental_beast" || hero.id.includes("ignisaur")) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEquipStudioKit("ignisaur")}
+                        className="w-full text-[11px] font-bold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900 cursor-pointer"
+                      >
+                        <Sparkles className="w-3 h-3 mr-1 text-amber-500" />
+                        Vestir Kit Completo Studio
+                      </Button>
+                    )}
+                  </div>
                 </div>
               );
             })}

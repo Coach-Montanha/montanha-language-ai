@@ -55,18 +55,16 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
 }) => {
   const pixelSize = SIZE_MAP[size] || 80;
   const archetype = config?.archetype || "human";
-  const subType = config?.subType || "valerius_scribe";
-  const primaryColor = config?.primaryColor || "#3b82f6";
-  const secondaryColor = config?.secondaryColor || "#f59e0b";
+  const subType = config?.subType || "char_tactician_m";
+  const primaryColor = config?.primaryColor || "#38bdf8";
+  const secondaryColor = config?.secondaryColor || "#fbbf24";
   const eq = (config?.equipped || {}) as Record<string, string | null | undefined>;
 
-  const isMascot =
+  // Apenas mascotes redondas/esféricas (como Angeling ou Slime) requerem adaptação de itens sobre o corpo
+  const isBlobMascot =
     subType === "ro_chibi_angeling_base" ||
     subType === "char_angeling" ||
-    subType === "ro_chibi_baphomet_jr_base" ||
-    subType === "char_baphomet_jr" ||
-    archetype === "monster" ||
-    archetype === "animal";
+    subType === "starter_monster_elemental";
 
   // Slot Resolution: se a chave maiúscula estiver explicitamente definida (mesmo que null para unequipped),
   // respeitamos seu valor. Apenas se undefined consultamos os fallbacks em minúsculo.
@@ -79,7 +77,7 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
   };
 
   const backId = resolveSlot("BACKPACK_CAPE", "GARMENT", "BACK", "back");
-  const backpackId = resolveSlot("BACKPACK", "backpack", "back_field_lexicon_pack");
+  const backpackId = resolveSlot("BACKPACK", "backpack");
   const legsId = resolveSlot("FOOTGEAR", "LEGS", "legs");
   const chestId = resolveSlot("OUTFIT", "ARMOR", "CHEST", "chest", "body");
   const headId = resolveSlot("HEADWEAR", "HEAD_UPPER", "HEAD", "head");
@@ -294,28 +292,28 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
         {renderBaseArchetype(archetype, subType, primaryColor, secondaryColor, state, ctx)}
 
         {/* 5. LAYER_FOOTGEAR (PERNAS / BOTAS / GREVAS) */}
-        {renderLegsApparel(legsId, primaryColor, secondaryColor, ctx, isMascot)}
+        {renderLegsApparel(legsId, primaryColor, secondaryColor, ctx, isBlobMascot)}
 
         {/* 6. LAYER_ARMOR (PEITORAL / TÚNICAS / ARMADURAS) */}
-        {renderBodyApparel(chestId, primaryColor, secondaryColor, ctx, isMascot)}
+        {renderBodyApparel(chestId, primaryColor, secondaryColor, ctx, isBlobMascot)}
 
         {/* 7. LAYER_HEAD_LOWER (ROSTO INFERIOR / FOLHA NA BOCA) */}
         {renderHeadLowerItem(headLowerId, state, ctx)}
 
         {/* 8. LAYER_HEAD_MIDDLE (ROSTO / OLHOS / VISEIRA) */}
-        {renderEyewear(eyesId, state, ctx)}
+        {renderEyewear(eyesId, state, ctx, isBlobMascot)}
 
         {/* 9. CAMADA DE ACESSÓRIO (ACCESSORY) */}
         {renderAccessoryItem(accessoryId, primaryColor, secondaryColor, ctx)}
 
         {/* 10. LAYER_HEAD_UPPER (CHAPÉU / ORELHAS DE COELHO / MAÇÃ) */}
-        {renderHeadwear(headId, primaryColor, secondaryColor, ctx)}
+        {renderHeadwear(headId, primaryColor, secondaryColor, ctx, isBlobMascot)}
 
         {/* 11. LAYER_HAND_L (MÃO SECUNDÁRIA / ESCUDOS / GRIMÓRIOS) */}
-        {renderOffHandItem(offHandId, state, ctx)}
+        {renderOffHandItem(offHandId, state, ctx, isBlobMascot)}
 
         {/* 12. LAYER_HAND_R (MÃO PRINCIPAL / MARTELO / CAJADO) */}
-        {renderHandItem(mainHandId, state, ctx)}
+        {renderHandItem(mainHandId, state, ctx, isBlobMascot)}
 
         {/* 13. LAYER_PET_GROUND (MASCOTE NO CHÃO / PORING / SPORE) */}
         {renderPetGroundItem(petId, state, ctx)}
@@ -988,15 +986,45 @@ function renderBaseArchetype(
         <circle cx="70" cy="106" r="3" fill="#ffffff" opacity="0.9" />
         <ellipse cx="118" cy="86" rx="8" ry="3" fill="#ffffff" opacity="0.45" transform="rotate(-15 118 86)" />
 
-        {/* 4. Colarinho / Manto de Mago Chibi (Elegante & Proporcional) */}
-        <path
-          d="M 72 152 Q 100 164 128 152 Q 124 162 100 166 Q 76 162 72 152 Z"
-          fill="#4c1d95"
-          stroke="#fbbf24"
-          strokeWidth="1.2"
-        />
-        <circle cx="100" cy="158" r="4.5" fill="#fbbf24" stroke="#d97706" strokeWidth="1" filter={glow} />
-        <circle cx="100" cy="158" r="2.5" fill="#38bdf8" />
+        {/* 4. Manto e Túnica de Mago Shaded em Camadas (Estilo Studio Fantasy) */}
+        <g id="angeling-wizard-robe">
+          {/* Sombra de profundidade sob o manto na base da geleia */}
+          <path
+            d="M 52 142 C 60 168 140 168 148 142 C 144 170 125 178 100 178 C 75 178 56 170 52 142 Z"
+            fill="#1e1b4b"
+            opacity="0.45"
+          />
+          {/* Corpo principal do Manto de Mago em Veludo Índigo Shaded */}
+          <path
+            d="M 54 138 C 50 148 54 162 68 168 C 84 174 116 174 132 168 C 146 162 150 148 146 138 C 136 150 120 156 100 156 C 80 156 64 150 54 138 Z"
+            fill={ctx?.lyannaRobe || "url(#purpleGrad)"}
+            stroke="#1e1b4b"
+            strokeWidth="1.8"
+          />
+          {/* Bainha Inferior com Pregas Bordadas em Ouro Rúnico */}
+          <path
+            d="M 64 166 Q 100 178 136 166"
+            stroke={ctx?.goldTrim || "#fbbf24"}
+            strokeWidth="2.5"
+            fill="none"
+            filter={glow}
+          />
+          {/* Pregas Verticais de Tecido Dinâmico Shaded */}
+          <path d="M 80 150 Q 82 166 78 170" stroke="#1e1b4b" strokeWidth="1.8" fill="none" opacity="0.65" />
+          <path d="M 100 156 L 100 174" stroke="#1e1b4b" strokeWidth="1.8" fill="none" opacity="0.65" />
+          <path d="M 120 150 Q 118 166 122 170" stroke="#1e1b4b" strokeWidth="1.8" fill="none" opacity="0.65" />
+          {/* Colarinho em Seda Carmesim / Éter com Broche Astral */}
+          <path
+            d="M 68 140 Q 100 152 132 140 Q 120 148 100 150 Q 80 148 68 140 Z"
+            fill="#831843"
+            stroke="#fbbf24"
+            strokeWidth="1.2"
+          />
+          {/* Broche Rúnico de Ouro com Gema Elemental Ciano Central */}
+          <circle cx="100" cy="148" r="5.5" fill="#fbbf24" stroke="#b45309" strokeWidth="1.5" filter={glow} />
+          <circle cx="100" cy="148" r="3" fill="#38bdf8" />
+          <circle cx="98.5" cy="146.5" r="1" fill="#ffffff" />
+        </g>
 
         {/* 5. Olhos de Anime Expressivos & Brilhantes */}
         <g id="angeling-eyes">
@@ -1035,37 +1063,82 @@ function renderBaseArchetype(
     );
   }
 
-  // 1. VALERIUS, O ESCRIBA ERRANTE (HUMAN_MALE)
+  // 1. VALERIUS, O ESCRIBA ERRANTE (HUMAN_MALE - STUDIO FANTASY SCHOLAR)
   if (subType === "valerius_scribe" || subType === "valerius") {
     return (
-      <g id="archetype-valerius">
-        {/* Pescoço e Base de Ombros */}
-        <rect x="88" y="115" width="24" height="25" fill="#fed7aa" />
-        <path d="M 50 140 Q 100 120 150 140 L 160 185 L 40 185 Z" fill="#1e3a8a" />
-        {/* Orelhas com pena de escriba na orelha direita */}
-        <circle cx="56" cy="92" r="10" fill="#fed7aa" />
-        <circle cx="144" cy="92" r="10" fill="#fed7aa" />
-        <path d="M 148 90 Q 165 72 172 55 Q 162 70 150 82 Z" fill="#fbbf24" stroke="#b45309" strokeWidth="1" />
-        {/* Rosto Sábio e Expressão Focada */}
-        <ellipse cx="100" cy="94" rx="42" ry="44" fill="#ffedd5" />
-        {/* Cabelo Penteado Erudito */}
-        <path d="M 56 80 Q 60 42 100 42 Q 140 42 144 80 Q 130 55 100 52 Q 68 55 56 80 Z" fill="#451a03" />
-        <path d="M 58 75 Q 75 58 92 65 Q 70 70 58 75 Z" fill="#78350f" />
-        {/* Olhos Castanhos Expressivos */}
-        <circle cx="82" cy="88" r="6" fill="#292524" />
-        <circle cx="118" cy="88" r="6" fill="#292524" />
-        <circle cx="80" cy="86" r="2" fill="#fff" />
-        <circle cx="116" cy="86" r="2" fill="#fff" />
-        {/* Sobrancelhas Sérias de Estudioso */}
-        <path d="M 74 78 Q 82 74 90 77" stroke="#451a03" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <path d="M 110 77 Q 118 74 126 78" stroke="#451a03" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <path d="M 98 94 Q 100 98 103 98" stroke="#fca5a5" strokeWidth="2" strokeLinecap="round" fill="none" />
-        {/* Boca */}
-        {isSpeaking ? (
-          <ellipse cx="100" cy="108" rx="8" ry="6" fill="#e11d48" />
+      <g id="archetype-valerius" className="transition-all duration-300">
+        {/* Base Corporal: Pescoço Shaded e Ombros com Túnica de Seda Erudita */}
+        <path d="M 88 116 L 88 134 Q 100 138 112 134 L 112 116 Z" fill={ctx?.skinShade || "#fed7aa"} />
+        <path d="M 46 138 Q 100 120 154 138 L 162 186 L 38 186 Z" fill="#1e3a8a" stroke="#172554" strokeWidth="1.5" />
+        
+        {/* Camisete do Escriba com Detalhe Dourado */}
+        <path d="M 84 134 L 100 166 L 116 134 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1" />
+        <line x1="100" y1="136" x2="100" y2="162" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3 2" />
+        <circle cx="100" cy="148" r="3.5" fill="#fbbf24" filter={glow} />
+
+        {/* Orelhas com Contorno Shaded */}
+        <circle cx="54" cy="94" r="10" fill="#fce7d6" />
+        <circle cx="54" cy="94" r="6" fill="#fed7aa" />
+        <circle cx="146" cy="94" r="10" fill="#fce7d6" />
+        <circle cx="146" cy="94" r="6" fill="#fed7aa" />
+
+        {/* Pena Dourada do Escriba atrás da orelha direita com brilho */}
+        <path d="M 148 90 Q 170 70 176 48 Q 164 68 150 82 Z" fill="#fbbf24" stroke="#d97706" strokeWidth="1.2" filter={glow} />
+        <path d="M 152 82 Q 166 64 172 52" stroke="#ffffff" strokeWidth="1" fill="none" opacity="0.8" />
+
+        {/* Rosto Sábio e Expressão Focada de Estudioso */}
+        <ellipse cx="100" cy="95" rx="43" ry="46" fill="#fff7ed" />
+
+        {/* Olhos Castanho-Âmbar de Anime com Brilho Intelectual */}
+        {state === "celebrating" ? (
+          <g>
+            <path d="M 72 92 Q 80 84 88 92" stroke="#451a03" strokeWidth="3" strokeLinecap="round" fill="none" />
+            <path d="M 112 92 Q 120 84 128 92" stroke="#451a03" strokeWidth="3" strokeLinecap="round" fill="none" />
+          </g>
         ) : (
-          <path d="M 92 106 Q 100 112 108 106" stroke="#991b1b" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <g id="valerius-eyes">
+            <ellipse cx="80" cy="90" rx="8" ry="9.5" fill="#1c1917" />
+            <ellipse cx="80" cy="91" rx="6.5" ry="8" fill="#78350f" />
+            <ellipse cx="80" cy="93" rx="5" ry="5" fill="#b45309" />
+            <circle cx="77" cy="87" r="3" fill="#ffffff" />
+            <circle cx="83" cy="93" r="1.3" fill="#ffffff" />
+            <path d="M 70 87 Q 80 82 90 86" stroke="#451a03" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+
+            <ellipse cx="120" cy="90" rx="8" ry="9.5" fill="#1c1917" />
+            <ellipse cx="120" cy="91" rx="6.5" ry="8" fill="#78350f" />
+            <ellipse cx="120" cy="93" rx="5" ry="5" fill="#b45309" />
+            <circle cx="117" cy="87" r="3" fill="#ffffff" />
+            <circle cx="123" cy="93" r="1.3" fill="#ffffff" />
+            <path d="M 110 86 Q 120 82 130 87" stroke="#451a03" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          </g>
         )}
+
+        {/* Sobrancelhas Sérias de Acadêmico */}
+        <path d="M 71 78 Q 80 74 89 77" stroke="#451a03" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+        <path d="M 111 77 Q 120 74 129 78" stroke="#451a03" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+        <path d="M 98 94 Q 100 98 103 98" stroke="#fca5a5" strokeWidth="2" strokeLinecap="round" fill="none" />
+
+        {/* Boca Focada */}
+        {isSpeaking ? (
+          <ellipse cx="100" cy="110" rx="8" ry="6" fill="#be123c">
+            <path d="M 95 111 Q 100 114 105 111" fill="#fda4af" />
+          </ellipse>
+        ) : (
+          <path d="M 92 108 Q 100 113 108 108" stroke="#991b1b" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        )}
+
+        {/* Cabelo Penteado Erudito em Camadas com Brilho Studio */}
+        <g id="valerius-hair">
+          <path
+            d="M 52 82 C 48 44 68 32 100 32 C 132 32 152 44 148 82 C 136 60 120 54 100 54 C 80 54 64 60 52 82 Z"
+            fill="#451a03"
+            stroke="#291205"
+            strokeWidth="1.5"
+          />
+          <path d="M 54 78 Q 72 58 92 66 Q 70 72 56 80 Z" fill="#78350f" />
+          <path d="M 146 78 Q 128 58 108 66 Q 130 72 144 80 Z" fill="#78350f" />
+          <path d="M 68 44 Q 100 36 132 44" stroke="#d97706" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.6" />
+        </g>
       </g>
     );
   }
@@ -1636,7 +1709,6 @@ function renderBaseArchetype(
   );
 }
 
-// =========================================================================
 // 4. LEGS APPAREL LAYER (SLOT LEGS: GREVAS, BOTAS, CALÇAS)
 // =========================================================================
 function renderLegsApparel(
@@ -1644,9 +1716,9 @@ function renderLegsApparel(
   primaryColor: string = "#3b82f6",
   secondaryColor: string = "#f59e0b",
   ctx?: SvgContext,
-  isMascot: boolean = false
+  isBlobMascot: boolean = false
 ) {
-  if (!legsId || isMascot) return null;
+  if (!legsId || isBlobMascot) return null;
 
   switch (legsId) {
     case "legs_botas_rusticas":
@@ -1696,22 +1768,61 @@ function renderBodyApparel(
   primaryColor: string = "#3b82f6",
   secondaryColor: string = "#f59e0b",
   ctx?: SvgContext,
-  isMascot: boolean = false
+  isBlobMascot: boolean = false
 ) {
   if (!bodyId) return null;
   const glow = ctx?.glowEffect || "url(#glowEffect)";
   const gold = ctx?.goldGrad || "url(#goldGrad)";
 
-  if (isMascot) {
-    // Para mascotes (Angeling, Baphomet Jr.), não cortar o corpo arredondado com túnica de corte humano
-    // Renderizamos um elegante broche / laço / medalhão proporcional ao formato esférico
-    return (
-      <g id="mascot-body-accessory">
-        <path d="M 80 152 Q 100 162 120 152" stroke={secondaryColor || "#fbbf24"} strokeWidth="2.5" fill="none" />
-        <circle cx="100" cy="158" r="4.5" fill={primaryColor || "#38bdf8"} stroke="#fbbf24" strokeWidth="1.5" filter={glow} />
-        <circle cx="100" cy="158" r="2" fill="#ffffff" />
-      </g>
-    );
+  if (isBlobMascot) {
+    // Para mascotes esféricas (Angeling), adapta o traje ao formato globular com curvas elegantes
+    switch (bodyId) {
+      case "outfit_ceremonial_silks":
+        return (
+          <g id="mascot-ceremonial-silks" filter={glow}>
+            <path
+              d="M 54 140 C 60 166 140 166 146 140 C 142 168 124 176 100 176 C 76 176 58 168 54 140 Z"
+              fill="#991b1b"
+              stroke="#fbbf24"
+              strokeWidth="1.5"
+            />
+            <path d="M 62 166 Q 100 178 138 166" stroke="#ea580c" strokeWidth="2.5" fill="none" />
+            <rect x="74" y="150" width="52" height="12" rx="3" fill="#d97706" stroke="#fbbf24" strokeWidth="1.2" />
+            <circle cx="100" cy="156" r="4.5" fill="#ef4444" stroke="#fbbf24" strokeWidth="1" filter={glow} />
+          </g>
+        );
+      case "outfit_scout_tunic":
+        return (
+          <g id="mascot-scout-tunic">
+            <path
+              d="M 54 140 C 60 166 140 166 146 140 C 142 168 124 176 100 176 C 76 176 58 168 54 140 Z"
+              fill="#54301a"
+              stroke="#b45309"
+              strokeWidth="1.5"
+            />
+            <line x1="64" y1="140" x2="136" y2="174" stroke="#92400e" strokeWidth="7" />
+            <line x1="64" y1="140" x2="136" y2="174" stroke="#fbbf24" strokeWidth="2" strokeDasharray="3 2" filter={glow} />
+            <rect x="94" y="152" width="12" height="12" rx="2" fill="#fbbf24" stroke="#78350f" strokeWidth="1.2" />
+          </g>
+        );
+      case "chest_tunica_novico":
+      case "armor_apprentice_robe":
+        return (
+          <g id="mascot-apprentice-robe">
+            <path
+              d="M 54 140 C 60 166 140 166 146 140 C 142 168 124 176 100 176 C 76 176 58 168 54 140 Z"
+              fill="#0284c7"
+              stroke="#fbbf24"
+              strokeWidth="1.5"
+            />
+            <path d="M 64 166 Q 100 178 136 166" stroke="#fef08a" strokeWidth="2" fill="none" />
+            <circle cx="100" cy="154" r="4.5" fill="#fbbf24" filter={glow} />
+            <circle cx="100" cy="154" r="2" fill="#ffffff" />
+          </g>
+        );
+      default:
+        return null;
+    }
   }
 
   switch (bodyId) {
@@ -1854,9 +1965,38 @@ function renderHeadLowerItem(headLowerId?: string | null, state: string = "idle"
 // =========================================================================
 // 6. EYEWEAR LAYER (ÓCULOS / MÁSCARAS)
 // =========================================================================
-function renderEyewear(eyesId?: string | null, state: string = "idle", ctx?: SvgContext) {
+function renderEyewear(
+  eyesId?: string | null,
+  state: string = "idle",
+  ctx?: SvgContext,
+  isBlobMascot: boolean = false
+) {
   if (!eyesId) return null;
   const glow = ctx?.glowEffect || "url(#glowEffect)";
+
+  if (isBlobMascot) {
+    switch (eyesId) {
+      case "starter_glasses":
+        return (
+          <g id="eyewear-starter-mascot" filter={glow}>
+            <circle cx="82" cy="116" r="9.5" fill="none" stroke="#38bdf8" strokeWidth="2" />
+            <circle cx="118" cy="116" r="9.5" fill="none" stroke="#38bdf8" strokeWidth="2" />
+            <path d="M 91.5 116 Q 100 113 108.5 116" stroke="#38bdf8" strokeWidth="2" fill="none" />
+            <line x1="72.5" y1="116" x2="66" y2="114" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="127.5" y1="116" x2="134" y2="114" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round" />
+          </g>
+        );
+      case "eyes_cyber_visor":
+        return (
+          <g id="eyewear-cyber-visor-mascot" filter={glow}>
+            <path d="M 68 110 L 132 110 L 126 122 L 74 122 Z" fill="#00f2fe" opacity="0.85" stroke="#38bdf8" strokeWidth="1.5" />
+            <line x1="76" y1="116" x2="124" y2="116" stroke="#fff" strokeWidth="1.5" strokeDasharray="4 2" />
+          </g>
+        );
+      default:
+        return null;
+    }
+  }
 
   switch (eyesId) {
     case "starter_glasses":
@@ -1948,12 +2088,38 @@ function renderHeadwear(
   headId?: string | null,
   primaryColor: string = "#3b82f6",
   secondaryColor: string = "#f59e0b",
-  ctx?: SvgContext
+  ctx?: SvgContext,
+  isBlobMascot: boolean = false
 ) {
   if (!headId) return null;
   const glow = ctx?.glowEffect || "url(#glowEffect)";
   const gold = ctx?.goldGrad || "url(#goldGrad)";
   const fire = ctx?.fireGrad || "url(#fireGrad)";
+
+  if (isBlobMascot) {
+    switch (headId) {
+      case "head_tiara_aprendiz":
+        return (
+          <g id="head-tiara-mascot" filter={glow}>
+            {/* Tiara angelical flutuando suavemente como coroa sobre a auréola */}
+            <path d="M 76 30 Q 100 22 124 30" stroke="#fbbf24" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <circle cx="100" cy="24" r="3.5" fill="#38bdf8" stroke="#fbbf24" strokeWidth="1" />
+          </g>
+        );
+      case "hat_pointed_wanderer":
+        return (
+          <g id="head-wanderer-mascot" filter={glow}>
+            {/* Chapéu cônico inclinado graciosamente sobre a cabeça/auréola da mascote */}
+            <ellipse cx="100" cy="36" rx="44" ry="11" fill="#1c1917" stroke="#292524" strokeWidth="1.5" />
+            <path d="M 66 36 Q 100 -2 134 36 Z" fill="#292524" stroke="#1c1917" strokeWidth="1.2" />
+            <path d="M 72 34 Q 100 27 128 34 L 129 37 Q 100 30 71 37 Z" fill="#b91c1c" />
+            <rect x="74" y="40" width="7" height="9" rx="1" fill="#fef08a" stroke="#ca8a04" strokeWidth="0.8" />
+          </g>
+        );
+      default:
+        break;
+    }
+  }
 
   switch (headId) {
     case "hat_pointed_wanderer":
@@ -2100,10 +2266,117 @@ function renderHeadwear(
 // =========================================================================
 // 9. MAIN HAND ITEM LAYER (SLOT MAIN_HAND: ESPADAS, CAJADOS, PENA, MARTELO)
 // =========================================================================
-function renderHandItem(handId?: string | null, state: string = "idle", ctx?: SvgContext) {
+function renderHandItem(
+  handId?: string | null,
+  state: string = "idle",
+  ctx?: SvgContext,
+  isBlobMascot: boolean = false
+) {
   if (!handId) return null;
   const glow = ctx?.glowEffect || "url(#glowEffect)";
   const cyber = ctx?.cyberGrad || "url(#cyberGrad)";
+
+  if (isBlobMascot) {
+    switch (handId) {
+      case "weapon_runic_rapier":
+        return (
+          <g id="weapon-runic-rapier-mascot" filter={glow}>
+            <ellipse cx="164" cy="118" rx="14" ry="4.5" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="4 2" />
+            <rect x="162" y="112" width="5" height="15" rx="2" fill="#78350f" />
+            <ellipse cx="164" cy="112" rx="8" ry="5" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1.5" />
+            <circle cx="164" cy="112" r="2.5" fill="#0284c7" />
+            <line x1="164" y1="108" x2="182" y2="42" stroke="#f8fafc" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="166" y1="102" x2="180" y2="52" stroke="#38bdf8" strokeWidth="1.2" strokeDasharray="3 2" />
+            <circle cx="182" cy="40" r="2" fill="#38bdf8" />
+          </g>
+        );
+      case "weapon_gnarled_staff":
+        return (
+          <g id="weapon-gnarled-staff-mascot" filter={glow}>
+            <ellipse cx="166" cy="128" rx="12" ry="4" fill="none" stroke="#10b981" strokeWidth="1.2" strokeDasharray="3 2" />
+            <line x1="164" y1="130" x2="174" y2="52" stroke="#78350f" strokeWidth="4.5" strokeLinecap="round" />
+            <path d="M 172 58 Q 168 40 182 36 Q 190 48 174 54" stroke="#92400e" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+            <circle cx="178" cy="42" r="8" fill="#10b981" stroke="#059669" strokeWidth="1.5" opacity="0.95" />
+            <circle cx="176" cy="40" r="3" fill="#a7f3d0" />
+            <circle cx="186" cy="36" r="1.5" fill="#34d399" />
+          </g>
+        );
+      case "wpn_forging_hammer":
+        return (
+          <g id="wpn-forging-hammer-mascot" filter={glow}>
+            <ellipse cx="164" cy="128" rx="13" ry="4" fill="none" stroke="#fbbf24" strokeWidth="1.2" strokeDasharray="3 2" />
+            <line x1="162" y1="130" x2="174" y2="58" stroke="#78350f" strokeWidth="5" strokeLinecap="round" />
+            <rect x="156" y="52" width="38" height="22" rx="3" fill="#334155" stroke="#0f172a" strokeWidth="2" transform="rotate(-15 174 62)" />
+            <line x1="164" y1="62" x2="184" y2="62" stroke="#fbbf24" strokeWidth="2" transform="rotate(-15 174 62)" />
+          </g>
+        );
+      case "wpn_wizard_staff":
+        return (
+          <g id="wpn-wizard-staff-mascot" filter={glow}>
+            <ellipse cx="166" cy="128" rx="12" ry="4" fill="none" stroke="#fbbf24" strokeWidth="1.2" strokeDasharray="3 2" />
+            <line x1="164" y1="130" x2="174" y2="52" stroke="#b45309" strokeWidth="4" strokeLinecap="round" />
+            <circle cx="174" cy="48" r="12" fill="none" stroke="#fbbf24" strokeWidth="2" />
+            <circle cx="171" cy="46" r="5" fill="#ef4444" stroke="#f97316" strokeWidth="1" filter={glow} />
+            <circle cx="178" cy="50" r="4" fill="#38bdf8" stroke="#0284c7" strokeWidth="1" filter={glow} />
+          </g>
+        );
+      case "main_hand_pena_prata":
+        return (
+          <g id="main-hand-pena-mascot" filter={glow}>
+            <ellipse cx="164" cy="116" rx="12" ry="4" fill="none" stroke="#38bdf8" strokeWidth="1.2" strokeDasharray="3 2" />
+            <path d="M 160 112 Q 176 86 182 62 Q 170 78 166 102 L 158 116 Z" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1.2" />
+            <polygon points="158,116 155,121 161,118" fill="#38bdf8" />
+            <circle cx="154" cy="123" r="2" fill="#0284c7" />
+            <circle cx="170" cy="74" r="1.2" fill="#38bdf8" />
+            <circle cx="178" cy="95" r="1" fill="#fef08a" />
+          </g>
+        );
+      case "starter_quill":
+        return (
+          <g id="hand-quill-mascot" filter={glow}>
+            <ellipse cx="164" cy="116" rx="12" ry="4" fill="none" stroke="#fbbf24" strokeWidth="1.2" strokeDasharray="3 2" />
+            <path d="M 160 112 Q 176 86 182 62 Q 170 78 166 102 L 158 116 Z" fill="#fbbf24" stroke="#d97706" strokeWidth="1" />
+            <polygon points="158,116 155,121 161,118" fill="#1e293b" />
+            <circle cx="170" cy="74" r="1.2" fill="#fbbf24" />
+          </g>
+        );
+      case "main_hand_cajado_carvalho":
+        return (
+          <g id="main-hand-cajado-mascot" filter={glow}>
+            <ellipse cx="166" cy="128" rx="12" ry="4" fill="none" stroke="#10b981" strokeWidth="1.2" strokeDasharray="3 2" />
+            <line x1="164" y1="130" x2="174" y2="60" stroke="#78350f" strokeWidth="4" strokeLinecap="round" />
+            <circle cx="174" cy="56" r="9" fill="#10b981" stroke="#047857" strokeWidth="1.8" opacity="0.95" />
+            <circle cx="172" cy="54" r="3" fill="#fff" />
+          </g>
+        );
+      case "main_hand_espada_selo_arcano":
+        return (
+          <g id="main-hand-espada-arcana-mascot" filter={glow}>
+            <ellipse cx="164" cy="120" rx="13" ry="4" fill="none" stroke="#00f2fe" strokeWidth="1.5" strokeDasharray="4 2" />
+            <rect x="162" y="116" width="5" height="15" rx="1.5" fill="#78350f" />
+            <line x1="156" y1="116" x2="172" y2="116" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" />
+            <path d="M 163 116 L 182 48 L 185 50 L 166 116 Z" fill="#f8fafc" stroke="#38bdf8" strokeWidth="1.5" />
+            <line x1="165" y1="110" x2="180" y2="58" stroke="#00f2fe" strokeWidth="2" strokeDasharray="4 2" />
+          </g>
+        );
+      case "main_hand_lamina_colossal_aco":
+        return (
+          <g id="main-hand-lamina-colossal-mascot">
+            <ellipse cx="164" cy="124" rx="14" ry="4.5" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="4 2" />
+            <rect x="162" y="116" width="6" height="18" rx="2" fill="#e2e8f0" stroke="#475569" strokeWidth="1.2" />
+            <rect x="156" y="114" width="18" height="4" rx="1" fill="#1e293b" />
+            <polygon points="160,114 186,28 194,32 170,114" fill="#334155" stroke="#0f172a" strokeWidth="2" />
+          </g>
+        );
+      default:
+        return (
+          <g id="mascot-telekinetic-weapon" filter={glow}>
+            <ellipse cx="164" cy="118" rx="12" ry="4" fill="none" stroke="#38bdf8" strokeWidth="1.2" strokeDasharray="3 2" />
+            <circle cx="164" cy="110" r="4" fill="#38bdf8" />
+          </g>
+        );
+    }
+  }
 
   switch (handId) {
     case "weapon_runic_rapier":
@@ -2213,9 +2486,68 @@ function renderHandItem(handId?: string | null, state: string = "idle", ctx?: Sv
 // =========================================================================
 // 10. OFF HAND ITEM LAYER (SLOT OFF_HAND: ESCUDOS, GRIMÓRIOS, LANTERNAS)
 // =========================================================================
-function renderOffHandItem(offHandId?: string | null, state: string = "idle", ctx?: SvgContext) {
+function renderOffHandItem(
+  offHandId?: string | null,
+  state: string = "idle",
+  ctx?: SvgContext,
+  isBlobMascot: boolean = false
+) {
   if (!offHandId) return null;
   const glow = ctx?.glowEffect || "url(#glowEffect)";
+
+  if (isBlobMascot) {
+    switch (offHandId) {
+      case "off_hand_adaga_precisao":
+        return (
+          <g id="offhand-adaga-mascot" filter={glow}>
+            <ellipse cx="36" cy="118" rx="11" ry="3.5" fill="none" stroke="#38bdf8" strokeWidth="1.2" strokeDasharray="3 2" />
+            <rect x="34" y="116" width="4" height="12" rx="1.5" fill="#78350f" />
+            <line x1="29" y1="116" x2="43" y2="116" stroke="#fbbf24" strokeWidth="1.8" strokeLinecap="round" />
+            <polygon points="34,116 18,84 38,116" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1" />
+            <circle cx="18" cy="82" r="1.5" fill="#38bdf8" />
+          </g>
+        );
+      case "off_hand_lanterna_ecos":
+        return (
+          <g id="offhand-lanterna-mascot" filter={glow}>
+            <ellipse cx="34" cy="136" rx="12" ry="4" fill="none" stroke="#fbbf24" strokeWidth="1.2" strokeDasharray="3 2" />
+            <line x1="34" y1="102" x2="34" y2="114" stroke="#78350f" strokeWidth="1.8" />
+            <rect x="26" y="114" width="16" height="20" rx="2.5" fill="#fbbf24" stroke="#b45309" strokeWidth="1.8" />
+            <rect x="29" y="117" width="10" height="14" fill="#fef08a" />
+            <line x1="21" y1="124" x2="14" y2="124" stroke="#fbbf24" strokeWidth="1.8" />
+            <line x1="23" y1="117" x2="16" y2="112" stroke="#fbbf24" strokeWidth="1.8" />
+            <line x1="23" y1="131" x2="16" y2="136" stroke="#fbbf24" strokeWidth="1.8" />
+          </g>
+        );
+      case "off_hand_escudo_perseveranca":
+        return (
+          <g id="offhand-escudo-mascot" filter={glow}>
+            <ellipse cx="34" cy="136" rx="14" ry="4.5" fill="none" stroke="#60a5fa" strokeWidth="1.2" strokeDasharray="3 2" />
+            <path d="M 20 102 L 48 102 Q 48 132 34 142 Q 20 132 20 102 Z" fill="#1e3a8a" stroke="#fbbf24" strokeWidth="1.8" />
+            <line x1="34" y1="107" x2="34" y2="134" stroke="#fbbf24" strokeWidth="2.5" />
+            <line x1="24" y1="116" x2="44" y2="116" stroke="#fbbf24" strokeWidth="2.5" />
+          </g>
+        );
+      case "off_hand_grimorio_idiomas":
+        return (
+          <g id="offhand-grimorio-mascot" filter={glow}>
+            <ellipse cx="34" cy="132" rx="14" ry="4.5" fill="none" stroke="#c084fc" strokeWidth="1.2" strokeDasharray="3 2" />
+            <rect x="18" y="104" width="28" height="36" rx="3" fill="#4c1d95" stroke="#fbbf24" strokeWidth="1.5" transform="rotate(12 18 104)" />
+            <rect x="21" y="107" width="22" height="30" rx="2" fill="#fef3c7" transform="rotate(12 18 104)" />
+            <text x="27" y="124" fill="#7e22ce" fontSize="8" fontWeight="bold" transform="rotate(12 18 104)">ᚱΩ</text>
+            <circle cx="16" cy="98" r="1.5" fill="#c084fc" />
+            <circle cx="42" cy="96" r="1.2" fill="#fef08a" />
+          </g>
+        );
+      default:
+        return (
+          <g id="mascot-telekinetic-offhand" filter={glow}>
+            <ellipse cx="34" cy="120" rx="12" ry="4" fill="none" stroke="#c084fc" strokeWidth="1.2" strokeDasharray="3 2" />
+            <circle cx="34" cy="115" r="4" fill="#c084fc" />
+          </g>
+        );
+    }
+  }
 
   switch (offHandId) {
     case "off_hand_adaga_precisao":
