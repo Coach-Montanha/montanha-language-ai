@@ -45,14 +45,23 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
   const secondaryColor = config?.secondaryColor || "#f59e0b";
   const eq = (config?.equipped || {}) as Record<string, string | null | undefined>;
 
-  // Slot Resolution: suporta chaves maiúsculas (HEAD, CHEST) e minúsculas (head, body)
-  const backId = eq["BACK"] || eq["back"];
-  const legsId = eq["LEGS"] || eq["legs"];
-  const chestId = eq["CHEST"] || eq["chest"] || eq["body"];
-  const headId = eq["HEAD"] || eq["head"];
-  const mainHandId = eq["MAIN_HAND"] || eq["hand"];
-  const offHandId = eq["OFF_HAND"] || eq["off_hand"] || eq["offHand"];
-  const accessoryId = eq["ACCESSORY"] || eq["accessory"];
+  // Slot Resolution: se a chave maiúscula estiver explicitamente definida (mesmo que null para unequipped),
+  // respeitamos seu valor. Apenas se undefined consultamos os fallbacks em minúsculo.
+  const resolveSlot = (primaryKey: string, ...fallbackKeys: string[]): string | null => {
+    if (eq[primaryKey] !== undefined) return eq[primaryKey];
+    for (const key of fallbackKeys) {
+      if (eq[key] !== undefined) return eq[key];
+    }
+    return null;
+  };
+
+  const backId = resolveSlot("BACK", "back");
+  const legsId = resolveSlot("LEGS", "legs");
+  const chestId = resolveSlot("CHEST", "chest", "body");
+  const headId = resolveSlot("HEAD", "head");
+  const mainHandId = resolveSlot("MAIN_HAND", "hand");
+  const offHandId = resolveSlot("OFF_HAND", "off_hand", "offHand");
+  const accessoryId = resolveSlot("ACCESSORY", "accessory");
   const eyesId = eq["eyes"] || undefined;
   const auraId = eq["aura"] || undefined;
 

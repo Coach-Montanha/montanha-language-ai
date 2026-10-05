@@ -12,6 +12,7 @@ import {
   ConversationMode,
   AiModelId,
 } from "@/types/language";
+import { CharacterBase } from "@/types/avatar";
 import { PRESET_THEMES, getPresetThemesForLanguage } from "@/data/vocabulary";
 import { callGeminiRaw } from "./gemini";
 import { compressContextForAgent, recordTokenSavings } from "./ruflo-eco-engine";
@@ -3061,7 +3062,8 @@ export async function tutorChat(
   learnerMemory?: LearnerProfileMemory,
   isPortugueseInput?: boolean,
   aiModelPreference?: AiModelId | undefined,
-  conversationMode?: ConversationMode
+  conversationMode?: ConversationMode,
+  companionCharacter?: CharacterBase
 ): Promise<TutorChatResponse> {
   const activeTutor = tutorPersona || DEFAULT_TUTOR;
   const preferredModel =
@@ -3137,6 +3139,17 @@ Learner Profile & Cross-Session Memory (Tiered Memory):
 `
       : "";
 
+  const companionContext = companionCharacter
+    ? `
+RPG Companion Traveling With Student:
+- Hero: ${companionCharacter.name} (${companionCharacter.title})
+- Category & Lore: ${companionCharacter.category} - ${companionCharacter.lore}
+- Language Affinity Bonus: ${companionCharacter.nativeLanguageBonus}
+- Companion Voice / Inspiration: "${companionCharacter.avatarGreeting || "Pronto para os estudos!"}"
+* Pedagogical Instruction: The student is traveling with this RPG companion hero. If inspiring or contextually fitting, warmly reference their journey, dedication, or companion's focus on mastering ${targetLangName}.
+`
+    : "";
+
   // Se houver chave Gemini configurada, usar IA com a personalidade completa do tutor escolhido
   if (apiKey) {
     try {
@@ -3149,6 +3162,7 @@ Your Persona, Cultural Flavor & Style:
 - Cultural nuances & native expressions: ${tutorNuance}
 - Goal: Make the dialogue feel GENUINELY ALIVE, NATURAL, ENGAGING, and HIGHLY INTERACTIVE — like two close friends enjoying coffee, NOT a robotic exam or rigid grammar textbook.
 ${memoryContext}
+${companionContext}
 ${modeInstruction}
 
 Interaction Guidelines & Fluency System (80/20 Applied Linguistics):

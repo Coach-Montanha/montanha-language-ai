@@ -427,7 +427,8 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
         learnerMemory,
         isPt,
         progress.aiModelPreference,
-        conversationMode
+        conversationMode,
+        selectedHero
       );
 
       if (isPt) {

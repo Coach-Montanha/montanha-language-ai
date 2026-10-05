@@ -10,7 +10,10 @@ import { viteApiMiddlewarePlugin } from "./src/server/vite-api-plugin";
 export default defineConfig({
   nitro: {
     preset: "vercel",
-  },
+    externals: {
+      inline: ["tslib"],
+    },
+  } as any,
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this

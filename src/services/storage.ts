@@ -39,21 +39,25 @@ export function loadUserProgress(): UserProgress {
     if (data.lastActiveDate !== today) {
       const lastDate = new Date(data.lastActiveDate);
       const currentDate = new Date(today);
-      const diffTime = Math.abs(currentDate.getTime() - lastDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const lastTime = lastDate.getTime();
+      const currentTime = currentDate.getTime();
 
-      if (diffDays === 1) {
-        // Dia consecutivo!
-        data.streakDays += 1;
-      } else if (diffDays > 1) {
-        // Verifica proteção de streak fornecida pelo equipamento RPG
-        const stats = getCombinedStats(data, data.selectedLanguage);
-        if (stats.finalStreakProtection > 0 && diffDays <= 1 + stats.finalStreakProtection) {
-          // Streak protegido pelo equipamento RPG!
+      if (!Number.isNaN(lastTime) && !Number.isNaN(currentTime) && currentTime > lastTime) {
+        const diffDays = Math.round((currentTime - lastTime) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+          // Dia consecutivo!
           data.streakDays += 1;
-        } else {
-          // Quebrou o streak
-          data.streakDays = 1;
+        } else if (diffDays > 1) {
+          // Verifica proteção de streak fornecida pelo equipamento RPG
+          const stats = getCombinedStats(data, data.selectedLanguage);
+          if (stats.finalStreakProtection > 0 && diffDays <= 1 + stats.finalStreakProtection) {
+            // Streak protegido pelo equipamento RPG!
+            data.streakDays += 1;
+          } else {
+            // Quebrou o streak
+            data.streakDays = 1;
+          }
         }
       }
       data.lastActiveDate = today;
@@ -80,6 +84,7 @@ export function saveUserProgress(progress: UserProgress): void {
 }
 
 export function addXP(amount: number, language?: SupportedLanguage): UserProgress {
+  if (amount <= 0) return loadUserProgress();
   const current = loadUserProgress();
   const langToUse = language || current.selectedLanguage;
   const stats = getCombinedStats(current, langToUse);

@@ -49,7 +49,7 @@ export const CHARACTERS_DATABASE: CharacterBase[] = [
     category: "HUMAN_FEMALE",
     lore: "Donzela guerreira que entoa canções de glória sob as luzes da aurora boreal. Incute determinação férrea e destemor para falar línguas do norte com autoridade nativa.",
     nativeLanguageBonus: "Nordic_Languages",
-    supportedLanguageBonusIds: ["de", "en"],
+    supportedLanguageBonusIds: ["de", "en", "ru"],
     baseSpriteAsset: "astrid_valkyrie",
     avatarGreeting: "Pelos ventos boreais! Avance sem hesitação — a coragem é a chave da fluência!",
   },

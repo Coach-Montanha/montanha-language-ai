@@ -596,4 +596,82 @@ console.log("➡️ Test 10: Shop Purchase, Equip, Unequip & Character Switching
   console.log("  ✓ Shop purchase, equip, unequip, and character switching verified!");
 }
 
+// ==========================================
+// Test 11: Unequip Null Preservation in ensureGamificationProgress
+// ==========================================
+console.log("➡️ Test 11: Unequip Null Preservation & Avatar Config Integrity");
+{
+  const testPlayer: UserProgress = {
+    xp: 200,
+    coins: 300,
+    level: 2,
+    equipment: {
+      HEAD: null,
+      CHEST: "chest_manto_dalaran",
+      LEGS: null,
+      MAIN_HAND: null,
+      OFF_HAND: null,
+      BACK: null,
+      ACCESSORY: null,
+    },
+  };
+
+  const normalized = ensureGamificationProgress(testPlayer);
+  assert.strictEqual(normalized.equipment?.HEAD, null, "HEAD must remain null when explicitly unequipped");
+  assert.strictEqual(normalized.equipment?.LEGS, null, "LEGS must remain null when explicitly unequipped");
+  assert.strictEqual(normalized.equipment?.CHEST, "chest_manto_dalaran", "Equipped CHEST must remain");
+  assert.strictEqual(normalized.equippedAvatar?.equipped.HEAD, null, "Avatar equipped.HEAD must remain null");
+  assert.strictEqual(normalized.equippedAvatar?.equipped.head, null, "Avatar equipped.head must remain null");
+  assert.strictEqual(normalized.equippedAvatar?.equipped.LEGS, null, "Avatar equipped.LEGS must remain null");
+  assert.strictEqual(normalized.equippedAvatar?.equipped.legs, null, "Avatar equipped.legs must remain null");
+
+  console.log("  ✓ Unequipped null slots preservation verified!");
+}
+
+// ==========================================
+// Test 12: getCombinedStats Fallback & Unknown Character Robustness
+// ==========================================
+console.log("➡️ Test 12: getCombinedStats Unknown Character Robustness");
+{
+  const corruptPlayer: UserProgress = {
+    xp: 100,
+    selectedCharacterId: "non_existent_hero_xyz",
+    equipment: { ...STARTER_EQUIPMENT },
+  };
+
+  const stats = getCombinedStats(corruptPlayer, "en");
+  assert.strictEqual(stats.characterBonus.active, false);
+  assert.strictEqual(stats.characterBonus.characterId, null);
+  assert.strictEqual(stats.characterBonus.xpMultiplier, 0);
+  assert.strictEqual(stats.characterBonus.coinBonus, 0);
+  assert.ok(stats.finalXpMultiplier >= 1.0);
+
+  console.log("  ✓ Unknown character robustness verified!");
+}
+
+// ==========================================
+// Test 13: Astrid Nordic & Russian Affinity Bonus
+// ==========================================
+console.log("➡️ Test 13: Astrid Nordic & Russian Affinity Bonus");
+{
+  const astrid = getCharacterById("astrid")!;
+  assert.ok(astrid.supportedLanguageBonusIds?.includes("ru"), "Astrid must support Russian ('ru')");
+  assert.ok(astrid.supportedLanguageBonusIds?.includes("de"), "Astrid must support German ('de')");
+
+  const astridPlayer: UserProgress = {
+    xp: 200,
+    selectedCharacterId: "astrid",
+    equipment: { ...STARTER_EQUIPMENT },
+  };
+
+  const statsRussian = getCombinedStats(astridPlayer, "ru");
+  assert.strictEqual(statsRussian.characterBonus.active, true);
+  assert.strictEqual(statsRussian.characterBonus.xpMultiplier, 0.15);
+
+  const statsGerman = getCombinedStats(astridPlayer, "de");
+  assert.strictEqual(statsGerman.characterBonus.active, true);
+
+  console.log("  ✓ Astrid Russian and Nordic affinity verified!");
+}
+
 console.log("\n🎉 ALL GAMIFICATION, RPG & AVATAR VERIFICATION TESTS PASSED FLAWLESSLY!\n");

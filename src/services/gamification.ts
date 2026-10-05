@@ -76,6 +76,9 @@ export function ensureGamificationProgress(progress: UserProgress): UserProgress
   const level = progress.level || levelInfo.level;
   const skillPoints = typeof progress.skillPoints === "number" ? progress.skillPoints : level;
   const selectedCharacterId = progress.selectedCharacterId || DEFAULT_CHARACTER_ID;
+  const activeChar = getCharacterById(selectedCharacterId);
+  const charSubType = activeChar?.baseSpriteAsset || "valerius_scribe";
+  const charArchetype = activeChar?.category === "MYTHIC_BEAST" ? "monster" : "human";
 
   const equipment = {
     ...STARTER_EQUIPMENT,
@@ -90,8 +93,20 @@ export function ensureGamificationProgress(progress: UserProgress): UserProgress
     ])
   );
 
+  const lowerSlotMap: Record<string, string> = {
+    HEAD: "head",
+    CHEST: "body",
+    LEGS: "legs",
+    MAIN_HAND: "hand",
+    OFF_HAND: "off_hand",
+    BACK: "back",
+    ACCESSORY: "accessory",
+  };
+
   const equippedAvatar: AvatarConfig = {
     ...DEFAULT_AVATAR_CONFIG,
+    archetype: progress.equippedAvatar?.archetype || charArchetype,
+    subType: progress.equippedAvatar?.subType || charSubType,
     ...(progress.equippedAvatar || {}),
     equipped: {
       ...DEFAULT_AVATAR_CONFIG.equipped,
@@ -99,6 +114,14 @@ export function ensureGamificationProgress(progress: UserProgress): UserProgress
       ...equipment,
     },
   };
+
+  // Se algum slot em equipment estiver explicitamente null, garante que equippedAvatar.equipped reflita null
+  for (const [slotKey, lowerKey] of Object.entries(lowerSlotMap)) {
+    if (equipment[slotKey as SlotType] === null) {
+      equippedAvatar.equipped[slotKey] = null;
+      equippedAvatar.equipped[lowerKey] = null;
+    }
+  }
 
   const unlockedAvatarItems = Array.from(
     new Set([
@@ -191,8 +214,8 @@ export function getCombinedStats(
     character && lang && character.supportedLanguageBonusIds?.includes(lang)
   );
 
-  const charXpBonus = matchesLang ? 0.15 : 0.05;
-  const charCoinBonus = matchesLang ? 0.10 : 0.05;
+  const charXpBonus = character ? (matchesLang ? 0.15 : 0.05) : 0;
+  const charCoinBonus = character ? (matchesLang ? 0.10 : 0.05) : 0;
 
   const totalItemStats = {
     xpMultiplier: Number(itemXpMultiplier.toFixed(2)),
@@ -319,7 +342,7 @@ export function unequipShopSlot(current: UserProgress, slot: SlotType): UserProg
 
   const currentConfig = prepared.equippedAvatar || DEFAULT_AVATAR_CONFIG;
   const newEquipped = { ...currentConfig.equipped };
-  delete newEquipped[slot];
+  newEquipped[slot] = null;
 
   const lowerMap: Record<SlotType, string> = {
     HEAD: "head",
@@ -330,7 +353,7 @@ export function unequipShopSlot(current: UserProgress, slot: SlotType): UserProg
     BACK: "back",
     ACCESSORY: "accessory",
   };
-  delete newEquipped[lowerMap[slot]];
+  newEquipped[lowerMap[slot]] = null;
 
   return {
     ...prepared,

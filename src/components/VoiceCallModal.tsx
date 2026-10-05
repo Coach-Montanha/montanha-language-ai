@@ -17,7 +17,8 @@ import {
 } from "@/services/speech";
 import { tutorChat } from "@/services/ai-engine";
 import { addXP, loadLearnerMemory, updateLearnerMemoryFromInteraction } from "@/services/storage";
-import { ensureGamificationProgress } from "@/services/gamification";
+import { ensureGamificationProgress, getCombinedStats } from "@/services/gamification";
+import { getCharacterById } from "@/data/avatar-items";
 import { ModularAvatar } from "@/components/avatar/ModularAvatar";
 import { AvatarAnimationState } from "@/types/avatar";
 import {
@@ -66,6 +67,8 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
   const [callDuration, setCallDuration] = useState(0);
 
   const preparedProgress = ensureGamificationProgress(progress);
+  const selectedHero = getCharacterById(preparedProgress.selectedCharacterId || "valerius");
+  const combinedStats = getCombinedStats(preparedProgress, activeTutor.language);
   const avatarAnimState: AvatarAnimationState =
     callState === "speaking"
       ? "speaking"
@@ -177,8 +180,8 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         const updatedHistory = [...historyContext, userMsg];
         setConversationHistory(updatedHistory);
 
-        // Concede XP de conversação falada
-        const updatedProg = addXP(5);
+        // Concede XP de conversação falada com bônus de idioma
+        const updatedProg = addXP(5, activeTutor.language);
         onUpdateProgress({
           ...updatedProg,
           messagesSentCount: progress.messagesSentCount + 1,
@@ -186,7 +189,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
 
         try {
           const learnerMemory = loadLearnerMemory(activeTutor.language);
-          // IA responde diretamente ao contexto falado sem duplicar última mensagem
+          // IA responde diretamente ao contexto falado refletindo a persona do companion
           const tutorResult = await tutorChat(
             spokenText,
             conversationHistory,
@@ -194,7 +197,9 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             activeTutor,
             learnerMemory,
             undefined,
-            progress.aiModelPreference
+            progress.aiModelPreference,
+            undefined,
+            selectedHero
           );
           const responseText = tutorResult.replyText;
 
@@ -332,6 +337,30 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             {audioSpeed}x
           </Badge>
         </div>
+
+        {/* RPG Companion & Language Bonus HUD */}
+        {selectedHero && (
+          <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-indigo-950/70 via-slate-900/80 to-purple-950/70 border-y border-indigo-500/20 text-xs shrink-0 select-none z-10">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm shrink-0">🧙‍♂️</span>
+              <div className="min-w-0">
+                <span className="font-bold text-indigo-300 truncate block text-[11px]">
+                  {selectedHero.name}
+                </span>
+                <span className="text-[10px] text-zinc-400 block truncate">
+                  {combinedStats.characterBonus.active
+                    ? `⚡ Bônus Ativo: +15% XP em ${selectedHero.nativeLanguageBonus}`
+                    : `🛡️ Companheiro em campo (+5% XP geral)`}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Badge variant="outline" className="text-[10px] border-indigo-500/40 text-indigo-300 font-bold bg-indigo-500/10">
+                {combinedStats.finalXpMultiplier}x XP
+              </Badge>
+            </div>
+          </div>
+        )}
 
         {/* Centro da Chamada: Avatar com Animação de Onda Sonora */}
         <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6 relative">

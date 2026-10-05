@@ -8,10 +8,10 @@ export const DEFAULT_AVATAR_CONFIG: AvatarConfig = {
   primaryColor: "#3b82f6",
   secondaryColor: "#f59e0b",
   equipped: {
-    head: "starter_cap",
+    head: "head_tiara_aprendiz",
     eyes: "starter_glasses",
-    body: "starter_adventurer_robe",
-    hand: "starter_quill",
+    body: "chest_tunica_novico",
+    hand: "main_hand_pena_prata",
     aura: "starter_glow",
     HEAD: "head_tiara_aprendiz",
     CHEST: "chest_tunica_novico",
