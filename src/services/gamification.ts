@@ -6,6 +6,7 @@ import {
   SlotType,
   ALL_SLOT_TYPES,
   CombinedStats,
+  EquipmentSlot,
 } from "@/types/avatar";
 import {
   DEFAULT_AVATAR_CONFIG,
@@ -101,13 +102,34 @@ export function ensureGamificationProgress(progress: UserProgress): UserProgress
     OFF_HAND: "off_hand",
     BACK: "back",
     ACCESSORY: "accessory",
+    HEAD_UPPER: "head",
+    HEAD_MIDDLE: "head",
+    HEAD_LOWER: "head",
+    ARMOR: "body",
+    GARMENT: "body",
+    FOOTGEAR: "legs",
+    RIGHT_HAND: "hand",
+    LEFT_HAND: "off_hand",
+    BACKPACK: "back",
+    PET_FAMILIAR: "accessory",
   };
+
+  // Se selectedCharacterId foi definido/trocado, garante que o avatar reflita o arquétipo e o subType corretos
+  const targetSubType =
+    progress.selectedCharacterId && activeChar
+      ? activeChar.baseSpriteAsset
+      : progress.equippedAvatar?.subType || charSubType;
+
+  const targetArchetype =
+    activeChar?.category === "MYTHIC_BEAST"
+      ? "monster"
+      : progress.equippedAvatar?.archetype || charArchetype;
 
   const equippedAvatar: AvatarConfig = {
     ...DEFAULT_AVATAR_CONFIG,
-    archetype: progress.equippedAvatar?.archetype || charArchetype,
-    subType: progress.equippedAvatar?.subType || charSubType,
     ...(progress.equippedAvatar || {}),
+    archetype: targetArchetype,
+    subType: targetSubType,
     equipped: {
       ...DEFAULT_AVATAR_CONFIG.equipped,
       ...(progress.equippedAvatar?.equipped || {}),
@@ -180,6 +202,23 @@ export function awardGamificationRewards(
   };
 }
 
+// Mapeamento de slots correspondentes entre o sistema clássico (7 slots) e Ragnarok Online (10 slots)
+// Evita duplicação fantasma de equipamentos simultâneos (ex: Peitoral Clássico + Armadura RO)
+export const CORRESPONDING_SLOTS: Record<string, string[]> = {
+  HEAD_UPPER: ["HEAD"],
+  HEAD: ["HEAD_UPPER"],
+  ARMOR: ["CHEST"],
+  CHEST: ["ARMOR"],
+  FOOTGEAR: ["LEGS"],
+  LEGS: ["FOOTGEAR"],
+  RIGHT_HAND: ["MAIN_HAND"],
+  MAIN_HAND: ["RIGHT_HAND"],
+  LEFT_HAND: ["OFF_HAND"],
+  OFF_HAND: ["LEFT_HAND"],
+  GARMENT: ["BACK"],
+  BACK: ["GARMENT"],
+};
+
 // =========================================================================
 // RPG COMBINED STATS CALCULATION
 // =========================================================================
@@ -194,16 +233,36 @@ export function getCombinedStats(
   let itemStreakProtection = 0;
   let itemCoinBonus = 0;
 
-  const checkedSlots = Array.from(new Set([...ALL_SLOT_TYPES, ...Object.keys(equipment)]));
-  for (const slot of checkedSlots) {
-    const itemId = equipment[slot];
-    if (itemId) {
-      const item = getShopItemById(itemId);
-      if (item && item.statBonus) {
-        itemXpMultiplier += item.statBonus.xpMultiplier || 0;
-        itemStreakProtection += item.statBonus.streakProtection || 0;
-        itemCoinBonus += item.statBonus.coinBonus || 0;
-      }
+  // Resolve precedência de slots equipados evitando sobreposição dupla entre slots RO e legado
+  const effectiveSlots: Record<string, string> = {};
+  for (const [slot, id] of Object.entries(equipment)) {
+    if (id) effectiveSlots[slot] = id;
+  }
+  if (effectiveSlots[EquipmentSlot.HEAD_UPPER] && effectiveSlots["HEAD"]) {
+    delete effectiveSlots["HEAD"];
+  }
+  if (effectiveSlots[EquipmentSlot.ARMOR] && effectiveSlots["CHEST"]) {
+    delete effectiveSlots["CHEST"];
+  }
+  if (effectiveSlots[EquipmentSlot.FOOTGEAR] && effectiveSlots["LEGS"]) {
+    delete effectiveSlots["LEGS"];
+  }
+  if (effectiveSlots[EquipmentSlot.RIGHT_HAND] && effectiveSlots["MAIN_HAND"]) {
+    delete effectiveSlots["MAIN_HAND"];
+  }
+  if (effectiveSlots[EquipmentSlot.LEFT_HAND] && effectiveSlots["OFF_HAND"]) {
+    delete effectiveSlots["OFF_HAND"];
+  }
+  if (effectiveSlots[EquipmentSlot.GARMENT] && effectiveSlots["BACK"]) {
+    delete effectiveSlots["BACK"];
+  }
+
+  for (const [slot, itemId] of Object.entries(effectiveSlots)) {
+    const item = getShopItemById(itemId);
+    if (item && item.statBonus) {
+      itemXpMultiplier += item.statBonus.xpMultiplier || 0;
+      itemStreakProtection += item.statBonus.streakProtection || 0;
+      itemCoinBonus += item.statBonus.coinBonus || 0;
     }
   }
 
@@ -322,6 +381,13 @@ export function equipShopItem(current: UserProgress, itemId: string): UserProgre
     },
   };
 
+  // Se o slot possui slots correspondentes conflitantes (ex: ARMOR vs CHEST), desequipa o conflitante
+  const conflicts = CORRESPONDING_SLOTS[item.slot] || [];
+  for (const conflictSlot of conflicts) {
+    newEquipment[conflictSlot] = null;
+    newEquippedAvatar.equipped[conflictSlot] = null;
+  }
+
   return {
     ...prepared,
     equipment: newEquipment,
@@ -344,6 +410,15 @@ export function unequipShopSlot(current: UserProgress, slot: SlotType | string):
   const currentConfig = prepared.equippedAvatar || DEFAULT_AVATAR_CONFIG;
   const newEquipped = { ...currentConfig.equipped };
   newEquipped[slot] = null;
+
+  // Desequipa também qualquer slot correspondente legado/RO associado
+  const conflicts = CORRESPONDING_SLOTS[slot] || [];
+  for (const conflictSlot of conflicts) {
+    if (newEquipment[conflictSlot] !== undefined) {
+      newEquipment[conflictSlot] = null;
+      newEquipped[conflictSlot] = null;
+    }
+  }
 
   const lowerMap: Record<string, string> = {
     HEAD: "head",

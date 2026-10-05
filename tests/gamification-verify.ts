@@ -28,6 +28,8 @@ import {
   BASE_AVATARS,
   ITEM_CATALOG,
   AntigravityAvatarEngine,
+  getRoAvatarById,
+  getRoItemById,
 } from "../src/data/avatar-items";
 import { UserProgress, SupportedLanguage } from "../src/types/language";
 import { AvatarItem, SlotType, ALL_SLOT_TYPES, EquipmentSlot, ItemTier, ArchetypeRole } from "../src/types/avatar";
@@ -888,6 +890,129 @@ console.log("➡️ Test 16: RO Integration with UserProgress and Adapters");
   assert.ok(stats.finalXpMultiplier > 1.0);
 
   console.log("  ✓ RO Integration with UserProgress, getCharacterById, and getShopItemById verified!");
+}
+
+// ==========================================
+// Test 17: RO vs Legacy Slot Conflict Resolution & No Phantom Stacking
+// ==========================================
+console.log("➡️ Test 17: RO vs Legacy Slot Conflict Resolution & No Phantom Stacking");
+{
+  const starterPlayer: UserProgress = {
+    xp: 600,
+    coins: 1000,
+    level: 5,
+    equipment: {
+      HEAD: "head_tiara_aprendiz",
+      CHEST: "chest_tunica_novico",
+      LEGS: "legs_botas_rusticas",
+      MAIN_HAND: "main_hand_pena_prata",
+      OFF_HAND: "off_hand_adaga_precisao",
+      BACK: "back_capa_viajante",
+      ACCESSORY: "accessory_amuleto_concentracao",
+    },
+    inventoryItemIds: [
+      "head_tiara_aprendiz",
+      "chest_tunica_novico",
+      "legs_botas_rusticas",
+      "main_hand_pena_prata",
+      "off_hand_adaga_precisao",
+      "back_capa_viajante",
+      "accessory_amuleto_concentracao",
+      "armor_apprentice_robe",
+      "head_bunny_ears",
+      "wpn_forging_hammer",
+      "garment_angel_wings",
+    ],
+  };
+
+  // 17a: Equipping RO ARMOR should supersede/clear legacy CHEST
+  const equippedArmor = equipShopItem(starterPlayer, "armor_apprentice_robe");
+  assert.strictEqual(equippedArmor.equipment?.ARMOR, "armor_apprentice_robe");
+  assert.strictEqual(equippedArmor.equipment?.CHEST, null, "Legacy CHEST must be set to null when ARMOR is equipped");
+  assert.strictEqual(equippedArmor.equippedAvatar?.equipped.ARMOR, "armor_apprentice_robe");
+  assert.strictEqual(equippedArmor.equippedAvatar?.equipped.CHEST, null);
+
+  // 17b: Equipping RO RIGHT_HAND should supersede/clear legacy MAIN_HAND
+  const equippedHammer = equipShopItem(equippedArmor, "wpn_forging_hammer");
+  assert.strictEqual(equippedHammer.equipment?.RIGHT_HAND, "wpn_forging_hammer");
+  assert.strictEqual(equippedHammer.equipment?.MAIN_HAND, null, "Legacy MAIN_HAND must be set to null when RIGHT_HAND is equipped");
+
+  // 17c: Equipping RO HEAD_UPPER should supersede/clear legacy HEAD
+  const equippedBunny = equipShopItem(equippedHammer, "head_bunny_ears");
+  assert.strictEqual(equippedBunny.equipment?.HEAD_UPPER, "head_bunny_ears");
+  assert.strictEqual(equippedBunny.equipment?.HEAD, null, "Legacy HEAD must be set to null when HEAD_UPPER is equipped");
+
+  // 17d: Stats check: getCombinedStats must not double-count superseded slots
+  const statsNoDoubling = getCombinedStats(equippedBunny, "es");
+  // Check that CHEST stat bonus (+0.02) and HEAD stat bonus (+0.00) are not phantom stacked with ARMOR/HEAD_UPPER
+  assert.ok(statsNoDoubling.finalXpMultiplier > 1.0);
+  assert.ok(statsNoDoubling.finalXpMultiplier < 2.5, "Stats should not be artificially inflated by double-counting");
+
+  // 17e: Unequipping ARMOR ensures both ARMOR and CHEST remain unequipped
+  const unequippedArmor = unequipShopSlot(equippedBunny, EquipmentSlot.ARMOR);
+  assert.strictEqual(unequippedArmor.equipment?.ARMOR, null);
+  assert.strictEqual(unequippedArmor.equipment?.CHEST, null);
+
+  console.log("  ✓ RO vs Legacy Slot Conflict Resolution & No Phantom Stacking verified!");
+}
+
+// ==========================================
+// Test 18: getRoAvatarById spriteKey fallback & timeBonusSeconds adaptation
+// ==========================================
+console.log("➡️ Test 18: getRoAvatarById spriteKey fallback & timeBonusSeconds in adapted shop items");
+{
+  // 18a: getRoAvatarById resolves by baseSpriteKey
+  const bySpriteKey = getRoAvatarById("ro_chibi_swordsman_male_base");
+  assert.ok(bySpriteKey, "Must resolve avatar by baseSpriteKey");
+  assert.strictEqual(bySpriteKey.id, "char_swordsman_m");
+
+  const baphometBySprite = getRoAvatarById("ro_chibi_baphomet_jr_base");
+  assert.ok(baphometBySprite, "Must resolve baphomet by baseSpriteKey");
+  assert.strictEqual(baphometBySprite.id, "char_baphomet_jr");
+
+  // 18b: timeBonusSeconds preserved in adaptRoItemToShopItem
+  const bunnyItem = getShopItemById("head_bunny_ears");
+  assert.ok(bunnyItem, "Bunny ears item must exist");
+  assert.strictEqual(bunnyItem.statBonus?.timeBonusSeconds, 3, "Bunny ears must preserve timeBonusSeconds = 3");
+
+  const staffItem = getShopItemById("wpn_wizard_staff");
+  assert.ok(staffItem, "Wizard staff item must exist");
+  assert.strictEqual(staffItem.statBonus?.timeBonusSeconds, 5, "Wizard staff must preserve timeBonusSeconds = 5");
+
+  console.log("  ✓ getRoAvatarById spriteKey resolution & timeBonusSeconds adaptation verified!");
+}
+
+// ==========================================
+// Test 19: ensureGamificationProgress auto-synchronization for RO heroes
+// ==========================================
+console.log("➡️ Test 19: ensureGamificationProgress subType auto-synchronization");
+{
+  // Player whose selectedCharacterId is changed to char_angeling
+  const playerAngeling: UserProgress = {
+    xp: 300,
+    selectedCharacterId: "char_angeling",
+    equippedAvatar: {
+      archetype: "human",
+      subType: "valerius_scribe",
+      primaryColor: "#3b82f6",
+      secondaryColor: "#f59e0b",
+      equipped: {},
+    },
+  };
+
+  const normalizedAngeling = ensureGamificationProgress(playerAngeling);
+  assert.strictEqual(
+    normalizedAngeling.equippedAvatar?.subType,
+    "ro_chibi_angeling_base",
+    "subType must synchronize to ro_chibi_angeling_base when selectedCharacterId is char_angeling"
+  );
+  assert.strictEqual(
+    normalizedAngeling.equippedAvatar?.archetype,
+    "monster",
+    "archetype must synchronize to monster for MYTHIC_BEAST"
+  );
+
+  console.log("  ✓ ensureGamificationProgress subType auto-synchronization verified!");
 }
 
 console.log("\n🎉 ALL GAMIFICATION, RPG & AVATAR VERIFICATION TESTS PASSED FLAWLESSLY!\n");

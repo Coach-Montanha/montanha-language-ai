@@ -158,13 +158,22 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
     // Correspondência direta do slot
     if (item.slot === selectedSlot) return true;
 
-    // Mapeamento de slots RO compatíveis
-    if (selectedSlot === "HEAD" && (item.slot === EquipmentSlot.HEAD_UPPER || item.slot === EquipmentSlot.HEAD_LOWER)) return true;
+    // Mapeamento de slots RO compatíveis (bidirecional)
+    if (selectedSlot === "HEAD" && (item.slot === EquipmentSlot.HEAD_UPPER || item.slot === EquipmentSlot.HEAD_LOWER || item.slot === EquipmentSlot.HEAD_MIDDLE)) return true;
+    if (selectedSlot === EquipmentSlot.HEAD_UPPER && item.slot === "HEAD") return true;
     if (selectedSlot === "CHEST" && item.slot === EquipmentSlot.ARMOR) return true;
+    if (selectedSlot === EquipmentSlot.ARMOR && item.slot === "CHEST") return true;
     if (selectedSlot === "BACK" && (item.slot === EquipmentSlot.GARMENT || item.slot === EquipmentSlot.BACKPACK)) return true;
+    if (selectedSlot === EquipmentSlot.GARMENT && item.slot === "BACK") return true;
+    if (selectedSlot === EquipmentSlot.BACKPACK && item.slot === "BACK") return true;
     if (selectedSlot === "MAIN_HAND" && item.slot === EquipmentSlot.RIGHT_HAND) return true;
+    if (selectedSlot === EquipmentSlot.RIGHT_HAND && item.slot === "MAIN_HAND") return true;
     if (selectedSlot === "OFF_HAND" && item.slot === EquipmentSlot.LEFT_HAND) return true;
+    if (selectedSlot === EquipmentSlot.LEFT_HAND && item.slot === "OFF_HAND") return true;
     if (selectedSlot === "ACCESSORY" && item.slot === EquipmentSlot.PET_FAMILIAR) return true;
+    if (selectedSlot === EquipmentSlot.PET_FAMILIAR && item.slot === "ACCESSORY") return true;
+    if (selectedSlot === "LEGS" && item.slot === EquipmentSlot.FOOTGEAR) return true;
+    if (selectedSlot === EquipmentSlot.FOOTGEAR && item.slot === "LEGS") return true;
 
     return false;
   });
@@ -479,6 +488,11 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
                       {item.statBonus?.streakProtection && (
                         <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
                           +{item.statBonus.streakProtection} Proteção
+                        </span>
+                      )}
+                      {item.statBonus?.timeBonusSeconds && (
+                        <span className="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
+                          +{item.statBonus.timeBonusSeconds}s Tempo
                         </span>
                       )}
                     </div>

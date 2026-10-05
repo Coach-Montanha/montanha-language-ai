@@ -27,6 +27,7 @@ import { TravelPackModal } from "@/components/TravelPackModal";
 import { StreetTalkModal } from "@/components/StreetTalkModal";
 import { PlacementTestModal } from "@/components/PlacementTestModal";
 import { SmartScratchpadModal } from "@/components/SmartScratchpadModal";
+import { AvatarShopModal } from "@/components/avatar/AvatarShopModal";
 import { getDefaultTutorForLanguage } from "@/data/tutors";
 import { LanguageDefinition } from "@/types/language";
 import { Toaster } from "@/components/ui/sonner";
@@ -54,6 +55,7 @@ function SmartLanguageApp() {
   const [isStreetTalkOpen, setIsStreetTalkOpen] = useState(false);
   const [isPlacementTestOpen, setIsPlacementTestOpen] = useState(false);
   const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
+  const [isAvatarShopOpen, setIsAvatarShopOpen] = useState(false);
 
   const handleSelectLanguage = (lang: LanguageDefinition) => {
     const defaultTutor = getDefaultTutorForLanguage(lang.id);
@@ -166,7 +168,7 @@ function SmartLanguageApp() {
         onLogout={handleLogout}
         onOpenLanguageSelector={() => setIsLanguageModalOpen(true)}
         onOpenTimeline={() => setIsTimelineOpen(true)}
-        onOpenAvatarShop={() => setActiveTab("avatar")}
+        onOpenAvatarShop={() => setIsAvatarShopOpen(true)}
       />
 
       {/* Conteúdo Principal com as Abas */}
@@ -184,7 +186,7 @@ function SmartLanguageApp() {
             onUpdateProgress={handleUpdateProgress}
             onOpenVoiceCall={() => setIsVoiceCallOpen(true)}
             onOpenStreetTalk={() => setIsStreetTalkOpen(true)}
-            onOpenAvatarShop={() => setActiveTab("avatar")}
+            onOpenAvatarShop={() => setIsAvatarShopOpen(true)}
           />
         )}
         {activeTab === "cenario" && (
@@ -202,6 +204,7 @@ function SmartLanguageApp() {
             progress={progress}
             onUpdateProgress={handleUpdateProgress}
             onOpenConversation={() => setActiveTab("conversa")}
+            onOpenAvatarShop={() => setIsAvatarShopOpen(true)}
           />
         )}
         {(activeTab === "estudo" || activeTab === "cartoes" || activeTab === "alfabeto") && (
@@ -307,6 +310,14 @@ function SmartLanguageApp() {
             window.dispatchEvent(evt);
           }, 150);
         }}
+      />
+
+      {/* Modal: Loja Kafra & Armaria Ragnarok Online */}
+      <AvatarShopModal
+        open={isAvatarShopOpen}
+        onOpenChange={setIsAvatarShopOpen}
+        progress={progress}
+        onUpdateProgress={handleUpdateProgress}
       />
 
       {/* Banner / Prompt de Instalação PWA para Celular */}

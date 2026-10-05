@@ -68,7 +68,29 @@ interface AvatarTabProps {
   progress: UserProgress;
   onUpdateProgress: (updated: UserProgress) => void;
   onOpenConversation?: () => void;
+  onOpenAvatarShop?: () => void;
 }
+
+interface PaperDollSlotDef {
+  slotKey: string;
+  fallbackKeys?: string[];
+  label: string;
+  icon: string;
+}
+
+const RO_PAPER_DOLL_SLOTS: PaperDollSlotDef[] = [
+  { slotKey: EquipmentSlot.HEAD_UPPER, fallbackKeys: ["HEAD"], label: "Chapéu RO", icon: "🐰" },
+  { slotKey: EquipmentSlot.HEAD_MIDDLE, fallbackKeys: ["eyes"], label: "Óculos RO", icon: "👓" },
+  { slotKey: EquipmentSlot.HEAD_LOWER, fallbackKeys: ["head_lower"], label: "Boca RO", icon: "🍃" },
+  { slotKey: EquipmentSlot.ARMOR, fallbackKeys: ["CHEST", "body"], label: "Armadura RO", icon: "👘" },
+  { slotKey: EquipmentSlot.GARMENT, fallbackKeys: ["BACK", "back"], label: "Asas & Capas RO", icon: "🪽" },
+  { slotKey: EquipmentSlot.FOOTGEAR, fallbackKeys: ["LEGS", "legs"], label: "Botas RO", icon: "🥾" },
+  { slotKey: EquipmentSlot.RIGHT_HAND, fallbackKeys: ["MAIN_HAND", "hand"], label: "Arma RO", icon: "🔨" },
+  { slotKey: EquipmentSlot.LEFT_HAND, fallbackKeys: ["OFF_HAND", "off_hand"], label: "Escudo RO", icon: "🛡️" },
+  { slotKey: EquipmentSlot.BACKPACK, fallbackKeys: ["backpack"], label: "Mochila RO", icon: "📦" },
+  { slotKey: EquipmentSlot.PET_FAMILIAR, fallbackKeys: ["pet"], label: "Pet Companheiro", icon: "🐣" },
+  { slotKey: "ACCESSORY", fallbackKeys: ["accessory"], label: "Relíquia / Acessório", icon: "💎" },
+];
 
 const SLOT_TABS: { id: string; label: string; icon: string }[] = [
   { id: "all", label: "Tudo", icon: "✨" },
@@ -116,6 +138,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
   progress,
   onUpdateProgress,
   onOpenConversation,
+  onOpenAvatarShop,
 }) => {
   const prepared = ensureGamificationProgress(progress);
   const levelInfo = calculateLevelInfo(prepared.xp);
@@ -141,17 +164,25 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
   const [previewState, setPreviewState] = useState<AvatarAnimationState>("idle");
 
   const filteredItems = fullShopCatalog.filter((item) => {
-    // Filtro por slot
+    // Filtro por slot com mapeamento bidirecional entre sistema RO e legado
     if (activeSlot !== "all" && activeSlot !== "archetype") {
       const directMatch = item.slot === activeSlot;
       const mappedMatch =
         (activeSlot === "HEAD" && (item.slot === EquipmentSlot.HEAD_UPPER || item.slot === EquipmentSlot.HEAD_LOWER || item.slot === EquipmentSlot.HEAD_MIDDLE)) ||
+        (activeSlot === EquipmentSlot.HEAD_UPPER && item.slot === "HEAD") ||
         (activeSlot === "CHEST" && item.slot === EquipmentSlot.ARMOR) ||
+        (activeSlot === EquipmentSlot.ARMOR && item.slot === "CHEST") ||
         (activeSlot === "BACK" && (item.slot === EquipmentSlot.GARMENT || item.slot === EquipmentSlot.BACKPACK)) ||
+        (activeSlot === EquipmentSlot.GARMENT && item.slot === "BACK") ||
+        (activeSlot === EquipmentSlot.BACKPACK && item.slot === "BACK") ||
         (activeSlot === "MAIN_HAND" && item.slot === EquipmentSlot.RIGHT_HAND) ||
+        (activeSlot === EquipmentSlot.RIGHT_HAND && item.slot === "MAIN_HAND") ||
         (activeSlot === "OFF_HAND" && item.slot === EquipmentSlot.LEFT_HAND) ||
+        (activeSlot === EquipmentSlot.LEFT_HAND && item.slot === "OFF_HAND") ||
         (activeSlot === "ACCESSORY" && item.slot === EquipmentSlot.PET_FAMILIAR) ||
-        (activeSlot === "LEGS" && item.slot === EquipmentSlot.FOOTGEAR);
+        (activeSlot === EquipmentSlot.PET_FAMILIAR && item.slot === "ACCESSORY") ||
+        (activeSlot === "LEGS" && item.slot === EquipmentSlot.FOOTGEAR) ||
+        (activeSlot === EquipmentSlot.FOOTGEAR && item.slot === "LEGS");
 
       if (!directMatch && !mappedMatch) return false;
     }
@@ -390,68 +421,71 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
           </div>
         </div>
 
-        {/* Painel dos 7 Slots de Equipamento (Paper Doll) */}
+        {/* Painel dos Slots de Equipamento Ragnarok Online (Paper Doll) */}
         <div className="lg:col-span-7 rounded-3xl border border-slate-800 bg-card/60 backdrop-blur-md p-6 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-extrabold text-foreground flex items-center gap-2">
                 <Shirt className="w-4 h-4 text-indigo-400" />
-                Equipamento Atual (7 Slots RPG)
+                Equipamento Chibi RO (10 Slots de Aventura)
               </h3>
               <p className="text-xs text-muted-foreground">
-                Equipe elmos, armaduras, armas e relíquias para multiplicar seu aprendizado.
+                Equipe chapéus, asas, martelos, capas e companheiros Poring para potencializar seus estudos.
               </p>
             </div>
+            {onOpenAvatarShop && (
+              <Button
+                size="sm"
+                onClick={onOpenAvatarShop}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs gap-1.5 cursor-pointer shadow-sm shadow-amber-500/20 shrink-0"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Loja Kafra RO
+              </Button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            {Array.from(new Set([...ALL_SLOT_TYPES, ...Object.keys(currentEquipment).filter((k) => currentEquipment[k])])).map((slot) => {
-              const itemId = currentEquipment[slot];
+            {RO_PAPER_DOLL_SLOTS.map((slotDef) => {
+              // Resolução com fallback seguro para preservação de progresso legado
+              let itemId: string | null = currentEquipment[slotDef.slotKey] || null;
+              let activeUnequipKey = slotDef.slotKey;
+
+              if (!itemId && slotDef.fallbackKeys) {
+                for (const fallback of slotDef.fallbackKeys) {
+                  if (currentEquipment[fallback]) {
+                    itemId = currentEquipment[fallback]!;
+                    activeUnequipKey = fallback;
+                    break;
+                  }
+                }
+              }
+
               const item = itemId ? getShopItemById(itemId) : null;
-              const slotLabelMap: Record<string, { label: string; icon: string }> = {
-                HEAD: { label: "Cabeça", icon: "🎩" },
-                CHEST: { label: "Peitoral", icon: "🥋" },
-                LEGS: { label: "Pernas", icon: "👢" },
-                MAIN_HAND: { label: "Mão Principal", icon: "⚔️" },
-                OFF_HAND: { label: "Mão Secundária", icon: "🛡️" },
-                BACK: { label: "Costas", icon: "🎒" },
-                ACCESSORY: { label: "Acessório", icon: "💎" },
-                HEAD_UPPER: { label: "Chapéu RO", icon: "🐰" },
-                HEAD_MIDDLE: { label: "Óculos RO", icon: "👓" },
-                HEAD_LOWER: { label: "Boca RO", icon: "🍃" },
-                ARMOR: { label: "Armadura RO", icon: "👘" },
-                GARMENT: { label: "Asas RO", icon: "🪽" },
-                FOOTGEAR: { label: "Botas RO", icon: "🥾" },
-                RIGHT_HAND: { label: "Arma RO", icon: "🔨" },
-                LEFT_HAND: { label: "Escudo RO", icon: "🛡️" },
-                BACKPACK: { label: "Mochila RO", icon: "📦" },
-                PET_FAMILIAR: { label: "Pet RO", icon: "🐣" },
-              };
-              const slotInfo = slotLabelMap[slot] || { label: slot, icon: "⚔️" };
 
               return (
                 <div
-                  key={slot}
-                  onClick={() => setActiveSlot(slot)}
+                  key={slotDef.slotKey}
+                  onClick={() => setActiveSlot(slotDef.slotKey)}
                   className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                     item
                       ? RARITY_COLORS[item.rarity].border + " bg-slate-900/60"
                       : "border-slate-800/80 bg-slate-950/40 hover:border-slate-700"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl p-2 rounded-xl bg-slate-800/60">
-                      {slotInfo.icon}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-2xl p-2 rounded-xl bg-slate-800/60 shrink-0">
+                      {slotDef.icon}
                     </span>
-                    <div>
-                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">
-                        {slotInfo.label}
+                    <div className="min-w-0">
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block truncate">
+                        {slotDef.label}
                       </span>
                       <span className="text-xs font-bold text-foreground block truncate max-w-[140px]">
                         {item ? item.name : "Vazio"}
                       </span>
                       {item && (
-                        <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                           {item.statBonus.xpMultiplier && (
                             <span className="text-[9px] text-indigo-400 font-bold">
                               +{Math.round(item.statBonus.xpMultiplier * 100)}% XP
@@ -467,6 +501,11 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                               +{Math.round(item.statBonus.coinBonus * 100)}% 🪙
                             </span>
                           )}
+                          {item.statBonus.timeBonusSeconds && (
+                            <span className="text-[9px] text-cyan-400 font-bold">
+                              +{item.statBonus.timeBonusSeconds}s Tempo
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -478,9 +517,9 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleUnequip(slot);
+                        handleUnequip(activeUnequipKey);
                       }}
-                      className="text-[10px] text-slate-400 hover:text-rose-400 h-7 px-2 cursor-pointer"
+                      className="text-[10px] text-slate-400 hover:text-rose-400 h-7 px-2 cursor-pointer shrink-0"
                     >
                       Remover
                     </Button>
@@ -711,6 +750,11 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                     {item.statBonus.coinBonus && (
                       <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                         +{Math.round(item.statBonus.coinBonus * 100)}% Moedas
+                      </span>
+                    )}
+                    {item.statBonus.timeBonusSeconds && (
+                      <span className="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                        +{item.statBonus.timeBonusSeconds}s Tempo
                       </span>
                     )}
                   </div>

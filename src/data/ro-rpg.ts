@@ -424,7 +424,7 @@ export class AntigravityAvatarEngine {
 // ----------------------------------------------------------------------------
 
 export function getRoAvatarById(id: string): BaseClassAvatar | undefined {
-  return BASE_AVATARS.find((a) => a.id === id);
+  return BASE_AVATARS.find((a) => a.id === id || a.baseSpriteKey === id);
 }
 
 export function getRoItemById(id: string): EquipItem | undefined {
@@ -464,19 +464,6 @@ export function adaptRoAvatarToCharacterBase(avatar: BaseClassAvatar): Character
 }
 
 export function adaptRoItemToShopItem(item: EquipItem): ShopItem {
-  const slotMap: Record<EquipmentSlot, SlotType> = {
-    [EquipmentSlot.HEAD_UPPER]: "HEAD",
-    [EquipmentSlot.HEAD_MIDDLE]: "HEAD",
-    [EquipmentSlot.HEAD_LOWER]: "HEAD",
-    [EquipmentSlot.ARMOR]: "CHEST",
-    [EquipmentSlot.GARMENT]: "BACK",
-    [EquipmentSlot.FOOTGEAR]: "LEGS",
-    [EquipmentSlot.RIGHT_HAND]: "MAIN_HAND",
-    [EquipmentSlot.LEFT_HAND]: "OFF_HAND",
-    [EquipmentSlot.BACKPACK]: "BACK",
-    [EquipmentSlot.PET_FAMILIAR]: "ACCESSORY",
-  };
-
   const rarityMap: Record<ItemTier, ShopItem["rarity"]> = {
     [ItemTier.NOVICE]: "COMMON",
     [ItemTier.FIRST_CLASS]: "RARE",
@@ -493,6 +480,9 @@ export function adaptRoItemToShopItem(item: EquipItem): ShopItem {
   }
   if (item.stats.coinDropBonus !== undefined) {
     statBonus.coinBonus = item.stats.coinDropBonus;
+  }
+  if (item.stats.timeBonusSeconds !== undefined) {
+    statBonus.timeBonusSeconds = item.stats.timeBonusSeconds;
   }
 
   return {

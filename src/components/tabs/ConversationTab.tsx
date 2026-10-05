@@ -920,17 +920,28 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
 
       {/* RPG Companion & Language Bonus HUD */}
       {selectedHero && (
-        <div className="flex items-center justify-between px-3 py-1.5 bg-gradient-to-r from-indigo-950/50 via-slate-900/60 to-purple-950/50 border-b border-indigo-500/20 text-xs shrink-0 select-none">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm shrink-0">🧙‍♂️</span>
+        <div className="flex items-center justify-between px-3 py-1.5 bg-gradient-to-r from-indigo-950/60 via-slate-900/70 to-purple-950/60 border-b border-indigo-500/30 text-xs shrink-0 select-none">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="h-7 w-7 rounded-xl bg-slate-950 border border-indigo-500/40 flex items-center justify-center overflow-hidden shrink-0 shadow-xs p-0.5">
+              <ModularAvatar
+                config={avatarConfig}
+                state="idle"
+                size="xs"
+              />
+            </div>
             <div className="min-w-0">
-              <span className="font-bold text-indigo-300 truncate block text-[11px]">
-                {selectedHero.name}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-indigo-200 truncate block text-[11px]">
+                  {selectedHero.name}
+                </span>
+                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/40 text-amber-300 bg-amber-500/10 font-bold shrink-0">
+                  {selectedHero.category === "MYTHIC_BEAST" ? "Mascote RO" : "Chibi RO"}
+                </Badge>
+              </div>
               <span className="text-[10px] text-muted-foreground block truncate">
                 {combinedStats.characterBonus.active
                   ? `⚡ Bônus Ativo: +15% XP em ${selectedHero.nativeLanguageBonus}`
-                  : `🛡️ Companheiro em campo (+5% XP geral)`}
+                  : selectedHero.avatarGreeting || `🛡️ Companheiro em campo (+5% XP geral)`}
               </span>
             </div>
           </div>
@@ -943,9 +954,9 @@ export const ConversationTab: React.FC<ConversationTabProps> = ({
                 type="button"
                 onClick={onOpenAvatarShop}
                 className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold cursor-pointer underline underline-offset-2 ml-1"
-                title="Abrir Loja RPG e Trocar Herói"
+                title="Abrir Loja Kafra e Trocar Herói"
               >
-                Loja RPG
+                Loja Kafra RO
               </button>
             )}
           </div>

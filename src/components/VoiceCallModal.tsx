@@ -340,17 +340,28 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
 
         {/* RPG Companion & Language Bonus HUD */}
         {selectedHero && (
-          <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-indigo-950/70 via-slate-900/80 to-purple-950/70 border-y border-indigo-500/20 text-xs shrink-0 select-none z-10">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm shrink-0">🧙‍♂️</span>
+          <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-indigo-950/80 via-slate-900/90 to-purple-950/80 border-y border-indigo-500/30 text-xs shrink-0 select-none z-10">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-7 w-7 rounded-xl bg-zinc-950 border border-indigo-500/40 flex items-center justify-center overflow-hidden shrink-0 shadow-xs p-0.5">
+                <ModularAvatar
+                  config={preparedProgress.equippedAvatar}
+                  state="idle"
+                  size="xs"
+                />
+              </div>
               <div className="min-w-0">
-                <span className="font-bold text-indigo-300 truncate block text-[11px]">
-                  {selectedHero.name}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-indigo-200 truncate block text-[11px]">
+                    {selectedHero.name}
+                  </span>
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/40 text-amber-300 bg-amber-500/10 font-bold shrink-0">
+                    {selectedHero.category === "MYTHIC_BEAST" ? "Mascote RO" : "Chibi RO"}
+                  </Badge>
+                </div>
                 <span className="text-[10px] text-zinc-400 block truncate">
                   {combinedStats.characterBonus.active
                     ? `⚡ Bônus Ativo: +15% XP em ${selectedHero.nativeLanguageBonus}`
-                    : `🛡️ Companheiro em campo (+5% XP geral)`}
+                    : selectedHero.avatarGreeting || `🛡️ Companheiro em campo (+5% XP geral)`}
                 </span>
               </div>
             </div>

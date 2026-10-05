@@ -33,6 +33,7 @@ export interface StatBonus {
   xpMultiplier?: number;
   streakProtection?: number;
   coinBonus?: number;
+  timeBonusSeconds?: number;
 }
 
 export interface CharacterBase {
