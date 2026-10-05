@@ -11,7 +11,13 @@ export type SlotType =
   | "OFF_HAND"
   | "BACK"
   | "ACCESSORY"
-  | EquipmentSlot;
+  | EquipmentSlot
+  | "HEADWEAR"
+  | "OUTFIT"
+  | "MAIN_TOOL"
+  | "OFF_TOOL"
+  | "BACKPACK_CAPE"
+  | "FAMILIAR";
 
 export const ALL_SLOT_TYPES: SlotType[] = [
   "HEAD",

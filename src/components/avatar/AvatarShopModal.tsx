@@ -20,6 +20,12 @@ import {
   getShopItemById,
 } from "@/data/avatar-items";
 import {
+  ARCHETYPES_REGISTRY,
+  WARDROBE_CATALOG,
+  adaptStudioArchetypeToCharacterBase,
+  adaptStudioWardrobeItemToShopItem,
+} from "@/data/studio-fantasy";
+import {
   calculateLevelInfo,
   ensureGamificationProgress,
   getCombinedStats,
@@ -69,57 +75,78 @@ interface AvatarShopModalProps {
 
 const RO_SLOT_TABS: { id: string; label: string; icon: string }[] = [
   { id: "all", label: "Tudo", icon: "✨" },
-  { id: "heroes", label: "Heróis RO", icon: "🧙‍♂️" },
-  { id: EquipmentSlot.HEAD_UPPER, label: "Chapéus RO", icon: "🐰" },
-  { id: EquipmentSlot.HEAD_LOWER, label: "Boca RO", icon: "🍃" },
-  { id: EquipmentSlot.ARMOR, label: "Armaduras RO", icon: "👘" },
-  { id: EquipmentSlot.GARMENT, label: "Asas & Capas RO", icon: "🪽" },
-  { id: EquipmentSlot.BACKPACK, label: "Mochilas RO", icon: "📦" },
-  { id: EquipmentSlot.RIGHT_HAND, label: "Armas RO", icon: "🔨" },
-  { id: EquipmentSlot.PET_FAMILIAR, label: "Pets RO", icon: "🐣" },
-  { id: "HEAD", label: "Cabeça", icon: "🎩" },
+  { id: "heroes", label: "Heróis & Companheiros", icon: "🧙‍♂️" },
+  { id: EquipmentSlot.HEAD_UPPER, label: "Chapéus & Capuzes", icon: "🎩" },
+  { id: EquipmentSlot.HEAD_LOWER, label: "Boca & Acessórios", icon: "🍃" },
+  { id: EquipmentSlot.ARMOR, label: "Trajes & Túnicas", icon: "👘" },
+  { id: EquipmentSlot.GARMENT, label: "Asas & Capas", icon: "🪽" },
+  { id: EquipmentSlot.BACKPACK, label: "Mochilas & Alforjes", icon: "🎒" },
+  { id: EquipmentSlot.RIGHT_HAND, label: "Armas & Cajados", icon: "⚔️" },
+  { id: EquipmentSlot.PET_FAMILIAR, label: "Familiares & Mascotes", icon: "🐣" },
+  { id: "HEAD", label: "Cabeça", icon: "🧢" },
   { id: "CHEST", label: "Peitoral", icon: "🥋" },
-  { id: "MAIN_HAND", label: "Mão", icon: "⚔️" },
-  { id: "BACK", label: "Costas", icon: "🎒" },
+  { id: "MAIN_HAND", label: "Mão", icon: "🔨" },
+  { id: "BACK", label: "Costas", icon: "📦" },
   { id: "ACCESSORY", label: "Acessório", icon: "💎" },
 ];
 
 const TIER_COLORS: Record<string, { badge: string; border: string }> = {
+  // Studio Fantasy Tiers
+  APPRENTICE: {
+    badge: "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600 font-bold",
+    border: "border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500",
+  },
+  SCHOLAR: {
+    badge: "bg-blue-100 dark:bg-blue-950/80 text-blue-900 dark:text-blue-200 border-blue-300 dark:border-blue-700/60 font-bold",
+    border: "border-blue-300 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-500",
+  },
+  POLYGLOT_KNIGHT: {
+    badge: "bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border-purple-300 dark:border-purple-700/60 font-bold",
+    border: "border-purple-300 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-500",
+  },
+  GRAND_ARCHIVIST: {
+    badge: "bg-amber-100 dark:bg-amber-950/80 text-amber-950 dark:text-amber-200 border-amber-400 dark:border-amber-600 font-black",
+    border: "border-amber-300 dark:border-amber-700/60 hover:border-amber-500 shadow-sm",
+  },
+
+  // Ragnarok Online Tiers
   NOVICE: {
-    badge: "bg-slate-500/20 text-slate-300 border-slate-500/30",
-    border: "border-slate-800 hover:border-slate-600",
+    badge: "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600 font-bold",
+    border: "border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500",
   },
   FIRST_CLASS: {
-    badge: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-    border: "border-blue-900/40 hover:border-blue-500",
+    badge: "bg-blue-100 dark:bg-blue-950/80 text-blue-900 dark:text-blue-200 border-blue-300 dark:border-blue-700/60 font-bold",
+    border: "border-blue-300 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-500",
   },
   SECOND_CLASS: {
-    badge: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-    border: "border-purple-900/40 hover:border-purple-500",
+    badge: "bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border-purple-300 dark:border-purple-700/60 font-bold",
+    border: "border-purple-300 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-500",
   },
   TRANSCENDENT: {
-    badge: "bg-amber-500/20 text-amber-400 border-amber-500/30 font-black animate-pulse",
-    border: "border-amber-600/60 hover:border-amber-400 shadow-md shadow-amber-500/20",
+    badge: "bg-amber-100 dark:bg-amber-950/80 text-amber-950 dark:text-amber-200 border-amber-400 dark:border-amber-600 font-black",
+    border: "border-amber-300 dark:border-amber-700/60 hover:border-amber-500 shadow-sm",
   },
+
+  // Legacy Tiers
   COMMON: {
-    badge: "bg-slate-500/20 text-slate-300 border-slate-500/30",
-    border: "border-slate-800 hover:border-slate-600",
+    badge: "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600 font-bold",
+    border: "border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500",
   },
   RARE: {
-    badge: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-    border: "border-blue-900/40 hover:border-blue-500",
+    badge: "bg-blue-100 dark:bg-blue-950/80 text-blue-900 dark:text-blue-200 border-blue-300 dark:border-blue-700/60 font-bold",
+    border: "border-blue-300 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-500",
   },
   EPIC: {
-    badge: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-    border: "border-purple-900/40 hover:border-purple-500",
+    badge: "bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border-purple-300 dark:border-purple-700/60 font-bold",
+    border: "border-purple-300 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-500",
   },
   LEGENDARY: {
-    badge: "bg-amber-500/20 text-amber-400 border-amber-500/30 font-black",
-    border: "border-amber-600/60 hover:border-amber-400 shadow-md shadow-amber-500/20",
+    badge: "bg-amber-100 dark:bg-amber-950/80 text-amber-950 dark:text-amber-200 border-amber-400 dark:border-amber-600 font-black",
+    border: "border-amber-300 dark:border-amber-700/60 hover:border-amber-500 shadow-sm",
   },
   MYTHIC: {
-    badge: "bg-rose-500/20 text-rose-400 border-rose-500/30 animate-pulse font-black",
-    border: "border-rose-600/60 hover:border-rose-400 shadow-md shadow-rose-500/20",
+    badge: "bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 dark:border-rose-700/60 font-black",
+    border: "border-rose-300 dark:border-rose-700/60 hover:border-rose-500 shadow-sm",
   },
 };
 
@@ -140,10 +167,12 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
   const [selectedSlot, setSelectedSlot] = useState<string>("all");
   const [previewState, setPreviewState] = useState<AvatarAnimationState>("idle");
 
+  const studioAdaptedItems = WARDROBE_CATALOG.map(adaptStudioWardrobeItemToShopItem);
   const roAdaptedItems = ITEM_CATALOG.map(adaptRoItemToShopItem);
-  const fullShopCatalog: ShopItem[] = [...roAdaptedItems, ...SHOP_ITEMS_CATALOG];
+  const fullShopCatalog: ShopItem[] = [...studioAdaptedItems, ...roAdaptedItems, ...SHOP_ITEMS_CATALOG];
 
   const allHeroes: CharacterBase[] = [
+    ...Object.values(ARCHETYPES_REGISTRY).map(adaptStudioArchetypeToCharacterBase),
     ...BASE_AVATARS.map(adaptRoAvatarToCharacterBase),
     ...CHARACTERS_DATABASE,
   ];
@@ -157,6 +186,25 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
 
     // Correspondência direta do slot
     if (item.slot === selectedSlot) return true;
+
+    // Mapeamento Studio Fantasy SlotCategory (bidirecional)
+    if ((selectedSlot === "HEAD" || selectedSlot === EquipmentSlot.HEAD_UPPER) && item.slot === "HEADWEAR") return true;
+    if (selectedSlot === "HEADWEAR" && (item.slot === "HEAD" || item.slot === EquipmentSlot.HEAD_UPPER)) return true;
+
+    if ((selectedSlot === "CHEST" || selectedSlot === EquipmentSlot.ARMOR) && item.slot === "OUTFIT") return true;
+    if (selectedSlot === "OUTFIT" && (item.slot === "CHEST" || item.slot === EquipmentSlot.ARMOR)) return true;
+
+    if ((selectedSlot === "MAIN_HAND" || selectedSlot === EquipmentSlot.RIGHT_HAND) && item.slot === "MAIN_TOOL") return true;
+    if (selectedSlot === "MAIN_TOOL" && (item.slot === "MAIN_HAND" || item.slot === EquipmentSlot.RIGHT_HAND)) return true;
+
+    if ((selectedSlot === "OFF_HAND" || selectedSlot === EquipmentSlot.LEFT_HAND) && item.slot === "OFF_TOOL") return true;
+    if (selectedSlot === "OFF_TOOL" && (item.slot === "OFF_HAND" || item.slot === EquipmentSlot.LEFT_HAND)) return true;
+
+    if ((selectedSlot === "BACK" || selectedSlot === EquipmentSlot.BACKPACK || selectedSlot === EquipmentSlot.GARMENT) && item.slot === "BACKPACK_CAPE") return true;
+    if (selectedSlot === "BACKPACK_CAPE" && (item.slot === "BACK" || item.slot === EquipmentSlot.BACKPACK || item.slot === EquipmentSlot.GARMENT)) return true;
+
+    if ((selectedSlot === "ACCESSORY" || selectedSlot === EquipmentSlot.PET_FAMILIAR) && item.slot === "FAMILIAR") return true;
+    if (selectedSlot === "FAMILIAR" && (item.slot === "ACCESSORY" || item.slot === EquipmentSlot.PET_FAMILIAR)) return true;
 
     // Mapeamento de slots RO compatíveis (bidirecional)
     if (selectedSlot === "HEAD" && (item.slot === EquipmentSlot.HEAD_UPPER || item.slot === EquipmentSlot.HEAD_LOWER || item.slot === EquipmentSlot.HEAD_MIDDLE)) return true;
@@ -218,32 +266,32 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 bg-slate-950 border border-slate-800 text-slate-100 rounded-3xl shadow-2xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-3xl shadow-2xl">
         <DialogHeader className="space-y-1">
           <div className="flex items-center justify-between gap-3 pr-6">
-            <DialogTitle className="text-xl sm:text-2xl font-black text-foreground flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-amber-400" />
-              <span>Loja Kafra &amp; Armaria RO</span>
+            <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-amber-500 dark:text-amber-400" />
+              <span>Loja &amp; Armaria Studio Fantasy</span>
             </DialogTitle>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-xs sm:text-sm">
-                <Coins className="w-4 h-4 text-amber-400" />
-                <span>{prepared.coins ?? 150} Zeny</span>
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 text-amber-900 dark:text-amber-300 font-bold text-xs sm:text-sm">
+                <Coins className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <span>{prepared.coins ?? 150} Moedas</span>
               </div>
-              <Badge variant="outline" className="border-indigo-500/40 text-indigo-300 text-xs font-bold">
+              <Badge variant="outline" className="border-indigo-300 dark:border-indigo-500/40 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 text-xs font-bold">
                 Nível {levelInfo.level}
               </Badge>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Personalize seu herói Chibi estilo Ragnarok Online com chapéus, asas, martelos e companheiros Poring!
+          <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+            Personalize seu herói com chapéus de viajante, mantos cerimoniais, rapieiras rúnicas e golens autômatos!
           </p>
         </DialogHeader>
 
         {/* Topo: Visualização do Avatar Chibi & Bônus de Lições */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
-          <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-3">
-            <div className="relative h-28 w-28 rounded-2xl bg-slate-900 border-2 border-indigo-500/30 flex items-center justify-center p-1.5 overflow-hidden shadow-inner">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 space-y-3 shadow-sm">
+            <div className="relative h-28 w-28 rounded-2xl bg-slate-100 dark:bg-slate-900 border-2 border-indigo-500/30 flex items-center justify-center p-1.5 overflow-hidden shadow-inner">
               <ModularAvatar
                 config={avatarConfig}
                 state={previewState}
@@ -258,8 +306,8 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
                   onClick={() => setPreviewState(st)}
                   className={`p-1.5 rounded-lg border text-xs cursor-pointer transition-all ${
                     previewState === st
-                      ? "bg-indigo-600 border-indigo-400 text-white"
-                      : "bg-slate-800 border-slate-700 text-slate-400 hover:text-white"
+                      ? "bg-indigo-600 border-indigo-400 text-white shadow-sm"
+                      : "bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                   }`}
                   title={`Testar pose: ${st}`}
                 >
@@ -276,74 +324,79 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
           <div className="md:col-span-2 flex flex-col justify-between space-y-3">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                   Companheiro Ativo
                 </span>
-                <Badge className="bg-indigo-600/30 border-indigo-500 text-indigo-300 text-[10px]">
-                  {allHeroes.find((h) => h.id === prepared.selectedCharacterId)?.name || "Espadachim Pronteriano"}
+                <Badge className="bg-indigo-100 dark:bg-indigo-600/30 border border-indigo-300 dark:border-indigo-500 text-indigo-900 dark:text-indigo-300 text-[10px] font-bold">
+                  {allHeroes.find((h) => h.id === prepared.selectedCharacterId)?.name || "Kaelen, o Tático Errante"}
                 </Badge>
               </div>
-              <h4 className="text-sm font-bold text-foreground mt-1">
+              <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mt-1">
                 {allHeroes.find((h) => h.id === prepared.selectedCharacterId)?.title || "Herói da Jornada"}
               </h4>
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+              <p className="text-xs text-slate-700 dark:text-slate-300 mt-0.5 line-clamp-2 leading-relaxed">
                 {allHeroes.find((h) => h.id === prepared.selectedCharacterId)?.lore || "Bônus ativo de aprendizado de vocabulário."}
               </p>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
-              <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-center">
-                <span className="text-[10px] text-muted-foreground block">Multiplicador XP</span>
-                <span className="text-xs sm:text-sm font-black text-amber-400">{combinedStats.finalXpMultiplier}x</span>
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/80">
+              <div className="p-2 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-center shadow-xs">
+                <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold block">Multiplicador XP</span>
+                <span className="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400">{combinedStats.finalXpMultiplier}x</span>
               </div>
-              <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-center">
-                <span className="text-[10px] text-muted-foreground block">Bônus Zeny</span>
-                <span className="text-xs sm:text-sm font-black text-emerald-400">+{Math.round((combinedStats.finalCoinBonus - 1) * 100)}%</span>
+              <div className="p-2 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-center shadow-xs">
+                <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold block">Bônus Moedas</span>
+                <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400">+{Math.round((combinedStats.finalCoinBonus - 1) * 100)}%</span>
               </div>
-              <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-center">
-                <span className="text-[10px] text-muted-foreground block">Proteção Streak</span>
-                <span className="text-xs sm:text-sm font-black text-blue-400">+{combinedStats.finalStreakProtection} Dias</span>
+              <div className="p-2 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-center shadow-xs">
+                <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold block">Proteção Streak</span>
+                <span className="text-xs sm:text-sm font-black text-blue-600 dark:text-blue-400">+{combinedStats.finalStreakProtection} Dias</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Abas Principais: Loja Kafra vs Heróis RO vs Armaria */}
-        <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+        {/* Abas Principais: Loja Fantasy vs Galeria de Heróis vs Armaria */}
+        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
           <Button
             size="sm"
             variant={activeTab === "catalog" ? "default" : "ghost"}
             onClick={() => {
+              playOptionSelectSound();
               setActiveTab("catalog");
               setSelectedSlot("all");
             }}
             className={`text-xs font-bold cursor-pointer ${
-              activeTab === "catalog" ? "bg-indigo-600 text-white" : "text-slate-400"
+              activeTab === "catalog" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
-            Loja Kafra
+            Loja Fantasy
           </Button>
           <Button
             size="sm"
             variant={activeTab === "heroes" ? "default" : "ghost"}
-            onClick={() => setActiveTab("heroes")}
+            onClick={() => {
+              playOptionSelectSound();
+              setActiveTab("heroes");
+            }}
             className={`text-xs font-bold cursor-pointer ${
-              activeTab === "heroes" ? "bg-indigo-600 text-white" : "text-slate-400"
+              activeTab === "heroes" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
             }`}
           >
             <UserCheck className="w-3.5 h-3.5 mr-1.5" />
-            Heróis Chibi RO (8 Classes)
+            Galeria de Heróis ({allHeroes.length})
           </Button>
           <Button
             size="sm"
             variant={activeTab === "closet" ? "default" : "ghost"}
             onClick={() => {
+              playOptionSelectSound();
               setActiveTab("closet");
               setSelectedSlot("all");
             }}
             className={`text-xs font-bold cursor-pointer ${
-              activeTab === "closet" ? "bg-indigo-600 text-white" : "text-slate-400"
+              activeTab === "closet" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
             }`}
           >
             <Shirt className="w-3.5 h-3.5 mr-1.5" />
@@ -358,11 +411,14 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setSelectedSlot(tab.id)}
-                className={`px-2.5 py-1 rounded-xl text-xs font-semibold shrink-0 cursor-pointer transition-all flex items-center gap-1 border ${
+                onClick={() => {
+                  playOptionSelectSound();
+                  setSelectedSlot(tab.id);
+                }}
+                className={`px-2.5 py-1 rounded-xl text-xs font-bold shrink-0 cursor-pointer transition-all flex items-center gap-1 border ${
                   selectedSlot === tab.id
-                    ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
-                    : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
+                    ? "bg-amber-100 dark:bg-amber-500/20 border-amber-400 dark:border-amber-500/50 text-amber-900 dark:text-amber-300 shadow-xs"
+                    : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 <span>{tab.icon}</span>
@@ -376,34 +432,34 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
         {activeTab === "heroes" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {allHeroes.map((hero) => {
-              const isSelected = (prepared.selectedCharacterId || "valerius") === hero.id;
+              const isSelected = (prepared.selectedCharacterId || "char_tactician_m") === hero.id;
               return (
                 <div
                   key={hero.id}
                   className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${
                     isSelected
-                      ? "bg-indigo-950/40 border-indigo-500 shadow-lg shadow-indigo-500/10"
-                      : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
+                      ? "bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-500 shadow-md shadow-indigo-500/10"
+                      : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-slate-700 shadow-sm"
                   }`}
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                         {hero.category}
                       </span>
                       {isSelected && (
-                        <Badge className="bg-indigo-600 text-white font-bold text-[10px]">
+                        <Badge className="bg-indigo-600 text-white font-extrabold text-[10px]">
                           Ativo ✓
                         </Badge>
                       )}
                     </div>
-                    <h4 className="font-extrabold text-sm text-foreground">{hero.name}</h4>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">{hero.name}</h4>
+                    <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
                       {hero.lore}
                     </p>
                     <div className="pt-1">
-                      <span className="text-[10px] font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 block truncate">
-                        {hero.nativeLanguageBonus}
+                      <span className="text-[10px] font-bold text-amber-950 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/10 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-500/20 block truncate">
+                        Afinidade: {hero.nativeLanguageBonus}
                       </span>
                     </div>
                   </div>
@@ -414,8 +470,8 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
                     onClick={() => handleSelectHero(hero)}
                     className={`w-full text-xs font-bold ${
                       isSelected
-                        ? "bg-slate-800 text-slate-400 cursor-default"
-                        : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer"
+                        ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-default"
+                        : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer shadow-sm"
                     }`}
                   >
                     {isSelected ? "Selecionado" : "Escolher Herói"}
@@ -436,23 +492,23 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
               const hasLevel = levelInfo.level >= item.requiredLevel;
 
               const fallbackTierStyle = {
-                badge: "bg-slate-500/20 text-slate-300 border-slate-500/30",
-                border: "border-slate-800 hover:border-slate-600",
+                badge: "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600 font-bold",
+                border: "border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500",
               };
               const tierStyle = (item.rarity && TIER_COLORS[item.rarity]) || fallbackTierStyle;
 
               return (
                 <div
                   key={item.id}
-                  className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${
+                  className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between space-y-3 bg-white dark:bg-slate-900/60 shadow-sm ${tierStyle.border} ${
                     isItemEquipped
-                      ? "bg-indigo-950/40 border-indigo-500 shadow-md shadow-indigo-500/10"
-                      : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
+                      ? "bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-500 shadow-md shadow-indigo-500/10"
+                      : ""
                   }`}
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className={`text-[9px] font-black px-2 py-0.5 rounded border ${tierStyle.badge}`}>
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${tierStyle.badge}`}>
                         {item.rarity}
                       </span>
                       {isItemEquipped ? (
@@ -460,38 +516,38 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
                           Equipado
                         </Badge>
                       ) : isOwned ? (
-                        <span className="text-[10px] text-slate-400 font-semibold">Adquirido</span>
+                        <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold">Adquirido</span>
                       ) : (
-                        <span className="text-xs font-black text-amber-400 flex items-center gap-1">
-                          <Coins className="w-3.5 h-3.5" />
-                          {item.costCoins} Zeny
+                        <span className="text-xs font-black text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                          <Coins className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                          {item.costCoins} Moedas
                         </span>
                       )}
                     </div>
 
-                    <h4 className="font-extrabold text-sm text-foreground">{item.name}</h4>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">{item.name}</h4>
+                    <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
                       {item.description}
                     </p>
 
                     <div className="flex flex-wrap gap-1 pt-1">
                       {item.statBonus?.xpMultiplier && (
-                        <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-bold text-amber-950 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-700/50">
                           +{Math.round(item.statBonus.xpMultiplier * 100)}% XP
                         </span>
                       )}
                       {item.statBonus?.coinBonus && (
-                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                          +{Math.round(item.statBonus.coinBonus * 100)}% Zeny
+                        <span className="text-[10px] font-bold text-emerald-950 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-700/50">
+                          +{Math.round(item.statBonus.coinBonus * 100)}% Moedas
                         </span>
                       )}
                       {item.statBonus?.streakProtection && (
-                        <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-bold text-blue-950 dark:text-blue-300 bg-blue-100 dark:bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-300 dark:border-blue-700/50">
                           +{item.statBonus.streakProtection} Proteção
                         </span>
                       )}
                       {item.statBonus?.timeBonusSeconds && (
-                        <span className="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-bold text-cyan-950 dark:text-cyan-300 bg-cyan-100 dark:bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-300 dark:border-cyan-700/50">
                           +{item.statBonus.timeBonusSeconds}s Tempo
                         </span>
                       )}
@@ -504,7 +560,7 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
                         size="sm"
                         variant="secondary"
                         onClick={() => handleUnequip(item.slot)}
-                        className="w-full text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
+                        className="w-full text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 cursor-pointer"
                       >
                         Desequipar
                       </Button>
@@ -512,7 +568,7 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
                       <Button
                         size="sm"
                         onClick={() => handleEquip(item)}
-                        className="w-full text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer"
+                        className="w-full text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer shadow-sm"
                       >
                         Equipar
                       </Button>
@@ -523,17 +579,17 @@ export const AvatarShopModal: React.FC<AvatarShopModalProps> = ({
                         onClick={() => handleBuy(item)}
                         className={`w-full text-xs font-bold cursor-pointer ${
                           !hasLevel
-                            ? "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
+                            ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed"
                             : !canAfford
-                            ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-                            : "bg-amber-600 hover:bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20"
+                            ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed"
+                            : "bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shadow-sm"
                         }`}
                       >
                         {!hasLevel
                           ? `Requer Nv. ${item.requiredLevel}`
                           : !canAfford
-                          ? "Zeny Insuficiente"
-                          : `Comprar (${item.costCoins} Zeny)`}
+                          ? "Moedas Insuficientes"
+                          : `Comprar (${item.costCoins} 🪙)`}
                       </Button>
                     )}
                   </div>

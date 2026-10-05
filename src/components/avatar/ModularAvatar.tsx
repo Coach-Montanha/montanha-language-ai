@@ -55,16 +55,16 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
     return null;
   };
 
-  const backId = resolveSlot("GARMENT", "BACK", "back");
-  const backpackId = resolveSlot("BACKPACK", "backpack");
+  const backId = resolveSlot("BACKPACK_CAPE", "GARMENT", "BACK", "back");
+  const backpackId = resolveSlot("BACKPACK", "backpack", "back_field_lexicon_pack");
   const legsId = resolveSlot("FOOTGEAR", "LEGS", "legs");
-  const chestId = resolveSlot("ARMOR", "CHEST", "chest", "body");
-  const headId = resolveSlot("HEAD_UPPER", "HEAD", "head");
+  const chestId = resolveSlot("OUTFIT", "ARMOR", "CHEST", "chest", "body");
+  const headId = resolveSlot("HEADWEAR", "HEAD_UPPER", "HEAD", "head");
   const eyesId = resolveSlot("HEAD_MIDDLE", "eyes");
   const headLowerId = resolveSlot("HEAD_LOWER", "head_lower");
-  const mainHandId = resolveSlot("RIGHT_HAND", "MAIN_HAND", "hand");
-  const offHandId = resolveSlot("LEFT_HAND", "OFF_HAND", "off_hand", "offHand");
-  const petId = resolveSlot("PET_FAMILIAR", "pet", "pet_familiar");
+  const mainHandId = resolveSlot("MAIN_TOOL", "RIGHT_HAND", "MAIN_HAND", "hand");
+  const offHandId = resolveSlot("OFF_TOOL", "LEFT_HAND", "OFF_HAND", "off_hand", "offHand");
+  const petId = resolveSlot("FAMILIAR", "PET_FAMILIAR", "pet", "pet_familiar");
   const accessoryId = resolveSlot("ACCESSORY", "accessory");
   const auraId = eq["aura"] || undefined;
 
@@ -269,6 +269,21 @@ function renderBackItem(
           <path d="M 35 150 Q 100 170 165 150" stroke="#3b82f6" strokeWidth="2" fill="none" opacity="0.6" />
         </g>
       );
+    case "back_field_lexicon_pack":
+      return (
+        <g id="back-field-lexicon-pack" filter={glow}>
+          {/* Alforge de Campo com Pergaminhos (Studio Fantasy) */}
+          <rect x="32" y="98" width="24" height="48" rx="5" fill="#78350f" stroke="#451a03" strokeWidth="2" />
+          <rect x="144" y="98" width="24" height="48" rx="5" fill="#78350f" stroke="#451a03" strokeWidth="2" />
+          <rect x="38" y="112" width="12" height="6" rx="1.5" fill="#fbbf24" stroke="#78350f" strokeWidth="1" />
+          <rect x="150" y="112" width="12" height="6" rx="1.5" fill="#fbbf24" stroke="#78350f" strokeWidth="1" />
+          <rect x="24" y="90" width="152" height="13" rx="6.5" fill="#fef3c7" stroke="#b45309" strokeWidth="1.5" />
+          <line x1="52" y1="90" x2="52" y2="103" stroke="#dc2626" strokeWidth="3" />
+          <line x1="148" y1="90" x2="148" y2="103" stroke="#dc2626" strokeWidth="3" />
+          <circle cx="168" cy="138" r="6" fill="#fbbf24" stroke="#b45309" strokeWidth="1.2" />
+          <circle cx="168" cy="138" r="3" fill="#38bdf8" />
+        </g>
+      );
     case "back_mochila_escriba":
       return (
         <g id="back-mochila-escriba">
@@ -391,6 +406,20 @@ function renderBackpackItem(backpackId?: string | null, ctx?: SvgContext) {
           {/* Cantoneiras de ferro reforçado */}
           <rect x="29" y="140" width="10" height="6" fill="#e2e8f0" stroke="#475569" strokeWidth="1" />
           <rect x="161" y="140" width="10" height="6" fill="#e2e8f0" stroke="#475569" strokeWidth="1" />
+        </g>
+      );
+    case "back_field_lexicon_pack":
+      return (
+        <g id="backpack-field-lexicon-pack" filter={glow}>
+          <rect x="32" y="98" width="24" height="48" rx="5" fill="#78350f" stroke="#451a03" strokeWidth="2" />
+          <rect x="144" y="98" width="24" height="48" rx="5" fill="#78350f" stroke="#451a03" strokeWidth="2" />
+          <rect x="38" y="112" width="12" height="6" rx="1.5" fill="#fbbf24" stroke="#78350f" strokeWidth="1" />
+          <rect x="150" y="112" width="12" height="6" rx="1.5" fill="#fbbf24" stroke="#78350f" strokeWidth="1" />
+          <rect x="24" y="90" width="152" height="13" rx="6.5" fill="#fef3c7" stroke="#b45309" strokeWidth="1.5" />
+          <line x1="52" y1="90" x2="52" y2="103" stroke="#dc2626" strokeWidth="3" />
+          <line x1="148" y1="90" x2="148" y2="103" stroke="#dc2626" strokeWidth="3" />
+          <circle cx="168" cy="138" r="6" fill="#fbbf24" stroke="#b45309" strokeWidth="1.2" />
+          <circle cx="168" cy="138" r="3" fill="#38bdf8" />
         </g>
       );
     case "back_mochila_escriba":
@@ -909,6 +938,132 @@ function renderBaseArchetype(
     );
   }
 
+  // STUDIO FANTASY 1: KAELEN, O ESPADACHIM LINGUISTA (MALE, TACTICIAN)
+  if (
+    subType === "char_tactician_m" ||
+    subType === "tactician_swordsman" ||
+    subType === "kaelen" ||
+    subType === "kaelen_base" ||
+    subType.includes("kaelen")
+  ) {
+    return (
+      <g id="studio-kaelen">
+        <rect x="88" y="114" width="24" height="26" fill="#e5b89c" />
+        <path d="M 46 138 Q 100 120 154 138 L 162 186 L 38 186 Z" fill="#1e293b" />
+        <path d="M 72 136 L 100 172 L 128 136 Z" fill="#334155" stroke="#38bdf8" strokeWidth="1.5" filter={glow} />
+        <rect x="42" y="136" width="22" height="14" rx="4" fill="#475569" stroke="#94a3b8" strokeWidth="1.2" />
+        <rect x="136" y="136" width="22" height="14" rx="4" fill="#475569" stroke="#94a3b8" strokeWidth="1.2" />
+        <circle cx="56" cy="92" r="10" fill="#e5b89c" />
+        <circle cx="144" cy="92" r="10" fill="#e5b89c" />
+        <ellipse cx="100" cy="94" rx="42" ry="44" fill="#fce7d6" />
+        <path d="M 52 78 L 38 46 L 64 52 L 76 26 L 98 46 L 118 24 L 132 46 L 158 38 L 148 78 Z" fill="#1c1917" />
+        <path d="M 62 48 L 74 32 L 88 48" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
+        <path d="M 104 46 L 116 30 L 128 46" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
+        <path d="M 54 75 Q 100 52 146 75 Q 125 60 100 60 Q 75 60 54 75 Z" fill="#292524" />
+        <ellipse cx="80" cy="88" rx="7.5" ry="8" fill="#0f172a" />
+        <ellipse cx="120" cy="88" rx="7.5" ry="8" fill="#0f172a" />
+        <ellipse cx="80" cy="89" rx="6" ry="6.5" fill="#0284c7" />
+        <ellipse cx="120" cy="89" rx="6" ry="6.5" fill="#0284c7" />
+        <circle cx="80" cy="88" r="3.5" fill="#082f49" />
+        <circle cx="120" cy="88" r="3.5" fill="#082f49" />
+        <circle cx="77" cy="85" r="2.8" fill="#fff" />
+        <circle cx="117" cy="85" r="2.8" fill="#fff" />
+        <circle cx="83" cy="91" r="1.4" fill="#fff" />
+        <circle cx="123" cy="91" r="1.4" fill="#fff" />
+        <path d="M 70 76 Q 80 72 90 75" stroke="#1c1917" strokeWidth="3" strokeLinecap="round" fill="none" />
+        <path d="M 110 75 Q 120 72 130 76" stroke="#1c1917" strokeWidth="3" strokeLinecap="round" fill="none" />
+        <ellipse cx="72" cy="98" rx="5" ry="2.5" fill="#f43f5e" opacity="0.35" />
+        <ellipse cx="128" cy="98" rx="5" ry="2.5" fill="#f43f5e" opacity="0.35" />
+        {isSpeaking ? (
+          <ellipse cx="100" cy="108" rx="8" ry="6" fill="#be123c" />
+        ) : (
+          <path d="M 92 106 Q 100 112 108 106" stroke="#881337" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        )}
+      </g>
+    );
+  }
+
+  // STUDIO FANTASY 2: LYANNA, A MAGA DE VÉU (FEMALE, ARCHIVIST)
+  if (
+    subType === "char_archivist_f" ||
+    subType === "hooded_archivist" ||
+    subType === "lyanna" ||
+    subType === "lyanna_base" ||
+    subType.includes("lyanna")
+  ) {
+    return (
+      <g id="studio-lyanna">
+        <rect x="89" y="115" width="22" height="25" fill="#f1c2a2" />
+        <path d="M 48 138 Q 100 122 152 138 L 160 186 L 40 186 Z" fill="#312e81" />
+        <path d="M 76 138 Q 100 160 124 138" stroke="#c084fc" strokeWidth="2" fill="none" filter={glow} />
+        <circle cx="58" cy="92" r="9" fill="#f1c2a2" />
+        <circle cx="142" cy="92" r="9" fill="#f1c2a2" />
+        <ellipse cx="100" cy="94" rx="41" ry="43" fill="#fef2f2" />
+        <path d="M 52 76 Q 56 36 100 36 Q 144 36 148 76 Q 125 54 100 54 Q 75 54 52 76 Z" fill="#c084fc" />
+        <path d="M 50 72 Q 36 105 38 152 Q 46 115 56 84 Z" fill="#a855f7" />
+        <path d="M 150 72 Q 164 105 162 152 Q 154 115 144 84 Z" fill="#a855f7" />
+        <path d="M 68 114 Q 100 128 132 114 Q 100 120 68 114 Z" fill="#e9d5ff" opacity="0.75" filter={glow} />
+        <ellipse cx="80" cy="88" rx="7" ry="7.5" fill="#581c87" />
+        <ellipse cx="120" cy="88" rx="7.5" ry="7.5" fill="#581c87" />
+        <ellipse cx="80" cy="89" rx="5.5" ry="6" fill="#9333ea" />
+        <ellipse cx="120" cy="89" rx="5.5" ry="6" fill="#9333ea" />
+        <circle cx="78" cy="85" r="2.6" fill="#fff" />
+        <circle cx="118" cy="85" r="2.6" fill="#fff" />
+        <circle cx="82" cy="90" r="1.3" fill="#fdf4ff" />
+        <circle cx="122" cy="90" r="1.3" fill="#fdf4ff" />
+        <path d="M 72 80 Q 80 77 88 80" stroke="#6b21a8" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+        <path d="M 112 80 Q 120 77 128 80" stroke="#6b21a8" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+        <ellipse cx="72" cy="97" rx="6" ry="3" fill="#f472b6" opacity="0.6" />
+        <ellipse cx="128" cy="97" rx="6" ry="3" fill="#f472b6" opacity="0.6" />
+        {isSpeaking ? (
+          <ellipse cx="100" cy="107" rx="7" ry="5.5" fill="#be123c" />
+        ) : (
+          <path d="M 94 106 Q 100 110 106 106" stroke="#db2777" strokeWidth="2" strokeLinecap="round" fill="none" />
+        )}
+      </g>
+    );
+  }
+
+  // STUDIO FANTASY 3: IGNISAUR, A CHAMA ANCESTRAL (NEUTRAL_CREATURE, ELEMENTAL_MENTOR)
+  if (
+    subType === "char_elemental_beast" ||
+    subType === "mythic_elemental_mentor" ||
+    subType === "ignisaur" ||
+    subType === "ignisaur_base" ||
+    subType.includes("ignisaur")
+  ) {
+    return (
+      <g id="studio-ignisaur">
+        <path d="M 48 138 Q 100 120 152 138 L 160 186 L 40 186 Z" fill="#7c2d12" />
+        <path d="M 70 138 L 100 176 L 130 138 Z" fill="#ea580c" stroke="#fbbf24" strokeWidth="1.5" />
+        <path d="M 64 68 C 42 42 36 12 56 6 C 72 2 70 38 66 68 Z" fill="#9a3412" stroke="#ea580c" strokeWidth="1.5" />
+        <path d="M 136 68 C 158 42 164 12 144 6 C 128 2 130 38 134 68 Z" fill="#9a3412" stroke="#ea580c" strokeWidth="1.5" />
+        <circle cx="54" cy="8" r="7" fill="#fbbf24" filter={glow} />
+        <circle cx="54" cy="8" r="3.5" fill="#38bdf8" />
+        <circle cx="146" cy="8" r="7" fill="#fbbf24" filter={glow} />
+        <circle cx="146" cy="8" r="3.5" fill="#38bdf8" />
+        <ellipse cx="100" cy="94" rx="44" ry="44" fill="#ba7b56" />
+        <polygon points="94,54 100,42 106,54" fill="#ea580c" />
+        <polygon points="82,58 88,48 92,60" fill="#ea580c" />
+        <polygon points="108,60 112,48 118,58" fill="#ea580c" />
+        <polygon points="90,88 110,88 100,108" fill="#9a3412" />
+        <circle cx="96" cy="102" r="1.5" fill="#431407" />
+        <circle cx="104" cy="102" r="1.5" fill="#431407" />
+        <ellipse cx="78" cy="84" rx="8" ry="6.5" fill="#fbbf24" stroke="#7c2d12" strokeWidth="1.5" filter={glow} />
+        <ellipse cx="122" cy="84" rx="8" ry="6.5" fill="#fbbf24" stroke="#7c2d12" strokeWidth="1.5" filter={glow} />
+        <ellipse cx="78" cy="84" rx="2.5" ry="5.5" fill="#431407" />
+        <ellipse cx="122" cy="84" rx="2.5" ry="5.5" fill="#431407" />
+        <circle cx="76" cy="82" r="2" fill="#fff" />
+        <circle cx="120" cy="82" r="2" fill="#fff" />
+        {isSpeaking ? (
+          <ellipse cx="100" cy="112" rx="7" ry="5" fill="#ea580c" />
+        ) : (
+          <path d="M 92 110 Q 100 115 108 110" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        )}
+      </g>
+    );
+  }
+
   // FALLBACK HUMANO PADRÃO
   return (
     <g id="archetype-human-default">
@@ -1067,6 +1222,32 @@ function renderBodyApparel(
           <circle cx="100" cy="154" r="2.5" fill="#fbbf24" />
         </g>
       );
+    case "outfit_scout_tunic":
+      return (
+        <g id="outfit-scout-tunic">
+          {/* Túnica de Couro com Faixa Runada (Studio Fantasy) */}
+          <path d="M 48 136 Q 100 120 152 136 L 160 186 L 40 186 Z" fill="#54301a" stroke="#381e0e" strokeWidth="1.5" />
+          <rect x="44" y="136" width="18" height="12" rx="3" fill="#78350f" stroke="#b45309" strokeWidth="1" />
+          <rect x="138" y="136" width="18" height="12" rx="3" fill="#78350f" stroke="#b45309" strokeWidth="1" />
+          <line x1="52" y1="136" x2="148" y2="186" stroke="#92400e" strokeWidth="9" />
+          <line x1="52" y1="136" x2="148" y2="186" stroke="#fbbf24" strokeWidth="2.5" strokeDasharray="4 3" filter={glow} />
+          <rect x="56" y="166" width="88" height="8" fill="#292524" />
+          <rect x="94" y="163" width="12" height="14" rx="2" fill="#fbbf24" stroke="#78350f" strokeWidth="1.5" />
+        </g>
+      );
+    case "outfit_ceremonial_silks":
+      return (
+        <g id="outfit-ceremonial-silks" filter={glow}>
+          {/* Quimono Nobre do Guardião Dracônico (Studio Fantasy) */}
+          <path d="M 46 134 Q 100 118 154 134 L 164 186 L 36 186 Z" fill="#991b1b" stroke="#7f1d1d" strokeWidth="2" />
+          <path d="M 36 142 L 20 178 L 48 186 Z" fill="#ea580c" />
+          <path d="M 164 142 L 180 178 L 152 186 Z" fill="#ea580c" />
+          <path d="M 76 134 L 100 172 L 124 134 Z" fill="#fbbf24" stroke="#f97316" strokeWidth="1.5" />
+          <rect x="54" y="162" width="92" height="12" fill="#d97706" stroke="#fbbf24" strokeWidth="1.5" />
+          <rect x="92" y="159" width="16" height="18" rx="2" fill="#fbbf24" stroke="#b45309" strokeWidth="1.5" />
+          <circle cx="100" cy="168" r="3.5" fill="#ef4444" />
+        </g>
+      );
     case "armor_blacksmith_overalls":
       return (
         <g id="armor-blacksmith-overalls">
@@ -1214,6 +1395,35 @@ function renderHeadwear(
   const fire = ctx?.fireGrad || "url(#fireGrad)";
 
   switch (headId) {
+    case "hat_pointed_wanderer":
+      return (
+        <g id="head-pointed-wanderer" filter={glow}>
+          {/* Chapéu Cônico do Peregrino (Studio Fantasy) */}
+          <ellipse cx="100" cy="66" rx="64" ry="16" fill="#1c1917" stroke="#292524" strokeWidth="2" />
+          <path d="M 52 66 Q 100 14 148 66 Z" fill="#292524" stroke="#1c1917" strokeWidth="1.5" />
+          <path d="M 60 62 Q 100 52 140 62 L 142 67 Q 100 57 58 67 Z" fill="#b91c1c" />
+          <line x1="72" y1="64" x2="68" y2="88" stroke="#b91c1c" strokeWidth="2.5" strokeLinecap="round" />
+          <rect x="63" y="86" width="10" height="15" rx="1" fill="#fef08a" stroke="#ca8a04" strokeWidth="1" />
+          <text x="65" y="97" fontSize="8" fontWeight="bold" fill="#78350f">語</text>
+          <ellipse cx="100" cy="74" rx="46" ry="8" fill="#0c0a09" opacity="0.35" />
+        </g>
+      );
+    case "hood_silk_archivist":
+      return (
+        <g id="head-silk-archivist" filter={glow}>
+          {/* Capuz Carmesim do Escriba Real (Studio Fantasy) */}
+          <path
+            d="M 52 78 C 50 32 70 18 100 18 C 130 18 150 32 148 78 C 136 68 118 64 100 64 C 82 64 64 68 52 78 Z"
+            fill="#991b1b"
+            stroke="#7f1d1d"
+            strokeWidth="2"
+          />
+          <path d="M 62 74 Q 100 60 138 74" stroke="#fbbf24" strokeWidth="3" fill="none" strokeDasharray="5 3" />
+          <path d="M 52 78 Q 45 105 52 125 L 62 118 Q 58 100 62 80 Z" fill="#7f1d1d" />
+          <path d="M 148 78 Q 155 105 148 125 L 138 118 Q 142 100 138 80 Z" fill="#7f1d1d" />
+          <circle cx="100" cy="22" r="3" fill="#fbbf24" />
+        </g>
+      );
     case "head_tiara_aprendiz":
       return (
         <g id="head-tiara-aprendiz">
@@ -1335,6 +1545,30 @@ function renderHandItem(handId?: string | null, state: string = "idle", ctx?: Sv
   const cyber = ctx?.cyberGrad || "url(#cyberGrad)";
 
   switch (handId) {
+    case "weapon_runic_rapier":
+      return (
+        <g id="weapon-runic-rapier" filter={glow}>
+          {/* Florete do Tradutor Ágil (Studio Fantasy) */}
+          <rect x="146" y="146" width="5" height="18" rx="2" fill="#78350f" />
+          <ellipse cx="148" cy="146" rx="9" ry="6" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1.5" />
+          <circle cx="148" cy="146" r="3" fill="#0284c7" />
+          <line x1="148" y1="142" x2="178" y2="48" stroke="#f8fafc" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="150" y1="135" x2="174" y2="60" stroke="#38bdf8" strokeWidth="1.2" strokeDasharray="3 2" />
+          <path d="M 148 164 Q 155 174 150 182" stroke="#0284c7" strokeWidth="2" fill="none" />
+        </g>
+      );
+    case "weapon_gnarled_staff":
+      return (
+        <g id="weapon-gnarled-staff" filter={glow}>
+          {/* Cajado das Raízes Ancestrais (Studio Fantasy) */}
+          <line x1="150" y1="186" x2="168" y2="68" stroke="#78350f" strokeWidth="5" strokeLinecap="round" />
+          <path d="M 166 76 Q 160 52 176 48 Q 186 64 168 70" stroke="#92400e" strokeWidth="4" fill="none" strokeLinecap="round" />
+          <circle cx="172" cy="56" r="9" fill="#10b981" stroke="#059669" strokeWidth="2" opacity="0.95" />
+          <circle cx="170" cy="53" r="3.5" fill="#a7f3d0" />
+          <circle cx="182" cy="48" r="1.5" fill="#34d399" />
+          <circle cx="162" cy="62" r="1.5" fill="#34d399" />
+        </g>
+      );
     case "wpn_forging_hammer":
       return (
         <g id="wpn-forging-hammer" filter={glow}>
@@ -1477,6 +1711,34 @@ function renderPetGroundItem(petId?: string | null, state: string = "idle", ctx?
   const glow = ctx?.glowEffect || "url(#glowEffect)";
 
   switch (petId) {
+    case "familiar_clockwork_golem":
+      return (
+        <g id="familiar-clockwork-golem" filter={glow} className="transition-transform duration-300">
+          {/* Golem Autômato de Bolso (Studio Fantasy) */}
+          <ellipse cx="158" cy="184" rx="16" ry="5.5" fill="#000" opacity="0.25" />
+          {/* Corpo em cúpula de latão dourado */}
+          <path
+            d="M 142 176 C 140 156 148 144 158 144 C 168 144 176 156 174 176 Z"
+            fill="#d97706"
+            stroke="#92400e"
+            strokeWidth="1.5"
+          />
+          {/* Engrenagem giratória no peito */}
+          <circle cx="158" cy="166" r="6" fill="#fbbf24" stroke="#78350f" strokeWidth="1" />
+          <line x1="152" y1="166" x2="164" y2="166" stroke="#78350f" strokeWidth="1.5" />
+          <line x1="158" y1="160" x2="158" y2="172" stroke="#78350f" strokeWidth="1.5" />
+          {/* Olho ciclope azul ciano brilhante */}
+          <circle cx="158" cy="154" r="5" fill="#0f172a" stroke="#fbbf24" strokeWidth="1" />
+          <circle cx="158" cy="154" r="3" fill="#06b6d4" />
+          <circle cx="157" cy="153" r="1" fill="#fff" />
+          {/* Pequena chaminé de cobre soltando vapor de acerto */}
+          <rect x="164" y="140" width="3" height="6" fill="#b45309" />
+          <circle cx="166" cy="136" r="2" fill="#e2e8f0" opacity="0.7" />
+          {/* Mãozinhas de latão batendo palmas */}
+          <circle cx="145" cy="168" r="3" fill="#fbbf24" stroke="#78350f" strokeWidth="1" />
+          <circle cx="171" cy="168" r="3" fill="#fbbf24" stroke="#78350f" strokeWidth="1" />
+        </g>
+      );
     case "pet_poring_cute":
       return (
         <g id="pet-poring" filter={glow} className="transition-transform duration-300">

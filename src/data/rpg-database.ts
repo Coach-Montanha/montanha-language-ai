@@ -13,8 +13,17 @@ import {
   adaptRoAvatarToCharacterBase,
   adaptRoItemToShopItem,
 } from "./ro-rpg";
+import {
+  ARCHETYPES_REGISTRY,
+  WARDROBE_CATALOG,
+  getStudioArchetypeById,
+  getStudioWardrobeItemById,
+  adaptStudioArchetypeToCharacterBase,
+  adaptStudioWardrobeItemToShopItem,
+} from "./studio-fantasy";
 
 export * from "./ro-rpg";
+export * from "./studio-fantasy";
 
 // =========================================================================
 // 1. BANCO DE DADOS DE PERSONAGENS & ARQUÉTIPOS RPG
@@ -93,6 +102,8 @@ export const DEFAULT_CHARACTER_ID = "valerius";
 export function getCharacterById(id: string): CharacterBase | undefined {
   const existing = CHARACTERS_DATABASE.find((c) => c.id === id);
   if (existing) return existing;
+  const studioArchetype = getStudioArchetypeById(id);
+  if (studioArchetype) return adaptStudioArchetypeToCharacterBase(studioArchetype);
   const roAvatar = getRoAvatarById(id);
   if (roAvatar) return adaptRoAvatarToCharacterBase(roAvatar);
   return undefined;
@@ -478,6 +489,8 @@ export const STARTER_SHOP_ITEM_IDS: string[] = [
 export function getShopItemById(id: string): ShopItem | undefined {
   const existing = SHOP_ITEMS_CATALOG.find((item) => item.id === id);
   if (existing) return existing;
+  const studioItem = getStudioWardrobeItemById(id);
+  if (studioItem) return adaptStudioWardrobeItemToShopItem(studioItem);
   const roItem = getRoItemById(id);
   if (roItem) return adaptRoItemToShopItem(roItem);
   return undefined;
@@ -485,8 +498,9 @@ export function getShopItemById(id: string): ShopItem | undefined {
 
 export function getShopItemsBySlot(slot: SlotType): ShopItem[] {
   const existing = SHOP_ITEMS_CATALOG.filter((item) => item.slot === slot);
+  const studioItems = WARDROBE_CATALOG.map(adaptStudioWardrobeItemToShopItem).filter((item) => item.slot === slot);
   const roItems = ITEM_CATALOG.filter((item) => item.slot === slot).map(adaptRoItemToShopItem);
-  return [...existing, ...roItems];
+  return [...existing, ...studioItems, ...roItems];
 }
 
 export function getShopItemsByRarity(rarity: ShopItem["rarity"]): ShopItem[] {

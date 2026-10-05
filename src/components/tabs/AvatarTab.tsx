@@ -21,6 +21,10 @@ import {
   ITEM_CATALOG,
   adaptRoAvatarToCharacterBase,
   adaptRoItemToShopItem,
+  ARCHETYPES_REGISTRY,
+  WARDROBE_CATALOG,
+  adaptStudioArchetypeToCharacterBase,
+  adaptStudioWardrobeItemToShopItem,
 } from "@/data/avatar-items";
 import {
   calculateLevelInfo,
@@ -113,24 +117,24 @@ const SLOT_TABS: { id: string; label: string; icon: string }[] = [
 
 const RARITY_COLORS: Record<ItemRarity, { badge: string; border: string }> = {
   COMMON: {
-    badge: "bg-slate-500/15 text-slate-300 border-slate-500/30",
-    border: "border-slate-800 hover:border-slate-600",
+    badge: "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600 font-bold",
+    border: "border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500",
   },
   RARE: {
-    badge: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-    border: "border-blue-900/40 hover:border-blue-500",
+    badge: "bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 font-bold",
+    border: "border-blue-200 dark:border-blue-800/80 hover:border-blue-500 dark:hover:border-blue-400",
   },
   EPIC: {
-    badge: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-    border: "border-purple-900/40 hover:border-purple-500",
+    badge: "bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700 font-bold",
+    border: "border-purple-200 dark:border-purple-800/80 hover:border-purple-500 dark:hover:border-purple-400",
   },
   LEGENDARY: {
-    badge: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-    border: "border-amber-700/50 hover:border-amber-400 shadow-sm shadow-amber-500/10",
+    badge: "bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700 font-black",
+    border: "border-amber-300 dark:border-amber-700 hover:border-amber-500 dark:hover:border-amber-400 shadow-sm",
   },
   MYTHIC: {
-    badge: "bg-rose-500/15 text-rose-400 border-rose-500/30 animate-pulse",
-    border: "border-rose-600/60 hover:border-rose-400 shadow-md shadow-rose-500/20",
+    badge: "bg-rose-50 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-700 font-black animate-pulse",
+    border: "border-rose-300 dark:border-rose-600 hover:border-rose-500 dark:hover:border-rose-400 shadow-md",
   },
 };
 
@@ -149,11 +153,13 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
   const selectedChar = getCharacterById(prepared.selectedCharacterId || "valerius");
 
   const allHeroes: CharacterBase[] = [
+    ...Object.values(ARCHETYPES_REGISTRY).map(adaptStudioArchetypeToCharacterBase),
     ...BASE_AVATARS.map(adaptRoAvatarToCharacterBase),
     ...CHARACTERS_DATABASE,
   ];
 
   const fullShopCatalog: ShopItem[] = [
+    ...WARDROBE_CATALOG.map(adaptStudioWardrobeItemToShopItem),
     ...ITEM_CATALOG.map(adaptRoItemToShopItem),
     ...SHOP_ITEMS_CATALOG,
   ];
@@ -164,23 +170,23 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
   const [previewState, setPreviewState] = useState<AvatarAnimationState>("idle");
 
   const filteredItems = fullShopCatalog.filter((item) => {
-    // Filtro por slot com mapeamento bidirecional entre sistema RO e legado
+    // Filtro por slot com mapeamento bidirecional entre sistema RO, Studio Fantasy e legado
     if (activeSlot !== "all" && activeSlot !== "archetype") {
       const directMatch = item.slot === activeSlot;
       const mappedMatch =
-        (activeSlot === "HEAD" && (item.slot === EquipmentSlot.HEAD_UPPER || item.slot === EquipmentSlot.HEAD_LOWER || item.slot === EquipmentSlot.HEAD_MIDDLE)) ||
-        (activeSlot === EquipmentSlot.HEAD_UPPER && item.slot === "HEAD") ||
-        (activeSlot === "CHEST" && item.slot === EquipmentSlot.ARMOR) ||
-        (activeSlot === EquipmentSlot.ARMOR && item.slot === "CHEST") ||
-        (activeSlot === "BACK" && (item.slot === EquipmentSlot.GARMENT || item.slot === EquipmentSlot.BACKPACK)) ||
-        (activeSlot === EquipmentSlot.GARMENT && item.slot === "BACK") ||
-        (activeSlot === EquipmentSlot.BACKPACK && item.slot === "BACK") ||
-        (activeSlot === "MAIN_HAND" && item.slot === EquipmentSlot.RIGHT_HAND) ||
-        (activeSlot === EquipmentSlot.RIGHT_HAND && item.slot === "MAIN_HAND") ||
-        (activeSlot === "OFF_HAND" && item.slot === EquipmentSlot.LEFT_HAND) ||
-        (activeSlot === EquipmentSlot.LEFT_HAND && item.slot === "OFF_HAND") ||
-        (activeSlot === "ACCESSORY" && item.slot === EquipmentSlot.PET_FAMILIAR) ||
-        (activeSlot === EquipmentSlot.PET_FAMILIAR && item.slot === "ACCESSORY") ||
+        (activeSlot === "HEAD" && (item.slot === EquipmentSlot.HEAD_UPPER || item.slot === EquipmentSlot.HEAD_LOWER || item.slot === EquipmentSlot.HEAD_MIDDLE || item.slot === "HEADWEAR")) ||
+        (activeSlot === EquipmentSlot.HEAD_UPPER && (item.slot === "HEAD" || item.slot === "HEADWEAR")) ||
+        (activeSlot === "CHEST" && (item.slot === EquipmentSlot.ARMOR || item.slot === "OUTFIT")) ||
+        (activeSlot === EquipmentSlot.ARMOR && (item.slot === "CHEST" || item.slot === "OUTFIT")) ||
+        (activeSlot === "BACK" && (item.slot === EquipmentSlot.GARMENT || item.slot === EquipmentSlot.BACKPACK || item.slot === "BACKPACK_CAPE")) ||
+        (activeSlot === EquipmentSlot.GARMENT && (item.slot === "BACK" || item.slot === "BACKPACK_CAPE")) ||
+        (activeSlot === EquipmentSlot.BACKPACK && (item.slot === "BACK" || item.slot === "BACKPACK_CAPE")) ||
+        (activeSlot === "MAIN_HAND" && (item.slot === EquipmentSlot.RIGHT_HAND || item.slot === "MAIN_TOOL")) ||
+        (activeSlot === EquipmentSlot.RIGHT_HAND && (item.slot === "MAIN_HAND" || item.slot === "MAIN_TOOL")) ||
+        (activeSlot === "OFF_HAND" && (item.slot === EquipmentSlot.LEFT_HAND || item.slot === "OFF_TOOL")) ||
+        (activeSlot === EquipmentSlot.LEFT_HAND && (item.slot === "OFF_HAND" || item.slot === "OFF_TOOL")) ||
+        (activeSlot === "ACCESSORY" && (item.slot === EquipmentSlot.PET_FAMILIAR || item.slot === "FAMILIAR")) ||
+        (activeSlot === EquipmentSlot.PET_FAMILIAR && (item.slot === "ACCESSORY" || item.slot === "FAMILIAR")) ||
         (activeSlot === "LEGS" && item.slot === EquipmentSlot.FOOTGEAR) ||
         (activeSlot === EquipmentSlot.FOOTGEAR && item.slot === "LEGS");
 
@@ -245,18 +251,18 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
       {/* ============================================================ */}
       {/* 1. BANNER RPG: NÍVEL, XP, TÍTULO, MOEDAS E BÔNUS COMBINADOS */}
       {/* ============================================================ */}
-      <div className="relative overflow-hidden rounded-3xl border border-violet-500/30 bg-gradient-to-r from-violet-950/80 via-slate-900/90 to-indigo-950/80 p-5 sm:p-6 shadow-2xl backdrop-blur-xl">
+      <div className="relative overflow-hidden rounded-3xl border border-violet-500/40 bg-gradient-to-r from-violet-900 via-indigo-900 to-slate-900 p-5 sm:p-6 shadow-2xl backdrop-blur-xl text-white">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className="bg-amber-500 text-slate-950 font-black px-3 py-0.5 text-xs">
+              <Badge className="bg-amber-400 text-slate-950 font-black px-3 py-0.5 text-xs shadow-sm">
                 Nível {levelInfo.level}
               </Badge>
               <h2 className="text-lg sm:text-xl font-black text-white">
                 {selectedChar ? selectedChar.name : levelInfo.title}
               </h2>
             </div>
-            <p className="text-xs text-slate-300 max-w-xl">
+            <p className="text-xs text-slate-100 font-medium max-w-xl leading-relaxed">
               {selectedChar?.lore ||
                 "Ganhe XP e Moedas em treinos diários e conversas com o Tutor IA para equipar e evoluir seu avatar RPG."}
             </p>
@@ -264,13 +270,13 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
 
           {/* Saldo de Moedas & Botão Conversar */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2.5 bg-amber-500/15 border border-amber-500/30 px-4 py-2.5 rounded-2xl shadow-inner">
-              <Coins className="h-6 w-6 text-amber-400" />
+            <div className="flex items-center gap-2.5 bg-slate-900/90 border border-amber-400/50 px-4 py-2.5 rounded-2xl shadow-inner">
+              <Coins className="h-6 w-6 text-amber-300" />
               <div>
-                <span className="text-[10px] text-amber-300 font-bold block uppercase tracking-wider">
+                <span className="text-[10px] text-amber-200 font-bold block uppercase tracking-wider">
                   Moedas RPG
                 </span>
-                <span className="text-lg font-black text-amber-400 leading-none">
+                <span className="text-lg font-black text-amber-300 leading-none">
                   {prepared.coins ?? 150} 🪙
                 </span>
               </div>
@@ -280,7 +286,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
               <Button
                 onClick={onOpenConversation}
                 size="sm"
-                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg cursor-pointer text-xs h-10 px-4 rounded-xl"
+                className="bg-indigo-500 hover:bg-indigo-400 text-white font-extrabold shadow-lg cursor-pointer text-xs h-10 px-4 rounded-xl"
               >
                 Praticar com Tutor
                 <ChevronRight className="h-4 w-4 ml-1" />
@@ -290,50 +296,50 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
         </div>
 
         {/* Estatísticas RPG Combinadas (Atributos de Equipamento) */}
-        <div className="mt-4 pt-4 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="flex items-center gap-3 bg-slate-950/60 border border-slate-800/80 p-3 rounded-xl">
-            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+        <div className="mt-4 pt-4 border-t border-indigo-800/60 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="flex items-center gap-3 bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl shadow-sm">
+            <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-300">
               <Flame className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-semibold block uppercase">
+              <span className="text-[11px] text-slate-300 font-bold block uppercase tracking-wider">
                 Multiplicador de XP
               </span>
-              <span className="text-sm font-black text-indigo-300">
+              <span className="text-sm font-black text-white">
                 {combinedStats.finalXpMultiplier}x{" "}
-                <span className="text-xs font-medium text-emerald-400">
+                <span className="text-xs font-bold text-emerald-300">
                   (+{Math.round((combinedStats.finalXpMultiplier - 1) * 100)}%)
                 </span>
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-slate-950/60 border border-slate-800/80 p-3 rounded-xl">
-            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+          <div className="flex items-center gap-3 bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl shadow-sm">
+            <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-300">
               <Coins className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-semibold block uppercase">
+              <span className="text-[11px] text-slate-300 font-bold block uppercase tracking-wider">
                 Bônus de Moedas
               </span>
-              <span className="text-sm font-black text-emerald-300">
+              <span className="text-sm font-black text-white">
                 {combinedStats.finalCoinBonus}x{" "}
-                <span className="text-xs font-medium text-emerald-400">
+                <span className="text-xs font-bold text-emerald-300">
                   (+{Math.round((combinedStats.finalCoinBonus - 1) * 100)}%)
                 </span>
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-slate-950/60 border border-slate-800/80 p-3 rounded-xl">
-            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
+          <div className="flex items-center gap-3 bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl shadow-sm">
+            <div className="p-2 rounded-lg bg-blue-500/20 text-blue-300">
               <Shield className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 font-semibold block uppercase">
+              <span className="text-[11px] text-slate-300 font-bold block uppercase tracking-wider">
                 Proteção de Ofensiva
               </span>
-              <span className="text-sm font-black text-blue-300">
+              <span className="text-sm font-black text-white">
                 {combinedStats.finalStreakProtection} Dias Protegidos
               </span>
             </div>
@@ -341,38 +347,38 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
         </div>
 
         {/* Barra de Progresso de Nível */}
-        <div className="mt-4 pt-3 border-t border-slate-800/60 space-y-1.5">
-          <div className="flex justify-between text-[11px] font-semibold text-slate-300">
+        <div className="mt-4 pt-3 border-t border-indigo-800/60 space-y-1.5">
+          <div className="flex justify-between text-[11px] font-bold text-slate-100">
             <span>Progresso para o Nível {levelInfo.level + 1}</span>
-            <span className="text-violet-400 font-bold">
+            <span className="text-amber-300 font-black">
               {levelInfo.currentXp} / {levelInfo.xpForNextLevel} XP ({levelInfo.progressPercent}%)
             </span>
           </div>
-          <Progress value={levelInfo.progressPercent} className="h-2 bg-slate-800" />
+          <Progress value={levelInfo.progressPercent} className="h-2 bg-slate-950/80" />
         </div>
       </div>
 
       {/* ============================================================ */}
-      {/* 2. VITRINE DE AVATAR RPG & OS 7 SLOTS DE EQUIPAMENTO */}
+      {/* 2. VITRINE DE AVATAR RPG & OS SLOTS DE EQUIPAMENTO */}
       {/* ============================================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Painel Central: Avatar 3D-like + Controles de Estado */}
-        <div className="lg:col-span-5 rounded-3xl border border-slate-800 bg-card/60 backdrop-blur-md p-6 flex flex-col items-center justify-center space-y-4">
+        {/* Painel Central: Avatar Preview + Controles de Estado */}
+        <div className="lg:col-span-5 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/95 p-6 flex flex-col items-center justify-center space-y-4 shadow-sm dark:shadow-xl">
           <div className="text-center space-y-1">
-            <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block">
+            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">
               Pré-visualização do Personagem
             </span>
-            <h3 className="text-base font-extrabold text-foreground">
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
               {selectedChar?.name || "Herói Aventureiro"}
             </h3>
             {selectedChar && (
-              <Badge variant="outline" className="text-[10px] border-indigo-500/40 text-indigo-300">
+              <Badge variant="outline" className="text-[10px] font-bold border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/80">
                 ⚡ Afinidade: {selectedChar.nativeLanguageBonus}
               </Badge>
             )}
           </div>
 
-          <div className="p-4 rounded-2xl bg-gradient-to-b from-indigo-950/20 to-slate-950/40 border border-indigo-500/20 shadow-inner">
+          <div className="p-5 rounded-2xl bg-gradient-to-b from-indigo-50/70 to-slate-100 dark:from-indigo-950/40 dark:to-slate-950/80 border border-indigo-100 dark:border-indigo-900/50 shadow-inner">
             <ModularAvatar
               config={avatarConfig}
               state={previewState}
@@ -383,8 +389,8 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
           </div>
 
           {/* Seletor de Estados de Animação */}
-          <div className="w-full pt-2 border-t border-border/40">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2 text-center">
+          <div className="w-full pt-2 border-t border-slate-100 dark:border-slate-800">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2 text-center">
               Testar Animações do Avatar
             </span>
             <div className="grid grid-cols-5 gap-1.5">
@@ -408,8 +414,10 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                       playOptionSelectSound();
                       setPreviewState(st.id);
                     }}
-                    className={`flex flex-col items-center h-auto py-1.5 px-1 text-[10px] gap-0.5 ${
-                      active ? "bg-indigo-600 text-white" : "border-slate-800 text-slate-300"
+                    className={`flex flex-col items-center h-auto py-1.5 px-1 text-[10px] gap-0.5 font-bold cursor-pointer ${
+                      active
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
@@ -421,16 +429,16 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
           </div>
         </div>
 
-        {/* Painel dos Slots de Equipamento Ragnarok Online (Paper Doll) */}
-        <div className="lg:col-span-7 rounded-3xl border border-slate-800 bg-card/60 backdrop-blur-md p-6 space-y-4">
+        {/* Painel dos Slots de Equipamento (Paper Doll) */}
+        <div className="lg:col-span-7 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/95 p-6 space-y-4 shadow-sm dark:shadow-xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-extrabold text-foreground flex items-center gap-2">
-                <Shirt className="w-4 h-4 text-indigo-400" />
-                Equipamento Chibi RO (10 Slots de Aventura)
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                <Shirt className="w-4 h-4 text-indigo-500" />
+                Equipamento Chibi &amp; Estúdio (Slots de Aventura)
               </h3>
-              <p className="text-xs text-muted-foreground">
-                Equipe chapéus, asas, martelos, capas e companheiros Poring para potencializar seus estudos.
+              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                Equipe chapéus, asas, martelos, capas e companheiros para potencializar seus estudos.
               </p>
             </div>
             {onOpenAvatarShop && (
@@ -440,7 +448,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                 className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs gap-1.5 cursor-pointer shadow-sm shadow-amber-500/20 shrink-0"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                Loja Kafra RO
+                Loja Kafra &amp; Estúdio
               </Button>
             )}
           </div>
@@ -462,47 +470,50 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
               }
 
               const item = itemId ? getShopItemById(itemId) : null;
+              const isFilled = !!item;
 
               return (
                 <div
                   key={slotDef.slotKey}
                   onClick={() => setActiveSlot(slotDef.slotKey)}
-                  className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                    item
-                      ? RARITY_COLORS[item.rarity].border + " bg-slate-900/60"
-                      : "border-slate-800/80 bg-slate-950/40 hover:border-slate-700"
+                  className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between shadow-sm ${
+                    isFilled
+                      ? "bg-slate-50 dark:bg-slate-800/90 border-indigo-200 dark:border-indigo-800/80 hover:border-indigo-400 dark:hover:border-indigo-500"
+                      : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-2xl p-2 rounded-xl bg-slate-800/60 shrink-0">
+                    <span className="text-2xl p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm shrink-0">
                       {slotDef.icon}
                     </span>
                     <div className="min-w-0">
-                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block truncate">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider block truncate">
                         {slotDef.label}
                       </span>
-                      <span className="text-xs font-bold text-foreground block truncate max-w-[140px]">
+                      <span className={`text-xs font-black block truncate max-w-[150px] ${
+                        isFilled ? "text-slate-900 dark:text-slate-100" : "text-slate-400 dark:text-slate-500 font-medium"
+                      }`}>
                         {item ? item.name : "Vazio"}
                       </span>
                       {item && (
                         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                           {item.statBonus.xpMultiplier && (
-                            <span className="text-[9px] text-indigo-400 font-bold">
+                            <span className="text-[10px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 px-1.5 py-0.2 rounded font-bold">
                               +{Math.round(item.statBonus.xpMultiplier * 100)}% XP
                             </span>
                           )}
                           {item.statBonus.streakProtection && (
-                            <span className="text-[9px] text-blue-400 font-bold">
+                            <span className="text-[10px] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 px-1.5 py-0.2 rounded font-bold">
                               +{item.statBonus.streakProtection} Prot.
                             </span>
                           )}
                           {item.statBonus.coinBonus && (
-                            <span className="text-[9px] text-emerald-400 font-bold">
+                            <span className="text-[10px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/80 border border-amber-200 dark:border-amber-800 px-1.5 py-0.2 rounded font-bold">
                               +{Math.round(item.statBonus.coinBonus * 100)}% 🪙
                             </span>
                           )}
                           {item.statBonus.timeBonusSeconds && (
-                            <span className="text-[9px] text-cyan-400 font-bold">
+                            <span className="text-[10px] text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/80 border border-cyan-200 dark:border-cyan-800 px-1.5 py-0.2 rounded font-bold">
                               +{item.statBonus.timeBonusSeconds}s Tempo
                             </span>
                           )}
@@ -519,7 +530,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                         e.stopPropagation();
                         handleUnequip(activeUnequipKey);
                       }}
-                      className="text-[10px] text-slate-400 hover:text-rose-400 h-7 px-2 cursor-pointer shrink-0"
+                      className="text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 font-bold h-7 px-2 cursor-pointer shrink-0"
                     >
                       Remover
                     </Button>
@@ -534,13 +545,13 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
       {/* ============================================================ */}
       {/* 3. SELEÇÃO DE HERÓIS E ARQUÉTIPOS RPG */}
       {/* ============================================================ */}
-      <div className="rounded-3xl border border-slate-800 bg-card/60 backdrop-blur-md p-6 space-y-4">
+      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur-md p-6 space-y-4">
         <div>
-          <h3 className="text-base font-extrabold text-foreground flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-indigo-400" />
+          <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+            <UserCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             Galeria de Heróis &amp; Companheiros Linguistas
           </h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
             Escolha seu companheiro de jornada. Cada herói possui bônus de afinidade para famílias de línguas.
           </p>
         </div>
@@ -553,35 +564,35 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                 key={char.id}
                 className={`p-4 rounded-2xl border transition-all space-y-3 flex flex-col justify-between ${
                   isCurrent
-                    ? "border-indigo-500 bg-indigo-950/30 shadow-lg shadow-indigo-500/10"
-                    : "border-slate-800 bg-slate-900/50 hover:border-slate-700"
+                    ? "border-indigo-500 bg-indigo-50/80 dark:bg-indigo-950/40 shadow-md shadow-indigo-500/10"
+                    : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/90 hover:border-indigo-300 dark:hover:border-slate-600 shadow-sm"
                 }`}
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="text-[10px] border-slate-700 text-slate-300">
+                    <Badge variant="outline" className="text-[10px] font-bold border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
                       {char.category}
                     </Badge>
                     {isCurrent && (
-                      <Badge className="bg-indigo-600 text-white font-bold text-[10px]">
+                      <Badge className="bg-indigo-600 text-white font-extrabold text-[10px]">
                         Ativo ✓
                       </Badge>
                     )}
                   </div>
 
                   <div>
-                    <h4 className="font-extrabold text-sm text-foreground">{char.name}</h4>
-                    <span className="text-[11px] text-indigo-400 font-semibold block">
+                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">{char.name}</h4>
+                    <span className="text-[11px] text-indigo-700 dark:text-indigo-400 font-bold block">
                       {char.title}
                     </span>
                   </div>
 
-                  <p className="text-xs text-muted-foreground line-clamp-3">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-3 font-normal leading-relaxed">
                     {char.lore}
                   </p>
 
                   <div className="pt-1">
-                    <span className="text-[10px] font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    <span className="text-[10px] font-bold text-amber-950 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700/50">
                       Afinidade: {char.nativeLanguageBonus} (+15% XP)
                     </span>
                   </div>
@@ -594,8 +605,8 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                   onClick={() => handleSelectCharacter(char)}
                   className={`w-full text-xs font-bold ${
                     isCurrent
-                      ? "bg-slate-800 text-slate-400 cursor-default"
-                      : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer"
+                      ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-default"
+                      : "bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer shadow-sm"
                   }`}
                 >
                   {isCurrent ? "Herói Selecionado" : "Escolher Herói"}
@@ -609,20 +620,20 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
       {/* ============================================================ */}
       {/* 4. LOJA & ARMORY RPG COM CATÁLOGO DOS 7 SLOTS */}
       {/* ============================================================ */}
-      <div className="rounded-3xl border border-slate-800 bg-card/60 backdrop-blur-md p-6 space-y-6">
+      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur-md p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-base font-extrabold text-foreground flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-indigo-400" />
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               Arsenal &amp; Loja de Itens RPG
             </h3>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
               Compre relíquias lendárias e equipe seu personagem para acelerar o progresso nos idiomas.
             </p>
           </div>
 
           {/* Toggle Loja vs Inventário */}
-          <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 p-1 rounded-xl">
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-xl">
             <Button
               size="sm"
               variant={shopMode === "shop" ? "default" : "ghost"}
@@ -631,7 +642,9 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                 setShopMode("shop");
               }}
               className={`text-xs font-bold ${
-                shopMode === "shop" ? "bg-indigo-600 text-white" : "text-slate-400"
+                shopMode === "shop"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Loja Completa
@@ -644,7 +657,9 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                 setShopMode("closet");
               }}
               className={`text-xs font-bold ${
-                shopMode === "closet" ? "bg-indigo-600 text-white" : "text-slate-400"
+                shopMode === "closet"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Meu Inventário ({inventoryIds.length})
@@ -667,8 +682,8 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                 }}
                 className={`text-xs font-bold whitespace-nowrap cursor-pointer ${
                   active
-                    ? "bg-indigo-600 text-white shadow-md"
-                    : "border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700"
+                    ? "bg-indigo-600 text-white shadow-md font-bold"
+                    : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/50"
                 }`}
               >
                 <span className="mr-1.5">{slot.icon}</span>
@@ -680,7 +695,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
 
         {/* Filtros de Raridade */}
         <div className="flex items-center gap-1.5 flex-wrap pt-1">
-          <span className="text-[11px] text-muted-foreground mr-1">Raridade:</span>
+          <span className="text-[11px] text-slate-700 dark:text-slate-300 font-bold mr-1">Raridade:</span>
           {(["ALL", "COMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC"] as const).map((rarity) => (
             <button
               key={rarity}
@@ -690,8 +705,8 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
               }}
               className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
                 rarityFilter === rarity
-                  ? "bg-primary text-primary-foreground border-primary shadow"
-                  : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-foreground"
+                  ? "bg-indigo-600 text-white border-indigo-600 shadow font-bold"
+                  : "bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-semibold"
               }`}
             >
               {rarity}
@@ -711,64 +726,64 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
             return (
               <div
                 key={item.id}
-                className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 bg-slate-900/40 backdrop-blur-sm ${rarityStyle.border}`}
+                className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 bg-white dark:bg-slate-800/95 shadow-sm backdrop-blur-sm ${rarityStyle.border}`}
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Badge variant="outline" className={`text-[10px] font-bold ${rarityStyle.badge}`}>
                       {item.rarity}
                     </Badge>
-                    <span className="text-[10px] font-bold text-muted-foreground">
+                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
                       Slot: {item.slot}
                     </span>
                   </div>
 
                   <div>
-                    <h4 className="font-black text-sm text-foreground">{item.name}</h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-2">
+                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">{item.name}</h4>
+                    <p className="text-[11px] text-slate-700 dark:text-slate-300 mt-0.5 line-clamp-2 leading-relaxed">
                       {item.description}
                     </p>
                   </div>
 
                   {/* Inspiração Épica */}
-                  <div className="text-[10px] text-indigo-300/90 italic bg-indigo-950/30 p-2 rounded-lg border border-indigo-900/30">
+                  <div className="text-[10px] text-indigo-900 dark:text-indigo-200 italic bg-indigo-50 dark:bg-indigo-950/50 p-2 rounded-lg border border-indigo-200 dark:border-indigo-800/60 font-medium">
                     🗡️ Inspirado em: {item.inspiration}
                   </div>
 
                   {/* Bônus de Atributos */}
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {item.statBonus.xpMultiplier && (
-                      <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                      <span className="text-[10px] font-bold text-indigo-950 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-300 dark:border-indigo-700/50">
                         +{Math.round(item.statBonus.xpMultiplier * 100)}% XP
                       </span>
                     )}
                     {item.statBonus.streakProtection && (
-                      <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                      <span className="text-[10px] font-bold text-blue-950 dark:text-blue-300 bg-blue-100 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-300 dark:border-blue-700/50">
                         +{item.statBonus.streakProtection} Dias Protegidos
                       </span>
                     )}
                     {item.statBonus.coinBonus && (
-                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                      <span className="text-[10px] font-bold text-emerald-950 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-700/50">
                         +{Math.round(item.statBonus.coinBonus * 100)}% Moedas
                       </span>
                     )}
                     {item.statBonus.timeBonusSeconds && (
-                      <span className="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                      <span className="text-[10px] font-bold text-cyan-950 dark:text-cyan-300 bg-cyan-100 dark:bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-300 dark:border-cyan-700/50">
                         +{item.statBonus.timeBonusSeconds}s Tempo
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-border/40 flex items-center justify-between gap-3">
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-3">
                   <div>
                     {!owned && (
                       <div className="flex items-center gap-1">
-                        <span className="text-xs font-black text-amber-400">
+                        <span className="text-xs font-black text-amber-700 dark:text-amber-400">
                           {item.costCoins > 0 ? `${item.costCoins} 🪙` : "Grátis"}
                         </span>
                         {!levelMet && (
-                          <span className="text-[10px] text-rose-400 block font-semibold">
+                          <span className="text-[10px] text-rose-700 dark:text-rose-400 block font-bold">
                             (Requer Nvl {item.requiredLevel})
                           </span>
                         )}
@@ -781,7 +796,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                       size="sm"
                       variant="secondary"
                       disabled
-                      className="text-xs font-bold bg-emerald-600/20 text-emerald-400 border border-emerald-500/40"
+                      className="text-xs font-bold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-600"
                     >
                       <Check className="w-3.5 h-3.5 mr-1" /> Equipado
                     </Button>
@@ -789,7 +804,7 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                     <Button
                       size="sm"
                       onClick={() => handleEquip(item)}
-                      className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer"
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer shadow-sm"
                     >
                       Equipar
                     </Button>
@@ -800,8 +815,8 @@ export const AvatarTab: React.FC<AvatarTabProps> = ({
                       onClick={() => handleBuy(item)}
                       className={`text-xs font-bold cursor-pointer ${
                         canAfford && levelMet
-                          ? "bg-amber-500 hover:bg-amber-400 text-slate-950 font-black"
-                          : "bg-slate-800 text-slate-500 cursor-not-allowed"
+                          ? "bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shadow-sm"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 font-bold cursor-not-allowed"
                       }`}
                     >
                       {!levelMet ? (

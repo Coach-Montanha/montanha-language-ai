@@ -20,7 +20,12 @@ export enum ItemTier {
   NOVICE = "NOVICE",         // Básico inicial
   FIRST_CLASS = "FIRST_CLASS", // Aprendiz dedicado
   SECOND_CLASS = "SECOND_CLASS", // Intermediário avançado
-  TRANSCENDENT = "TRANSCENDENT"  // Fluência e maestria
+  TRANSCENDENT = "TRANSCENDENT", // Fluência e maestria
+  // Studio Fantasy Tiers
+  APPRENTICE = "APPRENTICE",     // Nível 1 - 5
+  SCHOLAR = "SCHOLAR",           // Nível 6 - 14
+  POLYGLOT_KNIGHT = "POLYGLOT",  // Nível 15 - 24
+  GRAND_ARCHIVIST = "ARCHIVIST"  // Nível 25+
 }
 
 export enum ArchetypeRole {

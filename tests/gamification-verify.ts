@@ -30,6 +30,13 @@ import {
   AntigravityAvatarEngine,
   getRoAvatarById,
   getRoItemById,
+  AvatarRenderLayer,
+  SlotCategory,
+  ARCHETYPES_REGISTRY,
+  WARDROBE_CATALOG,
+  AntigravityAvatarController,
+  getStudioArchetypeById,
+  getStudioWardrobeItemById,
 } from "../src/data/avatar-items";
 import { UserProgress, SupportedLanguage } from "../src/types/language";
 import { AvatarItem, SlotType, ALL_SLOT_TYPES, EquipmentSlot, ItemTier, ArchetypeRole } from "../src/types/avatar";
@@ -1013,6 +1020,146 @@ console.log("➡️ Test 19: ensureGamificationProgress subType auto-synchroniza
   );
 
   console.log("  ✓ ensureGamificationProgress subType auto-synchronization verified!");
+}
+
+// ==========================================
+// Test 20: Studio Fantasy Avatar Customisation System
+// ==========================================
+console.log("➡️ Test 20: Studio Fantasy Avatar Customisation System & AntigravityAvatarController");
+{
+  // 20a: Enums & Layers
+  assert.strictEqual(AvatarRenderLayer.SHADOW, 0);
+  assert.strictEqual(AvatarRenderLayer.BODY_BASE, 3);
+  assert.strictEqual(AvatarRenderLayer.HEAD_UPPER, 8);
+  assert.strictEqual(AvatarRenderLayer.MAIN_HAND, 10);
+  assert.strictEqual(AvatarRenderLayer.FAMILIAR_FRONT, 11);
+  assert.strictEqual(AvatarRenderLayer.AURA_FX, 12);
+
+  assert.strictEqual(SlotCategory.HEADWEAR, "HEADWEAR");
+  assert.strictEqual(SlotCategory.OUTFIT, "OUTFIT");
+  assert.strictEqual(SlotCategory.MAIN_TOOL, "MAIN_TOOL");
+  assert.strictEqual(SlotCategory.OFF_TOOL, "OFF_TOOL");
+  assert.strictEqual(SlotCategory.BACKPACK_CAPE, "BACKPACK_CAPE");
+  assert.strictEqual(SlotCategory.FAMILIAR, "FAMILIAR");
+
+  assert.strictEqual(ItemTier.APPRENTICE, "APPRENTICE");
+  assert.strictEqual(ItemTier.SCHOLAR, "SCHOLAR");
+  assert.strictEqual(ItemTier.POLYGLOT_KNIGHT, "POLYGLOT");
+  assert.strictEqual(ItemTier.GRAND_ARCHIVIST, "ARCHIVIST");
+
+  // 20b: Archetypes Registry & Resolution
+  assert.ok(ARCHETYPES_REGISTRY["tactician_swordsman"], "Kaelen must exist in registry");
+  assert.ok(ARCHETYPES_REGISTRY["hooded_archivist"], "Lyanna must exist in registry");
+  assert.ok(ARCHETYPES_REGISTRY["mythic_elemental_mentor"], "Ignisaur must exist in registry");
+
+  const kaelenDirect = getStudioArchetypeById("char_tactician_m");
+  assert.ok(kaelenDirect, "getStudioArchetypeById must resolve char_tactician_m");
+  assert.ok(kaelenDirect.name.includes("Kaelen"));
+
+  const kaelenAdapted = getCharacterById("char_tactician_m");
+  assert.ok(kaelenAdapted, "getCharacterById must resolve Studio Fantasy archetype");
+  assert.strictEqual(kaelenAdapted.id, "char_tactician_m");
+  assert.strictEqual(kaelenAdapted.nativeLanguageBonus, "Corte Preciso");
+
+  const lyannaAdapted = getCharacterById("char_archivist_f");
+  assert.ok(lyannaAdapted, "getCharacterById must resolve Lyanna");
+  assert.strictEqual(lyannaAdapted.nativeLanguageBonus, "Eco Poliglota");
+
+  const ignisaurAdapted = getCharacterById("char_elemental_beast");
+  assert.ok(ignisaurAdapted, "getCharacterById must resolve Ignisaur");
+  assert.strictEqual(ignisaurAdapted.category, "MYTHIC_BEAST");
+
+  // 20c: Wardrobe Catalog & Adaptation
+  assert.strictEqual(WARDROBE_CATALOG.length, 8, "WARDROBE_CATALOG must contain exactly 8 items");
+
+  const rapierShopItem = getShopItemById("weapon_runic_rapier");
+  assert.ok(rapierShopItem, "getShopItemById must resolve weapon_runic_rapier");
+  assert.strictEqual(rapierShopItem.statBonus?.timeBonusSeconds, 5);
+  assert.strictEqual(rapierShopItem.slot, EquipmentSlot.RIGHT_HAND);
+
+  const golemShopItem = getShopItemById("familiar_clockwork_golem");
+  assert.ok(golemShopItem, "getShopItemById must resolve familiar_clockwork_golem");
+  assert.strictEqual(golemShopItem.statBonus?.streakProtection, 3);
+  assert.strictEqual(golemShopItem.statBonus?.timeBonusSeconds, 6);
+  assert.strictEqual(golemShopItem.slot, EquipmentSlot.PET_FAMILIAR);
+
+  // 20d: AntigravityAvatarController Life-cycle
+  const controller = new AntigravityAvatarController("tactician_swordsman", 1, 600);
+  assert.strictEqual(controller.getCurrentLevel(), 1);
+  assert.strictEqual(controller.getCoinBalance(), 600);
+
+  // Purchase blocked: Level too low
+  const buyGolem = controller.purchaseItem("familiar_clockwork_golem");
+  assert.strictEqual(buyGolem.success, false);
+  assert.ok(buyGolem.message.includes("Nível insuficiente"));
+
+  // Purchase blocked: Insufficient coins (coins: 100, staff cost: 400, required level: 1)
+  controller.setCoinBalance(100);
+  const buyStaffNoCoins = controller.purchaseItem("weapon_gnarled_staff");
+  assert.strictEqual(buyStaffNoCoins.success, false);
+  assert.ok(buyStaffNoCoins.message.includes("Moedas insuficientes"));
+
+  // Purchase successful: Cajado das Raízes Ancestrais (cost: 400, level: 1)
+  controller.setCoinBalance(600);
+  const buyStaff = controller.purchaseItem("weapon_gnarled_staff");
+  assert.strictEqual(buyStaff.success, true);
+  assert.strictEqual(controller.getCoinBalance(), 200);
+  assert.ok(controller.getOwnedItemIds().has("weapon_gnarled_staff"));
+
+  // Purchase blocked: Already owned
+  const buyStaffAgain = controller.purchaseItem("weapon_gnarled_staff");
+  assert.strictEqual(buyStaffAgain.success, false);
+  assert.ok(buyStaffAgain.message.includes("Já possuis"));
+
+  // Equip blocked: Not owned yet
+  const equipRapierUnowned = controller.equipItem("weapon_runic_rapier");
+  assert.strictEqual(equipRapierUnowned.success, false);
+  assert.ok(equipRapierUnowned.message.includes("Precisas de comprar"));
+
+  // Equip successful: Staff
+  const equipStaff = controller.equipItem("weapon_gnarled_staff");
+  assert.strictEqual(equipStaff.success, true);
+  assert.strictEqual(controller.getEquippedItem(SlotCategory.MAIN_TOOL)?.id, "weapon_gnarled_staff");
+
+  // Unequip item
+  const unequipStaff = controller.unequipItem(SlotCategory.MAIN_TOOL);
+  assert.strictEqual(unequipStaff.success, true);
+  assert.strictEqual(controller.getEquippedItem(SlotCategory.MAIN_TOOL), null);
+
+  // Re-equip and replace test
+  controller.equipItem("weapon_gnarled_staff");
+  controller.setCurrentLevel(10);
+  controller.addCoins(2000);
+  const buyRapier = controller.purchaseItem("weapon_runic_rapier");
+  assert.strictEqual(buyRapier.success, true);
+
+  const equipRapier = controller.equipItem("weapon_runic_rapier");
+  assert.strictEqual(equipRapier.success, true);
+  assert.strictEqual(equipRapier.replacedItem, "Cajado das Raízes Ancestrais");
+  assert.strictEqual(controller.getEquippedItem(SlotCategory.MAIN_TOOL)?.id, "weapon_runic_rapier");
+
+  // Buffs calculation
+  const buffs = controller.calculateCurrentBuffs();
+  assert.strictEqual(buffs.totalXpRate, 1.1, "Base 1.10 XP rate for tactician");
+  assert.strictEqual(buffs.extraListeningSeconds, 5, "Rapier gives +5s extra listening");
+
+  // Render tree stacking & layer sorting
+  const displayTree = controller.getAntigravityDisplayTree();
+  assert.ok(displayTree.length >= 2, "Display tree must contain base body + equipped items");
+  assert.strictEqual(displayTree[0]?.layerLabel, "BASE_CHARACTER_BODY");
+  assert.strictEqual(displayTree[0]?.layerIndex, AvatarRenderLayer.BODY_BASE);
+
+  // Assert tree is strictly monotonically sorted by layerIndex
+  for (let i = 1; i < displayTree.length; i++) {
+    const prev = displayTree[i - 1]!;
+    const curr = displayTree[i]!;
+    assert.ok(
+      curr.layerIndex >= prev.layerIndex,
+      `Layer index must be ordered: ${prev.layerIndex} <= ${curr.layerIndex}`
+    );
+  }
+
+  console.log("  ✓ Studio Fantasy Avatar Customisation System & Controller verified!");
 }
 
 console.log("\n🎉 ALL GAMIFICATION, RPG & AVATAR VERIFICATION TESTS PASSED FLAWLESSLY!\n");

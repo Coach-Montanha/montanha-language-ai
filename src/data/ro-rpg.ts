@@ -469,6 +469,10 @@ export function adaptRoItemToShopItem(item: EquipItem): ShopItem {
     [ItemTier.FIRST_CLASS]: "RARE",
     [ItemTier.SECOND_CLASS]: "EPIC",
     [ItemTier.TRANSCENDENT]: "LEGENDARY",
+    [ItemTier.APPRENTICE]: "COMMON",
+    [ItemTier.SCHOLAR]: "RARE",
+    [ItemTier.POLYGLOT_KNIGHT]: "EPIC",
+    [ItemTier.GRAND_ARCHIVIST]: "LEGENDARY",
   };
 
   const statBonus: ShopItem["statBonus"] = {};
