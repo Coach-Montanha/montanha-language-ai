@@ -33,3 +33,6 @@ dist-ssr
 
 .vercel
 
+
+# Spec Kit agent folder (may contain secrets)
+.agents/
