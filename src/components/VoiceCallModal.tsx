@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -35,9 +35,21 @@ import {
   Sparkles,
   Subtitles,
   Activity,
+  Zap,
 } from "lucide-react";
 import { AudioWaveform } from "@/components/ui/AudioWaveform";
 import { toast } from "sonner";
+import {
+  createLiveSession,
+  closeLiveSession,
+  sendAudioChunk,
+  signalSpeechEnd,
+  startMicCapture,
+  createAudioPlayer,
+  selectLiveVoice,
+  type LiveSession,
+} from "@/services/gemini-live";
+
 
 interface VoiceCallModalProps {
   open: boolean;
@@ -86,6 +98,108 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
   const timerRef = useRef<any>(null);
   const activeCallRef = useRef<boolean>(false);
 
+  // ── Gemini Live API refs ──
+  const liveSessionRef = useRef<LiveSession | null>(null);
+  const micStopRef = useRef<(() => void) | null>(null);
+  const audioPlayerRef = useRef<ReturnType<typeof createAudioPlayer> | null>(null);
+  const [isLiveMode, setIsLiveMode] = useState(false);
+
+  // ── Gemini Live API: inicia sessão full-duplex ──────────────────────────────
+  const startLiveSession = useCallback(async () => {
+    const apiKey = progress.geminiApiKey;
+    if (!apiKey || !activeCallRef.current) return;
+
+    try {
+      const learnerMemory = loadLearnerMemory(activeTutor.language);
+      const memoryText = learnerMemory?.recentMistakes?.length
+        ? `\nO aluno já cometeu estes erros recentes: ${learnerMemory.recentMistakes.slice(0, 5).join("; ")}.`
+        : "";
+
+      const systemInstruction =
+        (activeTutor as any).systemPrompt ||
+        `Você é ${activeTutor.name}, de ${(activeTutor as any).city || ""}. ` +
+        `Tutor de ${activeTutor.language === "en" ? "inglês" : activeTutor.language}. ` +
+        `Estilo: ${(activeTutor as any).styleTitle || "amigável"}. ` +
+        `Corrija erros gentilmente, mantenha respostas curtas (1-3 frases). ` +
+        `Só use o idioma ensinado, exceto para correções em português.` +
+        memoryText;
+
+      const voiceName = selectLiveVoice(activeTutor.language, activeTutor.gender);
+      const player = createAudioPlayer();
+      audioPlayerRef.current = player;
+
+      const session = await createLiveSession(
+        apiKey,
+        systemInstruction,
+        voiceName,
+        {
+          onConnected: () => {
+            setIsLiveMode(true);
+            setCallState("listening");
+            playMicStartSound();
+            toast.success(`${activeTutor.name} conectada via Live API ⚡`, { duration: 2000 });
+          },
+          onAudioChunk: (b64) => {
+            if (!activeCallRef.current) return;
+            setCallState("speaking");
+            player.play(b64);
+          },
+          onUserTranscript: (text) => {
+            if (text) setLastUserText(text);
+          },
+          onTutorTranscript: (text) => {
+            if (text) {
+              setLastTutorText(text);
+              // Concede XP por conversa
+              const updProg = addXP(3, activeTutor.language);
+              onUpdateProgress({ ...updProg, messagesSentCount: progress.messagesSentCount + 1 });
+            }
+          },
+          onInterrupted: () => {
+            player.stop();
+            setCallState("listening");
+          },
+          onError: (err) => {
+            console.warn("[Live] Erro na sessão:", err);
+            setIsLiveMode(false);
+            // Fallback gracioso para modo turn-based
+            toast.error("Live API indisponível, alternando para modo padrão.");
+            startListeningSession([]);
+          },
+          onClosed: () => {
+            if (activeCallRef.current) setCallState("idle");
+          },
+        }
+      );
+
+      liveSessionRef.current = session;
+
+      // Captura microfone e transmite chunks PCM
+      const { stop } = await startMicCapture((chunk) => {
+        if (activeCallRef.current && liveSessionRef.current) {
+          sendAudioChunk(liveSessionRef.current, chunk);
+        }
+      });
+      micStopRef.current = stop;
+    } catch (err) {
+      console.warn("[Live] Falha ao iniciar sessão, usando modo padrão:", err);
+      setIsLiveMode(false);
+    }
+  }, [activeTutor, progress, onUpdateProgress]);
+
+  // Teardown Live API
+  const teardownLive = useCallback(() => {
+    micStopRef.current?.();
+    micStopRef.current = null;
+    if (liveSessionRef.current) {
+      closeLiveSession(liveSessionRef.current);
+      liveSessionRef.current = null;
+    }
+    audioPlayerRef.current?.close();
+    audioPlayerRef.current = null;
+    setIsLiveMode(false);
+  }, []);
+
   // Inicia ou encerra a chamada
   useEffect(() => {
     if (open) {
@@ -95,46 +209,42 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         setCallDuration((prev) => prev + 1);
       }, 1000);
 
-      // Inicia com a saudação do tutor
-      const greeting = activeTutor.initialGreeting;
-      setLastTutorText(greeting);
-      setCallState("speaking");
+      // Tenta modo Live API (se tiver API key), senão usa turn-based
+      if (progress.geminiApiKey) {
+        startLiveSession();
+      } else {
+        // Modo turn-based original: tutor saúda primeiro
+        const greeting = activeTutor.initialGreeting;
+        setLastTutorText(greeting);
+        setCallState("speaking");
 
-      const initialHistory: ChatMessage[] = [
-        {
-          id: `tutor-init-${Date.now()}`,
-          sender: "tutor",
-          text: greeting,
-          timestamp: Date.now(),
-        },
-      ];
-      setConversationHistory(initialHistory);
+        const initialHistory: ChatMessage[] = [
+          { id: `tutor-init-${Date.now()}`, sender: "tutor", text: greeting, timestamp: Date.now() },
+        ];
+        setConversationHistory(initialHistory);
 
-      speakText(greeting, {
-        rate: audioSpeed,
-        pitch: activeTutor.speechPitch,
-        gender: activeTutor.gender,
-        lang: activeTutor.speechLangCode || langDef.speechLangCode,
-        preferredVoiceKeywords: activeTutor.preferredVoiceKeywords,
-        voiceName: progress.selectedVoiceName,
-        onEnd: () => {
-          if (activeCallRef.current && !isMuted) {
-            startListeningSession(initialHistory);
-          } else {
-            setCallState("idle");
-          }
-        },
-        onError: () => {
-          if (activeCallRef.current) startListeningSession(initialHistory);
-        },
-      });
+        speakText(greeting, {
+          rate: audioSpeed,
+          pitch: activeTutor.speechPitch,
+          gender: activeTutor.gender,
+          lang: activeTutor.speechLangCode || langDef.speechLangCode,
+          preferredVoiceKeywords: activeTutor.preferredVoiceKeywords,
+          voiceName: progress.selectedVoiceName,
+          onEnd: () => {
+            if (activeCallRef.current && !isMuted) startListeningSession(initialHistory);
+            else setCallState("idle");
+          },
+          onError: () => {
+            if (activeCallRef.current) startListeningSession(initialHistory);
+          },
+        });
+      }
     } else {
       activeCallRef.current = false;
       stopSpeaking();
+      teardownLive();
       if (recognizerRef.current) {
-        try {
-          recognizerRef.current.abort();
-        } catch (_) {}
+        try { recognizerRef.current.abort(); } catch (_) {}
       }
       if (timerRef.current) clearInterval(timerRef.current);
     }
@@ -142,10 +252,9 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     return () => {
       activeCallRef.current = false;
       stopSpeaking();
+      teardownLive();
       if (recognizerRef.current) {
-        try {
-          recognizerRef.current.abort();
-        } catch (_) {}
+        try { recognizerRef.current.abort(); } catch (_) {}
       }
       if (timerRef.current) clearInterval(timerRef.current);
     };
@@ -330,12 +439,19 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             </div>
           </div>
 
-          <Badge
-            variant="outline"
-            className="border-zinc-700 bg-zinc-900/80 text-[10px] text-zinc-300 font-mono"
-          >
-            {audioSpeed}x
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            {isLiveMode && (
+              <Badge className="border-emerald-500/50 bg-emerald-950/80 text-[10px] text-emerald-300 font-mono flex items-center gap-1">
+                <Zap className="w-2.5 h-2.5" />Live
+              </Badge>
+            )}
+            <Badge
+              variant="outline"
+              className="border-zinc-700 bg-zinc-900/80 text-[10px] text-zinc-300 font-mono"
+            >
+              {audioSpeed}x
+            </Badge>
+          </div>
         </div>
 
         {/* RPG Companion & Language Bonus HUD */}

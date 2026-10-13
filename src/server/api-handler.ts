@@ -120,6 +120,46 @@ export async function handleApiRequest(request: Request): Promise<Response> {
       });
     }
 
+    // 6. EPHEMERAL TOKEN — Gemini Live API (nunca expõe a API key no browser)
+    if (path === "/api/live-token" && method === "POST") {
+      const apiKey =
+        (typeof process !== "undefined" && process.env?.["GEMINI_API_KEY"]) ||
+        (typeof process !== "undefined" && process.env?.["VITE_GEMINI_API_KEY"]) ||
+        "";
+
+      if (!apiKey) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Chave Gemini não configurada no servidor." }),
+          { status: 503, headers: jsonHeaders }
+        );
+      }
+
+      try {
+        const res = await fetch(
+          "https://generativelanguage.googleapis.com/v1beta/ephemeral-tokens",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Goog-Api-Key": apiKey },
+            body: JSON.stringify({ ttl: "600s" }), // token válido por 10 minutos
+          }
+        );
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err?.error?.message || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        return new Response(JSON.stringify({ success: true, token: data.token }), {
+          status: 200,
+          headers: jsonHeaders,
+        });
+      } catch (e: any) {
+        return new Response(
+          JSON.stringify({ success: false, error: e?.message || "Erro ao gerar token." }),
+          { status: 500, headers: jsonHeaders }
+        );
+      }
+    }
+
     return new Response(JSON.stringify({ error: "Endpoint não encontrado" }), {
       status: 404,
       headers: jsonHeaders,
