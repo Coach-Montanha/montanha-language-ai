@@ -62,7 +62,11 @@ const DISPOSABLE_EMAIL_DOMAINS = new Set([
   'inboxalias.com'
 ]);
 
+// Singleton — evita múltiplos GoTrueClient por módulo
+let _supabaseInstance: SupabaseClient | null | undefined = undefined;
+
 function getSupabaseClient(): SupabaseClient | null {
+  if (_supabaseInstance !== undefined) return _supabaseInstance;
   try {
     const env = ((typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {}) as Record<string, string>;
     const procEnv = ((typeof process !== 'undefined' && process.env) ? process.env : {}) as Record<string, string>;
@@ -70,13 +74,12 @@ function getSupabaseClient(): SupabaseClient | null {
     const url = env['VITE_SUPABASE_URL'] || procEnv['SUPABASE_URL'] || '';
     const key = env['VITE_SUPABASE_ANON_KEY'] || env['VITE_SUPABASE_PUBLISHABLE_KEY'] || procEnv['SUPABASE_ANON_KEY'] || procEnv['SUPABASE_PUBLISHABLE_KEY'] || '';
 
-    if (url && key) {
-      return createClient(url, key);
-    }
+    _supabaseInstance = (url && key) ? createClient(url, key) : null;
   } catch (err) {
     console.warn('[EcosystemAuth] Error initializing Supabase client:', err);
+    _supabaseInstance = null;
   }
-  return null;
+  return _supabaseInstance;
 }
 
 /**
