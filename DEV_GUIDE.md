@@ -53,12 +53,14 @@ Montanha Language AI/
 │   ├── routes/              # Rotas do aplicativo
 │   │   ├── __root.tsx       # Head global, SEO, JSON-LD, temas e fontes
 │   │   ├── index.tsx        # Dashboard de treinos diários e progresso
+│   │   ├── auth.tsx         # Autenticação unificada (PIN 10 dígitos / e-mail)
 │   │   ├── boost.tsx        # Módulo Booster
 │   │   ├── create.tsx       # Módulo Creator com IA
 │   │   ├── eco.tsx          # Central do Ecossistema Montanha
 │   │   └── master-admin.tsx # Link para o Master Admin
 │   ├── styles.css           # Estilos globais
-├── DEV_GUIDE.md             # ESTE MANUAL TÉCNICO INTERNO
+│   └── database/            # Esquema SQL unificado no repositório canônico: montanha-master-admin/database/ecosystem_schema.sql
+├── DEV_GUIDE.md             # ESTE MANUAL TÉCNICO INTERNO (Atualizado)
 ├── package.json             # Dependências e scripts de execução
 ├── tsconfig.json            # Configurações TypeScript
 └── vite.config.ts           # Configurações do Vite e Nitro
