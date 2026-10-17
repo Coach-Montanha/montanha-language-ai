@@ -50,36 +50,12 @@ let memoryCache: UsersDatabase = {
   },
 };
 
-// Sincroniza o banco de dados com a nuvem universal
-async function syncToCloud(db: UsersDatabase): Promise<void> {
-  try {
-    await fetch(CLOUD_STORAGE_URL, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: "smart_language_users_master_db",
-        data: db,
-      }),
-    });
-  } catch (err) {
-    console.warn("Aviso: Falha ao sincronizar com nuvem universal:", err);
-  }
+// Armazenamento em nuvem desativado por motivos de conformidade LGPD e segurança
+async function syncToCloud(_db: UsersDatabase): Promise<void> {
+  // Sincronização externa desativada para proteger PII dos alunos
 }
 
-// Carrega os dados da nuvem universal caso estejam mais recentes
 async function fetchFromCloud(): Promise<UsersDatabase | null> {
-  try {
-    const res = await fetch(CLOUD_STORAGE_URL, {
-      headers: { Accept: "application/json" },
-    });
-    if (!res.ok) return null;
-    const json = (await res.json()) as { data?: { users?: Record<string, StoredUserData> } };
-    if (json && json.data && json.data.users) {
-      return json.data as UsersDatabase;
-    }
-  } catch (err) {
-    console.warn("Aviso: Falha ao buscar da nuvem universal:", err);
-  }
   return null;
 }
 

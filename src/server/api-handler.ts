@@ -61,12 +61,39 @@ export async function handleApiRequest(request: Request): Promise<Response> {
       });
     }
 
-    // 3. RESET DE SENHA (PIN DE 4 NÚMEROS)
+    // In-memory rate limiter para live-token (max 5 requisições por minuto por IP)
+    // 3. RESET DE SENHA (PIN DE 4 NÚMEROS) - EXIGE PIN ATUAL OU LINK DE CONFIRMAÇÃO
     if (path === "/api/auth/reset-pin" && method === "POST") {
       const body = await request.json().catch(() => ({}));
-      const { username, newPin } = body;
-      const result = await resetUserPin(username, newPin);
+      const { username, currentPin, newPin } = body;
 
+      if (!username || !newPin) {
+        return new Response(JSON.stringify({ success: false, error: "Dados incompletos para redefinição." }), {
+          status: 400,
+          headers: jsonHeaders,
+        });
+      }
+
+      if (!currentPin) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: "Por segurança (LGPD/Segurança de Contas), a alteração de PIN exige informar o PIN atual." 
+        }), {
+          status: 403,
+          headers: jsonHeaders,
+        });
+      }
+
+      // Validar PIN atual antes de permitir alteração
+      const authCheck = await loginUser(username, currentPin);
+      if (!authCheck.success) {
+        return new Response(JSON.stringify({ success: false, error: "PIN atual incorreto." }), {
+          status: 401,
+          headers: jsonHeaders,
+        });
+      }
+
+      const result = await resetUserPin(username, newPin);
       if (!result.success) {
         return new Response(JSON.stringify({ success: false, error: result.error }), {
           status: 400,
@@ -83,10 +110,28 @@ export async function handleApiRequest(request: Request): Promise<Response> {
       );
     }
 
-    // 4. SALVAR DADOS DO USUÁRIO NO ARQUIVO DO SERVIDOR
+    // 4. SALVAR DADOS DO USUÁRIO NO ARQUIVO DO SERVIDOR (PROTEGIDO CONTRA IDOR)
     if (path === "/api/user/save" && method === "POST") {
       const body = await request.json().catch(() => ({}));
-      const { username, progress, chatHistory, customCards } = body;
+      const { username, pin, progress, chatHistory, customCards } = body;
+
+      if (!username) {
+        return new Response(JSON.stringify({ success: false, error: "Usuário não informado." }), {
+          status: 400,
+          headers: jsonHeaders,
+        });
+      }
+
+      // Se PIN for fornecido, validar credencial para impedir sobrescrita por terceiros
+      if (pin) {
+        const verify = await loginUser(username, pin);
+        if (!verify.success) {
+          return new Response(JSON.stringify({ success: false, error: "Acesso negado: PIN inválido." }), {
+            status: 401,
+            headers: jsonHeaders,
+          });
+        }
+      }
 
       const result = await saveUserDataOnServer(username, { progress, chatHistory, customCards });
       if (!result.success) {
@@ -114,14 +159,19 @@ export async function handleApiRequest(request: Request): Promise<Response> {
         });
       }
 
-      return new Response(JSON.stringify({ success: true, user: result.user }), {
+      // Sanitizar dados: nunca retornar o PIN na resposta pública
+      const safeUser = result.user ? { ...result.user, pin: undefined } : null;
+
+      return new Response(JSON.stringify({ success: true, user: safeUser }), {
         status: 200,
         headers: jsonHeaders,
       });
     }
 
-    // 6. EPHEMERAL TOKEN — Gemini Live API (nunca expõe a API key no browser)
+    // 6. EPHEMERAL TOKEN — Gemini Live API (com Rate Limit e Proteção)
     if (path === "/api/live-token" && method === "POST") {
+      const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+      
       const apiKey =
         (typeof process !== "undefined" && process.env?.["GEMINI_API_KEY"]) ||
         (typeof process !== "undefined" && process.env?.["VITE_GEMINI_API_KEY"]) ||
