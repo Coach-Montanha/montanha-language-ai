@@ -203,7 +203,7 @@ export const DailySprintTab: React.FC<DailySprintTabProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 max-w-2xl mx-auto w-full space-y-4 pb-20">
+    <div className="w-full max-w-2xl mx-auto px-3 py-4 sm:px-6 space-y-4 pb-28">
       {/* Cabeçalho do Treino */}
       <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm space-y-3">
         <div className="flex items-center justify-between">

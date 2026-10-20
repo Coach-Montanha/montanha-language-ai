@@ -156,7 +156,7 @@ function SmartLanguageApp() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans select-none antialiased overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased overflow-x-hidden w-full max-w-full">
       {/* Barra de Notificações Toast */}
       <Toaster position="top-center" richColors />
 
@@ -172,7 +172,7 @@ function SmartLanguageApp() {
       />
 
       {/* Conteúdo Principal com as Abas */}
-      <main className="flex-1 pb-16 overflow-x-hidden overflow-y-auto flex flex-col w-full max-w-full">
+      <main className="flex-1 pb-24 overflow-x-hidden flex flex-col w-full max-w-full">
         {activeTab === "treino" && (
           <DailySprintTab
             progress={progress}
